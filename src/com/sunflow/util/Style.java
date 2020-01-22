@@ -22,6 +22,8 @@ package com.sunflow.util;
 import java.awt.Font;
 
 public class Style {
+	public int smooth;
+
 	public int imageMode;
 	public int rectMode;
 	public int ellipseMode;

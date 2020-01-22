@@ -34,6 +34,11 @@ import java.awt.event.KeyEvent;
  */
 public interface Constants {
 
+	// Threading mode
+
+	static final byte SYNC = 0;
+	static final byte ASYNC = 1;
+
 	// Rotation in Degree
 
 	static final byte R0 = 0;

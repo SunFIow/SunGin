@@ -18,7 +18,7 @@ import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.DPolygon;
 import com.sunflow.util.Log;
 
-public class Game3D extends Game2DAsynchron {
+public class Game3D extends Game2D {
 
 	protected ArrayList<Base3DModel> Models;
 	protected ArrayList<DPolygon> DPolygone;
@@ -65,8 +65,8 @@ public class Game3D extends Game2DAsynchron {
 	}
 
 	@Override
-	void initFrame() {
-		super.initFrame();
+	void createFrame() {
+		super.createFrame();
 
 		panel.addKeyListener(new Game3DKeyListeners());
 		panel.addMouseMotionListener(new Game3DMouseMousenListeners());

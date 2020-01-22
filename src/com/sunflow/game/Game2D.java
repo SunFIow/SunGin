@@ -17,6 +17,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -33,19 +35,31 @@ import com.sunflow.util.MathUtils;
 public abstract class Game2D extends GameP5 implements Runnable, Constants, MathUtils, GameUtils, GeometryUtils {
 
 	private Thread thread;
+
 	protected JFrame frame;
 
 	protected Random random;
 
-	protected long frameCount;
-	protected int frameRate;
-	private double timePerTickNano;
-	@SuppressWarnings("unused")
-	private double timePerTickMilli;
+	private double timePerTickNano, timePerTickMilli;
+	private double timePerFrameNano, timePerFrameMilli;
+	private double infoUpdateIntervall;
+
+	private int fps, tps;
+
+	protected int frameRate, tickRate;
+	protected long frameCount, tickCount;
+	private int frames = 0;
+
+	protected double delta, deltaMin;
+	protected double multiplier, multiplierMin;
+
+	private byte mode;
 
 	protected boolean running;
+	protected boolean noLoop;
+
 	protected boolean fullscreen;
-	protected boolean showFPS;
+	protected boolean showInfo;
 
 	private boolean paused;
 
@@ -53,9 +67,6 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	private Point savedPos;
 
 	private boolean createdCanvas;
-
-	private int fps;
-	protected double delta;
 
 //	private ImprovedNoise perlinnoise;
 	private OpenSimplexNoise noise;
@@ -82,6 +93,8 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	void privateRefresh() {
 		frameCount = 0;
 		frameRate = 0;
+		tickCount = 0;
+		tickRate = 0;
 
 		frameWidth = 0;
 		frameHeight = 0;
@@ -92,8 +105,8 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		y = 0;
 
 		fullscreen = false;
-		smooth(0);
-		showFPS = true;
+
+		showInfo = true;
 
 		mouseX = 0;
 		mouseY = 0;
@@ -103,6 +116,9 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		createdCanvas = false;
 
 		fps = 0;
+
+		multiplierMin = 0;
+		deltaMin = 0;
 	}
 
 	void privatePreSetup() {
@@ -111,6 +127,12 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
 //		perlinnoise = new ImprovedNoise();
+		frameRate(60);
+		mode(SYNC);
+		noSmooth();
+
+		multiplierMin = 5;
+		deltaMin = timePerFrameNano / NANOSECOND * 5;
 
 		savedSize = new Vertex2F();
 		savedPos = new Point(0, 0);
@@ -120,7 +142,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	protected void setup() {}
 
-	private void initFrame() {
+	void createFrame() {
 		if (frame != null) frame.dispose();
 
 		panel = new GamePanel();
@@ -237,7 +259,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			super.width = width;
 			super.height = height;
 
-			initFrame();
+			createFrame();
 
 			defaultSettings();
 		}
@@ -246,8 +268,8 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	@Override
 	final protected void defaultSettings() {
-		frameRate(60);
 		showFPS();
+		infoUpdateIntervall = NANOSECOND;
 		paused = false;
 
 		super.defaultSettings();
@@ -256,14 +278,20 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	final protected void start() {
 		if (running) return;
 		running = true;
+		if (createdCanvas) frame.setVisible(true);
 		thread = new Thread(this);
 		thread.start();
-		if (createdCanvas) frame.setVisible(true);
 	}
 
 	final protected void stop() {
-		if (!running) return;
+		noLoop();
 		running = false;
+	}
+
+	final protected void noLoop() {
+		noLoop = true;
+		running = false;
+		timePerFrameNano = Double.MAX_VALUE;
 	}
 
 	final protected void toggleFullscreen() {
@@ -292,18 +320,42 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 //		frame.requestFocus();
 	}
 
-	final protected void frameRate(int newTargetFrameRate) {
-		frameRate = newTargetFrameRate;
-		timePerTickNano = NANOSECOND / frameRate;
-		timePerTickMilli = MILLISECOND / frameRate;
+	final protected void tickRate(int newTarget) {
+		tickRate = newTarget;
+//		timePerFrameNano = timePerTickNano = NANOSECOND / frameRate;
+//		timePerFrameMilli = timePerTickMilli = MILLISECOND / frameRate;
+		timePerTickNano = newTarget < 1 ? 0 : NANOSECOND / tickRate;
+		timePerTickMilli = newTarget < 1 ? 0 : MILLISECOND / tickRate;
+		if (mode == SYNC) {
+			frameRate = tickRate;
+			timePerFrameNano = timePerTickNano;
+			timePerFrameMilli = timePerTickMilli;
+		}
 	}
 
-	void privateUpdate(double delta) {
+	final protected void frameRate(int newTarget) {
+		frameRate = newTarget;
+		timePerFrameNano = newTarget < 1 ? 0 : NANOSECOND / frameRate;
+		timePerFrameMilli = newTarget < 1 ? 0 : MILLISECOND / frameRate;
+		if (mode == SYNC) {
+			tickRate = frameRate;
+			timePerTickNano = timePerFrameNano;
+			timePerTickMilli = timePerFrameMilli;
+		}
+	}
+
+	/**
+	 * @param mode
+	 *            either SYNC or ASYNC
+	 */
+	final protected void mode(byte mode) { this.mode = mode; }
+
+	void privateUpdate() {
 		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
 		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
 	}
 
-	protected void update(double delta) {}
+	protected void update() {}
 
 	void privateDraw() { handleSmooth(); }
 
@@ -343,60 +395,59 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	@Override
 	public void run() {
-		long currentTime;
-		long passedTime;
+		long currentTime = 0;
+		long passedTime = 0;
 		long previousTime = System.nanoTime();
 		long lastTick = System.nanoTime();
 
-		double delta = 0;
+		double timeSinceLastTick = 0;
+		double timeSinceLastFrame = 0;
+		double timeSinceLastInfoUpdate = 0;
 
-//		long timer = 0;
 		int ticks = 0;
 
+		panel.repaint();
+		if (noLoop) return;
 		while (running) {
 			currentTime = System.nanoTime();
 			passedTime = currentTime - previousTime;
 			previousTime = currentTime;
 
-			delta += passedTime;
-//			timer += passedTime;
+			timeSinceLastTick += passedTime;
+			timeSinceLastFrame += passedTime;
+			timeSinceLastInfoUpdate += passedTime;
 
-//			if (timer >= NANOSECOND) {
-//				fps = ticks;
-//				timer -= NANOSECOND;
-//				ticks = 0;
-//			}
+			if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
+				timeSinceLastInfoUpdate -= infoUpdateIntervall;
+				tps = ticks;
+				ticks = 0;
+				fps = frames;
+				frames = 0;
+			}
 
-			if (delta >= timePerTickNano) {
-//					dt = delta / NANOSECOND;
-				this.delta = (currentTime - lastTick) / NANOSECOND;
-				this.delta = Math.min(this.delta, 0.15);
+			if (timeSinceLastTick >= timePerTickNano) {
+				timeSinceLastTick -= timePerTickNano;
+				delta = (currentTime - lastTick) / NANOSECOND;
+				delta = Math.min(delta, deltaMin);
+				multiplier = (currentTime - lastTick) / timePerTickNano;
+				multiplier = Math.min(multiplier, multiplierMin);
 				lastTick = currentTime;
 				ticks++;
-				delta -= timePerTickNano;
-
-				if (ticks % (NANOSECOND / timePerTickNano) == 0) {
-					fps = ticks;
-					ticks = 0;
-				}
-
 				if (!paused) tick();
 			}
+
+			if (timeSinceLastFrame >= timePerFrameNano) {
+				timeSinceLastFrame -= timePerFrameNano;
+				panel.repaint();
+			}
+
 		}
 	}
 
 	private void tick() {
-		privateUpdate(delta);
-		update(delta);
-		synchronized (thread) {
-			panel.repaint();
-			try {
-				thread.wait((long) Math.min(1, timePerTickMilli));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		frameCount++;
+		privateUpdate();
+		update();
+		tickCount++;
 	}
 
 	@SuppressWarnings("serial")
@@ -407,14 +458,14 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			Graphics2D g2 = (Graphics2D) g;
 
 			if (graphics == null) {
-				image = new BufferedImage(width(), height(), RGB);
+				image = new BufferedImage(width(), height(), ARGB);
 				graphics = image.createGraphics();
 			}
 
 			privateDraw();
 			draw();
 
-			if (showFPS) drawFps();
+			if (showInfo) drawInfo();
 
 			// Drawing the image.
 //			BufferedImage image2 = image.getSubimage(0, 0, getWidth(), getHeight());
@@ -423,25 +474,38 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			render(g2);
 
 			g2.dispose();
-			synchronized (thread) {
-				thread.notify();
-			}
+			frames++;
+			frameCount++;
 		}
 	};
 
-	final public void showFPS() { showFPS = true; }
+	final public void showInfo() { showInfo = true; }
 
-	final public void hideFPS() { showFPS = false; }
+	final public void hiddeInfo() { showInfo = false; }
 
-	private void drawFps() {
+	public List<String> getInfo() {
+		List<String> info = new ArrayList<>();
+		info.add(fps + " FPS");
+		info.add(tps + " TPS");
+		return info;
+	}
+
+	final public void drawInfo() {
+		List<String> infos = getInfo();
+		if (infos == null || infos.isEmpty()) return;
 		push();
 		colorMode(RGB);
+		smooth();
 		fill(255, 255, 0);
 		stroke(0, 100);
 		strokeWeight(5);
-		textSize(16);
+		textSize(13);
 		textAlign(LEFT, TOP);
-		text(fps + " FPS", 8, 5);
+		int xoff = 5, yoff = 6;
+		for (String info : infos) {
+			text(info, xoff, yoff);
+			yoff += textSize + 2;
+		}
 		pop();
 	}
 }

@@ -226,7 +226,7 @@ public class DImage implements Cloneable, Constants, MathUtils {
 		textAlignY = BASELINE;
 		textMode = MODEL;
 
-//		background(0xffCCCCCC);
+		background(0xffCCCCCC);
 	}
 
 	final public void resize(float width, float height) { resize((int) width, (int) height); }
@@ -1498,6 +1498,8 @@ public class DImage implements Cloneable, Constants, MathUtils {
 	public final Style getStyle(Style s) { // ignore
 		if (s == null) s = new Style();
 
+		s.smooth = smooth;
+
 		s.imageMode = imageMode;
 		s.rectMode = rectMode;
 		s.ellipseMode = ellipseMode;
@@ -1528,6 +1530,8 @@ public class DImage implements Cloneable, Constants, MathUtils {
 	}
 
 	public final void style(Style s) {
+		smooth(s.smooth);
+
 		imageMode(s.imageMode);
 		rectMode(s.rectMode);
 		ellipseMode(s.ellipseMode);

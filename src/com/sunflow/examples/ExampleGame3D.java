@@ -23,6 +23,7 @@ public class ExampleGame3D extends Game3D {
 	public void setup() {
 		createCanvas(1280, 720);
 		frameRate(144);
+		showTPS();
 
 		model = new Sphere(this, 0, 0, 1500, 750, 30);
 //		model = new Cube(0, 0, 1500, 750, 750, 750);
@@ -38,7 +39,7 @@ public class ExampleGame3D extends Game3D {
 	}
 
 	@Override
-	protected void update(double multiplier) {
+	protected void update() {
 		// rotate and update shape examples
 		if (auto) {
 			for (int i = 1; i < Models.size(); i++) {
