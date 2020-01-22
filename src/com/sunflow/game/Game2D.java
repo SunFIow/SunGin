@@ -268,7 +268,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	@Override
 	final protected void defaultSettings() {
-		showFPS();
+		hideInfo();
 		infoUpdateIntervall = NANOSECOND;
 		paused = false;
 
@@ -481,7 +481,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	final public void showInfo() { showInfo = true; }
 
-	final public void hiddeInfo() { showInfo = false; }
+	final public void hideInfo() { showInfo = false; }
 
 	public List<String> getInfo() {
 		List<String> info = new ArrayList<>();

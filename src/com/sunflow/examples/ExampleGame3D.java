@@ -23,7 +23,6 @@ public class ExampleGame3D extends Game3D {
 	public void setup() {
 		createCanvas(1280, 720);
 		frameRate(144);
-		showTPS();
 
 		model = new Sphere(this, 0, 0, 1500, 750, 30);
 //		model = new Cube(0, 0, 1500, 750, 750, 750);

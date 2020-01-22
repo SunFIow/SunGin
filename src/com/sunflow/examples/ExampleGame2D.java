@@ -18,7 +18,6 @@ public class ExampleGame2D extends Game2D {
 	@Override
 	public void setup() {
 		createCanvas(1000, 500);
-		showTPS();
 		smooth();
 		frameRate(60);
 		ballR = 25;
