@@ -68,8 +68,8 @@ public class Game3D extends Game2D {
 	void createFrame() {
 		super.createFrame();
 
-		panel.addKeyListener(new Game3DKeyListeners());
-		panel.addMouseMotionListener(new Game3DMouseMousenListeners());
+		canvas.addKeyListener(new Game3DKeyListeners());
+		canvas.addMouseMotionListener(new Game3DMouseMousenListeners());
 		invisibleMouse();
 	}
 
@@ -178,7 +178,7 @@ public class Game3D extends Game2D {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		BufferedImage cursorImage = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 		Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvisibleCursor");
-		panel.setCursor(invisibleCursor);
+		canvas.setCursor(invisibleCursor);
 	}
 
 	private void setPolygonOver() {

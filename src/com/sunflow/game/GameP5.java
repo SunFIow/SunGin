@@ -21,8 +21,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import javax.swing.JPanel;
-
 import com.sunflow.gfx.DImage;
 import com.sunflow.math.Vertex2D;
 
@@ -36,8 +34,6 @@ public abstract class GameP5 extends DImage implements MouseListener, MouseWheel
 	public int height() { return (int) height; }
 
 	protected int frameWidth, frameHeight;
-
-	protected JPanel panel;
 
 	protected int mouseX, mouseY;
 	protected int mouseScreenX, mouseScreenY;
@@ -138,9 +134,7 @@ public abstract class GameP5 extends DImage implements MouseListener, MouseWheel
 	 * if it contains no "/".
 	 */
 	private final static File getFile(String name) {
-		if (!name.contains("/")) {
-			name = "rec/".concat(name);
-		}
+		if (!name.contains("/")) name = "rec/".concat(name);
 		return new File(name);
 	}
 

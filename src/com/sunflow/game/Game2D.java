@@ -1,5 +1,6 @@
 package com.sunflow.game;
 
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -16,13 +17,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.math.Vertex2F;
@@ -37,8 +38,25 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	private Thread thread;
 
 	protected JFrame frame;
+	protected Canvas canvas;
+	private BufferStrategy bs;
+
+	private boolean createdCanvas;
+
+	// Overlay
+	protected boolean showOverlay;
+	protected boolean showInfo;
 
 	protected Random random;
+//	private ImprovedNoise perlinnoise;
+	private OpenSimplexNoise noise;
+
+	protected boolean running;
+	protected boolean paused;
+
+	protected boolean noLoop;
+
+	private byte mode;
 
 	private double timePerTickNano, timePerTickMilli;
 	private double timePerFrameNano, timePerFrameMilli;
@@ -53,23 +71,10 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	protected double delta, deltaMin;
 	protected double multiplier, multiplierMin;
 
-	private byte mode;
-
-	protected boolean running;
-	protected boolean noLoop;
-
 	protected boolean fullscreen;
-	protected boolean showInfo;
-
-	private boolean paused;
 
 	private Vertex2F savedSize;
 	private Point savedPos;
-
-	private boolean createdCanvas;
-
-//	private ImprovedNoise perlinnoise;
-	private OpenSimplexNoise noise;
 
 	@Override
 	protected final void init() {
@@ -122,7 +127,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	}
 
 	void privatePreSetup() {
-		Log.info("starting 2D Game - synchronized");
+		Log.info("starting 2D Game");
 
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
@@ -145,16 +150,18 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	void createFrame() {
 		if (frame != null) frame.dispose();
 
-		panel = new GamePanel();
-		panel.setFocusable(true);
-		panel.setPreferredSize(new Dimension(width(), height()));
+		canvas = new Canvas();
+		canvas.setFocusable(true);
+		canvas.setPreferredSize(new Dimension(width(), height()));
 
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(panel);
 		frame.setVisible(true);
-		frame.createBufferStrategy(2);
 		frame.setVisible(false);
+		frame.add(canvas);
+
+		canvas.createBufferStrategy(3);
+		bs = canvas.getBufferStrategy();
 
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -162,13 +169,13 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		x = frame.getX();
 		y = frame.getY();
 
-		panel.addKeyListener(this);
-		panel.addMouseListener(this);
-		panel.addMouseMotionListener(this);
-		panel.addMouseWheelListener(this);
-		panel.addComponentListener(this);
+		canvas.addKeyListener(this);
+		canvas.addMouseListener(this);
+		canvas.addMouseMotionListener(this);
+		canvas.addMouseWheelListener(this);
+		canvas.addComponentListener(this);
 
-		panel.addKeyListener(new KeyAdapter() {
+		canvas.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				switch (e.getKeyCode()) {
@@ -185,7 +192,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			}
 		});
 
-		panel.addMouseMotionListener(new MouseMotionListener() {
+		canvas.addMouseMotionListener(new MouseMotionListener() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
 				updateMousePosition(e.getX(), e.getY());
@@ -202,7 +209,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			}
 		});
 
-		panel.addComponentListener(new ComponentListener() {
+		canvas.addComponentListener(new ComponentListener() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				width = e.getComponent().getWidth();
@@ -264,11 +271,13 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			defaultSettings();
 		}
 		if (running) frame.setVisible(true);
+
 	}
 
 	@Override
 	final protected void defaultSettings() {
-		hideInfo();
+		showOverlay(false);
+		showInfo(false);
 		infoUpdateIntervall = NANOSECOND;
 		paused = false;
 
@@ -283,10 +292,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		thread.start();
 	}
 
-	final protected void stop() {
-		noLoop();
-		running = false;
-	}
+	final protected void stop() { running = false; }
 
 	final protected void noLoop() {
 		noLoop = true;
@@ -322,8 +328,6 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	final protected void tickRate(int newTarget) {
 		tickRate = newTarget;
-//		timePerFrameNano = timePerTickNano = NANOSECOND / frameRate;
-//		timePerFrameMilli = timePerTickMilli = MILLISECOND / frameRate;
 		timePerTickNano = newTarget < 1 ? 0 : NANOSECOND / tickRate;
 		timePerTickMilli = newTarget < 1 ? 0 : MILLISECOND / tickRate;
 		if (mode == SYNC) {
@@ -375,7 +379,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		if (textFont == null) {
 			textFont = createDefaultFont();
 		}
-		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), panel.getFontMetrics(textFont).getFontRenderContext());
+		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), canvas.getFontMetrics(textFont).getFontRenderContext());
 		AffineTransform transform = new AffineTransform();
 		transform.translate(x, y);
 		Shape shape = tl.getOutline(transform);
@@ -406,7 +410,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 		int ticks = 0;
 
-		panel.repaint();
+//		render();
 		if (noLoop) return;
 		while (running) {
 			currentTime = System.nanoTime();
@@ -438,9 +442,8 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 			if (timeSinceLastFrame >= timePerFrameNano) {
 				timeSinceLastFrame -= timePerFrameNano;
-				panel.repaint();
+				render();
 			}
-
 		}
 	}
 
@@ -450,49 +453,50 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		tickCount++;
 	}
 
-	@SuppressWarnings("serial")
-	private class GamePanel extends JPanel {
-		@Override
-		protected void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			Graphics2D g2 = (Graphics2D) g;
+	private void render() {
+		do {
+			do {
+				Graphics g = bs.getDrawGraphics();
 
-			if (graphics == null) {
-				image = new BufferedImage(width(), height(), ARGB);
-				graphics = image.createGraphics();
-			}
+				if (graphics == null) {
+					image = new BufferedImage(width(), height(), ARGB);
+					graphics = image.createGraphics();
+				}
 
-			privateDraw();
-			draw();
+				privateDraw();
+				draw();
 
-			if (showInfo) drawInfo();
+				if (showOverlay) drawOverlay();
 
-			// Drawing the image.
-//			BufferedImage image2 = image.getSubimage(0, 0, getWidth(), getHeight());
-			g2.drawImage(image, 0, 0, null);
+				// Drawing the image.
+//				BufferedImage image2 = image.getSubimage(0, 0, getWidth(), getHeight());
+				g.drawImage(image, 0, 0, null);
 
-			render(g2);
+				render((Graphics2D) g);
 
-			g2.dispose();
-			frames++;
-			frameCount++;
-		}
-	};
+				g.dispose();
+				frames++;
+				frameCount++;
 
-	final public void showInfo() { showInfo = true; }
-
-	final public void hideInfo() { showInfo = false; }
-
-	public List<String> getInfo() {
-		List<String> info = new ArrayList<>();
-		info.add(fps + " FPS");
-		info.add(tps + " TPS");
-		return info;
+				g.dispose();
+			} while (bs.contentsRestored());
+			bs.show();
+		} while (bs.contentsLost());
 	}
 
-	final public void drawInfo() {
-		List<String> infos = getInfo();
-		if (infos == null || infos.isEmpty()) return;
+	final public void showOverlay(boolean show) { showOverlay = show; }
+
+	final public void showInfo(boolean show) {
+		showInfo = show;
+		handleOverlay();
+	}
+
+	private void handleOverlay() {
+		if (showInfo) showOverlay = true; // if(showInfo || showX || show??? || ...
+		else showOverlay = false;
+	}
+
+	final public void drawOverlay() {
 		push();
 		colorMode(RGB);
 		smooth();
@@ -501,11 +505,28 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		strokeWeight(5);
 		textSize(13);
 		textAlign(LEFT, TOP);
-		int xoff = 5, yoff = 6;
+		if (showInfo) drawInfo();
+		// if(showX) drawX();
+		// if(show???) draw???();
+		pop();
+	}
+
+	final public void drawInfo() {
+		List<String> infos = getInfo();
+		if (infos == null || infos.isEmpty()) return;
+
+		float xoff = 5, yoff = 0;
+		float ychange = textSize * 1.25f;
 		for (String info : infos) {
 			text(info, xoff, yoff);
-			yoff += textSize + 2;
+			yoff += ychange;
 		}
-		pop();
+	}
+
+	public List<String> getInfo() {
+		List<String> info = new ArrayList<>();
+		info.add(fps + " FPS");
+		info.add(tps + " TPS");
+		return info;
 	}
 }

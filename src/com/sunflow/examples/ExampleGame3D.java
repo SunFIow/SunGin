@@ -2,6 +2,7 @@ package com.sunflow.examples;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math3d.models.Base3DModel;
@@ -15,14 +16,13 @@ public class ExampleGame3D extends Game3D {
 
 	private boolean auto = true;
 
-	public static void main(String[] args) {
-		new ExampleGame3D();
-	}
+	public static void main(String[] args) { new ExampleGame3D(); }
 
 	@Override
 	public void setup() {
 		createCanvas(1280, 720);
-		frameRate(144);
+		frameRate(600);
+		showInfo(true);
 
 		model = new Sphere(this, 0, 0, 1500, 750, 30);
 //		model = new Cube(0, 0, 1500, 750, 750, 750);
@@ -37,19 +37,35 @@ public class ExampleGame3D extends Game3D {
 		}
 	}
 
+	double showDelta, showMult;
+
+	@Override
+	public List<String> getInfo() {
+		List<String> info = super.getInfo();
+
+		info.add(showDelta + " ∆");
+		info.add(showMult + " x");
+
+		return info;
+	}
+
 	@Override
 	protected void update() {
 		// rotate and update shape examples
 		if (auto) {
 			for (int i = 1; i < Models.size(); i++) {
 				Base3DModel m = Models.get(i);
-				m.rotateX(0.005 * multiplier);
+				m.rotateX(0.5 * delta);
 			}
 		}
 	}
 
 	@Override
 	public void draw() {
+		if (frameCount % frameRate == 0) {
+			showDelta = delta;
+			showMult = multiplier;
+		}
 //		// Calculated all that is general for this camera position
 //		Calculator.SetPrederterminedInfo(this);
 //		cameraMovement();

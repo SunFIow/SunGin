@@ -1,6 +1,7 @@
 package com.sunflow.examples;
 
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import com.sunflow.game.Game2D;
 
@@ -11,35 +12,38 @@ public class ExampleGame2D extends Game2D {
 	private float ballVX;
 	private float ballVY;
 
-	public static void main(String[] args) {
-		new ExampleGame2D();
-	}
+	public static void main(String[] args) { new ExampleGame2D(); }
 
 	@Override
 	public void setup() {
 		createCanvas(1000, 500);
 		smooth();
 		frameRate(60);
+		showInfo(true);
 		ballR = 25;
 		ballX = width / 2;
 		ballY = height / 2;
-		ballVX = 4;
-		ballVY = 2;
+		ballVX = 400;
+		ballVY = 200;
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent event) {
-		if (!running) {
-			start();
-		} else {
-			stop();
-		}
+	public List<String> getInfo() {
+		List<String> list = super.getInfo();
+
+		list.add(0, "Position [" + ballX + "|[" + ballY + "]");
+		list.add("Velocity [" + ballVX + "|[" + ballVY + "]");
+
+		return list;
 	}
+
+	@Override
+	public void mouseClicked(MouseEvent event) { paused = !paused; }
 
 	@Override
 	public void update() {
-		ballX += ballVX * multiplier;
-		ballY += ballVY * multiplier;
+		ballX += ballVX * delta;
+		ballY += ballVY * delta;
 		if (ballX < ballR || ballX > width - ballR) {
 			ballVX *= -1;
 			ballX = ballX < ballR ? ballR : width - ballR;

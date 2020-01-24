@@ -194,7 +194,7 @@ public class DImage implements Cloneable, Constants, MathUtils {
 		image = bi;
 	}
 
-	public void init(int width, int height, int format) {
+	private void init(int width, int height, int format) {
 		this.width = width;
 		this.height = height;
 		this.format = format;
@@ -226,7 +226,7 @@ public class DImage implements Cloneable, Constants, MathUtils {
 		textAlignY = BASELINE;
 		textMode = MODEL;
 
-		background(0xffCCCCCC);
+//		background(0xffCCCCCC);
 	}
 
 	final public void resize(float width, float height) { resize((int) width, (int) height); }
@@ -1193,8 +1193,9 @@ public class DImage implements Cloneable, Constants, MathUtils {
 		Shape shape = tl.getOutline(null);
 
 		float w = fm.stringWidth(text);
+		float h = fm.getHeight();
 //		float w = (float) shape.getBounds2D().getWidth();
-		float h = (float) shape.getBounds2D().getHeight();
+//		float h = (float) shape.getBounds2D().getHeight();
 
 		if (textAlign == CENTER) {
 			x -= w / 2;
