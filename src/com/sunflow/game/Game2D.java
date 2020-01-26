@@ -18,7 +18,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,7 +25,6 @@ import java.util.Random;
 import javax.swing.JFrame;
 
 import com.sunflow.math.OpenSimplexNoise;
-import com.sunflow.math.Vertex2F;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
@@ -35,11 +33,16 @@ import com.sunflow.util.MathUtils;
 
 public abstract class Game2D extends GameP5 implements Runnable, Constants, MathUtils, GameUtils, GeometryUtils {
 
-	private Thread thread;
+//	private Thread thread;
+	private Thread threadTick;
+	private Thread threadRender;
 
 	protected JFrame frame;
 	protected Canvas canvas;
 	private BufferStrategy bs;
+
+//	protected Screen screen;
+//	protected boolean useCanvas;
 
 	private boolean createdCanvas;
 
@@ -66,15 +69,18 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	protected int frameRate, tickRate;
 	protected long frameCount, tickCount;
-	private int frames = 0;
+	int frames = 0;
 
 	protected double delta, deltaMin;
 	protected double multiplier, multiplierMin;
 
 	protected boolean fullscreen;
 
-	private Vertex2F savedSize;
+	private Dimension savedSize;
 	private Point savedPos;
+
+	private float scaleWidth, scaleHeight;
+	private int scaledWidth, scaledHeight;
 
 	@Override
 	protected final void init() {
@@ -139,7 +145,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		multiplierMin = 5;
 		deltaMin = timePerFrameNano / NANOSECOND * 5;
 
-		savedSize = new Vertex2F();
+		savedSize = new Dimension();
 		savedPos = new Point(0, 0);
 	}
 
@@ -152,13 +158,20 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 		canvas = new Canvas();
 		canvas.setFocusable(true);
-		canvas.setPreferredSize(new Dimension(width(), height()));
+//		canvas.setPreferredSize(new Dimension(width(), height()));
+		canvas.setPreferredSize(new Dimension(scaledWidth, scaledHeight));
+//		screen = new Screen(this);
+//		screen.setFocusable(true);
+//		screen.setPreferredSize(new Dimension(width(), height()));
+
+		canvas.setIgnoreRepaint(true);
 
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		frame.setVisible(false);
 		frame.add(canvas);
+//		screen.addToFrame(frame);
 
 		canvas.createBufferStrategy(3);
 		bs = canvas.getBufferStrategy();
@@ -212,9 +225,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		canvas.addComponentListener(new ComponentListener() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				width = e.getComponent().getWidth();
-				height = e.getComponent().getHeight();
-				resize(width, height);
+				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
 			}
 
 			@Override
@@ -258,20 +269,36 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		});
 	}
 
-	final protected void createCanvas(float width, float height) { createCanvas((int) width, (int) height); }
+	private void cResized(int w, int h) {
+		scaledWidth = w;
+		scaledHeight = h;
+		width = scaledWidth / scaleWidth;
+		height = scaledHeight / scaleHeight;
+		resize(width, height);
+	}
 
-	final protected void createCanvas(int width, int height) {
+	final protected void createCanvas(float width, float height) { createCanvas(width, height, 1, 1); }
+
+	final protected void createCanvas(float width, float height, float scale) { createCanvas(width, height, scale, scale); }
+
+	final protected void createCanvas(float width, float height, float scaleW, float scaleH) {
 		if (!createdCanvas) {
 			createdCanvas = true;
 			super.width = width;
 			super.height = height;
+			this.scaleWidth = scaleW;
+			this.scaleHeight = scaleH;
+
+			this.scaledWidth = (int) (width * scaleWidth);
+			this.scaledHeight = (int) (height * scaleHeight);
 
 			createFrame();
 
 			defaultSettings();
 		}
 		if (running) frame.setVisible(true);
-
+		canvas.requestFocus();
+//		screen.requestFocus();
 	}
 
 	@Override
@@ -288,8 +315,12 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		if (running) return;
 		running = true;
 		if (createdCanvas) frame.setVisible(true);
-		thread = new Thread(this);
-		thread.start();
+//		thread = new Thread(this);
+//		thread.start();
+		threadTick = new TickThread();
+		threadTick.start();
+		threadRender = new RenderThread();
+		threadRender.start();
 	}
 
 	final protected void stop() { running = false; }
@@ -301,29 +332,30 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	}
 
 	final protected void toggleFullscreen() {
-		if (fullscreen) {
-			width = savedSize.x;
-			height = savedSize.y;
-			frame.setLocation(savedPos);
-			x = frame.getX();
-			y = frame.getY();
-		} else {
-			savedSize.x = width;
-			savedSize.y = height;
-			savedPos = frame.getLocation();
-			width = Toolkit.getDefaultToolkit().getScreenSize().width;
-			height = Toolkit.getDefaultToolkit().getScreenSize().height;
-			frame.setLocation(0, 0);
-			x = 0;
-			y = 0;
+		synchronized (bs) {
+			int w, h;
+			if (fullscreen) {
+				w = savedSize.width;
+				h = savedSize.height;
+				frame.setLocation(savedPos);
+				x = frame.getX();
+				y = frame.getY();
+			} else {
+				savedSize.setSize(scaledWidth, scaledHeight);
+				savedPos = frame.getLocation();
+				w = Toolkit.getDefaultToolkit().getScreenSize().width;
+				h = Toolkit.getDefaultToolkit().getScreenSize().height;
+				frame.setLocation(0, 0);
+				x = 0;
+				y = 0;
+			}
+			fullscreen = !fullscreen;
+			frame.dispose();
+			frame.setUndecorated(!(!fullscreen && frame.isOpaque()));
+			frame.getContentPane().setPreferredSize(new Dimension(w, h));
+			frame.pack();
+			frame.setVisible(true);
 		}
-		fullscreen = !fullscreen;
-		frame.dispose();
-		frame.setUndecorated(!(!fullscreen && frame.isOpaque()));
-		frame.getContentPane().setPreferredSize(new Dimension(width(), height()));
-		frame.pack();
-		frame.setVisible(true);
-//		frame.requestFocus();
 	}
 
 	final protected void tickRate(int newTarget) {
@@ -380,6 +412,7 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 			textFont = createDefaultFont();
 		}
 		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), canvas.getFontMetrics(textFont).getFontRenderContext());
+//		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), screen.getFontMetrics(textFont).getFontRenderContext());
 		AffineTransform transform = new AffineTransform();
 		transform.translate(x, y);
 		Shape shape = tl.getOutline(transform);
@@ -397,56 +430,6 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 
 	final public double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
 
-	@Override
-	public void run() {
-		long currentTime = 0;
-		long passedTime = 0;
-		long previousTime = System.nanoTime();
-		long lastTick = System.nanoTime();
-
-		double timeSinceLastTick = 0;
-		double timeSinceLastFrame = 0;
-		double timeSinceLastInfoUpdate = 0;
-
-		int ticks = 0;
-
-//		render();
-		if (noLoop) return;
-		while (running) {
-			currentTime = System.nanoTime();
-			passedTime = currentTime - previousTime;
-			previousTime = currentTime;
-
-			timeSinceLastTick += passedTime;
-			timeSinceLastFrame += passedTime;
-			timeSinceLastInfoUpdate += passedTime;
-
-			if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
-				timeSinceLastInfoUpdate -= infoUpdateIntervall;
-				tps = ticks;
-				ticks = 0;
-				fps = frames;
-				frames = 0;
-			}
-
-			if (timeSinceLastTick >= timePerTickNano) {
-				timeSinceLastTick -= timePerTickNano;
-				delta = (currentTime - lastTick) / NANOSECOND;
-				delta = Math.min(delta, deltaMin);
-				multiplier = (currentTime - lastTick) / timePerTickNano;
-				multiplier = Math.min(multiplier, multiplierMin);
-				lastTick = currentTime;
-				ticks++;
-				if (!paused) tick();
-			}
-
-			if (timeSinceLastFrame >= timePerFrameNano) {
-				timeSinceLastFrame -= timePerFrameNano;
-				render();
-			}
-		}
-	}
-
 	private void tick() {
 		privateUpdate();
 		update();
@@ -454,34 +437,26 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 	}
 
 	private void render() {
+		privateDraw();
+		draw();
+		render(graphics);
+
+		if (showOverlay) drawOverlay();
+
+//		Drawing the image.
+//		screen.render();
 		do {
 			do {
 				Graphics g = bs.getDrawGraphics();
-
-				if (graphics == null) {
-					image = new BufferedImage(width(), height(), ARGB);
-					graphics = image.createGraphics();
-				}
-
-				privateDraw();
-				draw();
-
-				if (showOverlay) drawOverlay();
-
-				// Drawing the image.
-//				BufferedImage image2 = image.getSubimage(0, 0, getWidth(), getHeight());
-				g.drawImage(image, 0, 0, null);
-
-				render((Graphics2D) g);
-
-				g.dispose();
-				frames++;
-				frameCount++;
-
+//				g.drawImage(image, 0, 0, null);
+				g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
 				g.dispose();
 			} while (bs.contentsRestored());
 			bs.show();
 		} while (bs.contentsLost());
+
+		frames++;
+		frameCount++;
 	}
 
 	final public void showOverlay(boolean show) { showOverlay = show; }
@@ -528,5 +503,139 @@ public abstract class Game2D extends GameP5 implements Runnable, Constants, Math
 		info.add(fps + " FPS");
 		info.add(tps + " TPS");
 		return info;
+	}
+
+	private class TickThread extends Thread {
+		@Override
+		public void run() {
+			long currentTime = 0;
+			long passedTime = 0;
+			long previousTime = System.nanoTime();
+			long lastTick = System.nanoTime();
+
+			double timeSinceLastTick = 0;
+			double timeSinceLastInfoUpdate = 0;
+
+			int ticks = 0;
+
+			if (noLoop) return;
+			while (running) {
+				currentTime = System.nanoTime();
+				passedTime = currentTime - previousTime;
+				previousTime = currentTime;
+
+				timeSinceLastTick += passedTime;
+				timeSinceLastInfoUpdate += passedTime;
+
+				if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
+					timeSinceLastInfoUpdate -= infoUpdateIntervall;
+					tps = ticks;
+					ticks = 0;
+					fps = frames;
+					frames = 0;
+				}
+
+				if (timeSinceLastTick >= timePerTickNano) {
+					timeSinceLastTick -= timePerTickNano;
+					delta = (currentTime - lastTick) / NANOSECOND;
+					delta = Math.min(delta, deltaMin);
+					multiplier = (currentTime - lastTick) / timePerTickNano;
+					multiplier = Math.min(multiplier, multiplierMin);
+					lastTick = currentTime;
+					ticks++;
+					if (!paused) {
+						if (mode == ASYNC) tick();
+						else {
+							tick();
+							render();
+						}
+
+					}
+				}
+			}
+		}
+	}
+
+	private class RenderThread extends Thread {
+		@Override
+		public void run() {
+			long currentTime = 0;
+			long passedTime = 0;
+			long previousTime = System.nanoTime();
+
+			double timeSinceLastFrame = 0;
+
+			if (noLoop) {
+				render();
+				return;
+			}
+			while (running) {
+				currentTime = System.nanoTime();
+				passedTime = currentTime - previousTime;
+				previousTime = currentTime;
+
+				timeSinceLastFrame += passedTime;
+
+				if (timeSinceLastFrame >= timePerFrameNano) {
+					timeSinceLastFrame -= timePerFrameNano;
+					if (mode == ASYNC) render();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		long currentTime = 0;
+		long passedTime = 0;
+		long previousTime = System.nanoTime();
+		long lastTick = System.nanoTime();
+
+		double timeSinceLastTick = 0;
+		double timeSinceLastFrame = 0;
+		double timeSinceLastInfoUpdate = 0;
+
+		int ticks = 0;
+
+//		render();
+		if (noLoop) {
+			render();
+//			screen.render();
+			return;
+		}
+		while (running) {
+			currentTime = System.nanoTime();
+			passedTime = currentTime - previousTime;
+			previousTime = currentTime;
+
+			timeSinceLastTick += passedTime;
+			timeSinceLastFrame += passedTime;
+			timeSinceLastInfoUpdate += passedTime;
+
+			if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
+				timeSinceLastInfoUpdate -= infoUpdateIntervall;
+				tps = ticks;
+				ticks = 0;
+				fps = frames;
+				frames = 0;
+			}
+
+			if (timeSinceLastTick >= timePerTickNano) {
+				timeSinceLastTick -= timePerTickNano;
+				delta = (currentTime - lastTick) / NANOSECOND;
+				delta = Math.min(delta, deltaMin);
+				multiplier = (currentTime - lastTick) / timePerTickNano;
+				multiplier = Math.min(multiplier, multiplierMin);
+				lastTick = currentTime;
+				ticks++;
+				if (!paused) tick();
+			}
+
+			if (timeSinceLastFrame >= timePerFrameNano) {
+				timeSinceLastFrame -= timePerFrameNano;
+				render();
+//				screen.render();
+			}
+		}
 	}
 }

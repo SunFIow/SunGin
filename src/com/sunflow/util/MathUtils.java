@@ -84,8 +84,7 @@ public interface MathUtils {
 	}
 
 	default double random(double low, double high) {
-		if (low >= high)
-			return low;
+		if (low >= high) return low;
 		double diff = high - low;
 		double value = 0;
 		// because of rounding error, can't just add low, otherwise it may hit high
