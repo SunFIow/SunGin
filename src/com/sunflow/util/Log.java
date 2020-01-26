@@ -70,14 +70,14 @@ public class Log {
 		System.err.flush();
 	}
 
-	private static String getMsg(Object msg) {
+	public static String getMsg(Object msg) {
 		if (msg == null) {
 			return "null";
 		}
 		return msg.toString();
 	}
 
-	private static String getArrayMsg(Object what) {
+	public static String getArrayMsg(Object what) {
 		String msg = "";
 		if (what == null) {
 			// special case since this does fuggly things on > 1.1

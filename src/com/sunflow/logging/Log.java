@@ -1,0 +1,97 @@
+package com.sunflow.logging;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Log {
+	public static final Level ALL = Level.ALL;
+	public static final Level DEBUG = SunLevel.DEBUG;
+	public static final Level INFO = SunLevel.INFO;
+	public static final Level WARN = SunLevel.WARN;
+	public static final Level ERROR = SunLevel.ERROR;
+	public static final Level FATAL = SunLevel.FATAL;
+	public static final Level OFF = Level.OFF;
+
+	private static SunLogger sunLogger = createSunLogger();
+
+	private static SunLogger createSunLogger() {
+		Logger logger = Logger.getLogger("com.sunflow.logging.Log");
+		logger.setUseParentHandlers(false);
+		logger.setLevel(ALL);
+
+		ConsoleHandler ch = new ConsoleHandler();
+		ch.setFormatter(new SunFormatter());
+		ch.setLevel(INFO);
+		logger.addHandler(ch);
+
+		String path = "logs";
+		new File(path).mkdir();
+
+//	Class<? extends Log> clazz = getClass();
+//	URL url = clazz.getResource("/");
+//	String path = url.getPath()
+////			.substring(3)
+//			.replace("%20", " ");
+//	new File(path).mkdirs();
+
+		try {
+			FileHandler fh = new FileHandler(path + "/debug.log");
+			fh.setFormatter(new SunFormatter());
+			fh.setLevel(ALL);
+			logger.addHandler(fh);
+		} catch (SecurityException | IOException e) {
+			logger.log(ERROR, "Debug file logger not working.", e);
+		}
+		try {
+			FileHandler fh = new FileHandler(path + "/latest.log");
+			fh.setFormatter(new SunFormatter());
+			fh.setLevel(INFO);
+			logger.addHandler(fh);
+		} catch (SecurityException | IOException e) {
+			logger.log(ERROR, "Latest file logger not working.", e);
+		}
+
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(FATAL, "Uncaught Exception", e));
+
+		return new SunLogger(logger);
+	}
+
+	public static SunLogger getLogger(String logName) {
+		Logger logger = Logger.getLogger(logName);
+		logger.setUseParentHandlers(false);
+		logger.setLevel(ALL);
+		Arrays.asList(sunLogger.logger.getHandlers()).forEach(logger::addHandler);
+		return new SunLogger(logger);
+	}
+
+	public static void log(Level level, Object logMessage) { sunLogger.log(level, logMessage); }
+
+	public static void log(Level level, String logMessage, Object... params) { sunLogger.log(level, logMessage, params); }
+
+	public static void log(Level level, Object logMessage, Throwable throwable) { sunLogger.log(level, logMessage, throwable); }
+
+	public static void debug(Object logMessage) { sunLogger.log(DEBUG, logMessage); }
+
+	public static void info(Object logMessage) { sunLogger.log(INFO, logMessage); }
+
+	public static void warn(Object logMessage) { sunLogger.log(WARN, logMessage); }
+
+	public static void error(Object logMessage) { sunLogger.log(ERROR, logMessage); }
+
+	public static void fatal(Object logMessage) { sunLogger.log(FATAL, logMessage); }
+
+	public static void debug(String logMessage, Object... params) { sunLogger.log(DEBUG, logMessage, params); }
+
+	public static void info(String logMessage, Object... params) { sunLogger.log(INFO, logMessage, params); }
+
+	public static void warn(String logMessage, Object... params) { sunLogger.log(WARN, logMessage, params); }
+
+	public static void error(String logMessage, Object... params) { sunLogger.log(ERROR, logMessage, params); }
+
+	public static void fatal(String logMessage, Object... params) { sunLogger.log(FATAL, logMessage, params); }
+}
