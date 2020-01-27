@@ -1,7 +1,9 @@
 package com.sunflow.logging;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -29,18 +31,16 @@ public class Log {
 		ch.setLevel(INFO);
 		logger.addHandler(ch);
 
-		String path = "logs";
-		new File(path).mkdir();
-
-//	Class<? extends Log> clazz = getClass();
-//	URL url = clazz.getResource("/");
-//	String path = url.getPath()
-////			.substring(3)
-//			.replace("%20", " ");
-//	new File(path).mkdirs();
+		Path dir = Paths.get("logs");
+		if (Files.notExists(dir)) try {
+			Files.createDirectory(dir);
+		} catch (IOException e) {
+			logger.log(ERROR, "Logger file Directory could't be created", e);
+		}
 
 		try {
-			FileHandler fh = new FileHandler(path + "/debug.log");
+			Path path = dir.resolve("debug.log");
+			FileHandler fh = new FileHandler(path.toString());
 			fh.setFormatter(new SunFormatter());
 			fh.setLevel(ALL);
 			logger.addHandler(fh);
@@ -48,7 +48,8 @@ public class Log {
 			logger.log(ERROR, "Debug file logger not working.", e);
 		}
 		try {
-			FileHandler fh = new FileHandler(path + "/latest.log");
+			Path path = dir.resolve("latest.log");
+			FileHandler fh = new FileHandler(path.toString());
 			fh.setFormatter(new SunFormatter());
 			fh.setLevel(INFO);
 			logger.addHandler(fh);
@@ -56,7 +57,7 @@ public class Log {
 			logger.log(ERROR, "Latest file logger not working.", e);
 		}
 
-		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(FATAL, "Uncaught Exception", e));
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(ERROR, "Uncaught Exception", e));
 
 		return new SunLogger(logger);
 	}
