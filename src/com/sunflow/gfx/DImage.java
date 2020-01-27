@@ -24,11 +24,11 @@ import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
 import com.sunflow.util.Constants;
-import com.sunflow.util.Log;
+import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.Style;
 
-public class DImage implements Cloneable, Constants, MathUtils {
+public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 	public int format;
 
 	public int width;
@@ -1127,11 +1127,11 @@ public class DImage implements Cloneable, Constants, MathUtils {
 	public final void textMode(int mode) {
 		// CENTER and MODEL overlap (they're both 3)
 		if ((mode == LEFT) || (mode == RIGHT)) {
-			Log.err("Since Processing 1.0 beta, textMode() is now textAlign().");
+			error("Since Processing 1.0 beta, textMode() is now textAlign().");
 			return;
 		}
 		if (mode == SCREEN) {
-			Log.err("textMode(SCREEN) has been removed from Processing 2.0.");
+			error("textMode(SCREEN) has been removed from Processing 2.0.");
 			return;
 		}
 
@@ -1147,7 +1147,7 @@ public class DImage implements Cloneable, Constants, MathUtils {
 					modeStr = "SHAPE";
 					break;
 			}
-			Log.err("textMode(" + modeStr + ") is not supported by this renderer.");
+			error("textMode(" + modeStr + ") is not supported by this renderer.");
 		}
 	}
 

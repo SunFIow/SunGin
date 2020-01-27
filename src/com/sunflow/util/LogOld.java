@@ -2,7 +2,8 @@ package com.sunflow.util;
 
 import java.util.Arrays;
 
-public class Log {
+@Deprecated
+public class LogOld {
 
 	public static void info() {
 		System.out.println();
@@ -11,7 +12,7 @@ public class Log {
 
 	public static void info(Object msg) {
 		if (msg instanceof Arrays) {
-			Log.err("instance of Arrays");
+			LogOld.err("instance of Arrays");
 		}
 		System.out.println(getMsg(msg));
 		System.out.flush();
@@ -29,7 +30,7 @@ public class Log {
 
 	public static void xinfo(Object msg) {
 		if (msg instanceof Arrays) {
-			Log.err("instance of Arrays");
+			LogOld.err("instance of Arrays");
 		}
 		System.out.print(getMsg(msg));
 		System.out.flush();
@@ -70,14 +71,14 @@ public class Log {
 		System.err.flush();
 	}
 
-	public static String getMsg(Object msg) {
+	private static String getMsg(Object msg) {
 		if (msg == null) {
 			return "null";
 		}
 		return msg.toString();
 	}
 
-	public static String getArrayMsg(Object what) {
+	private static String getArrayMsg(Object what) {
 		String msg = "";
 		if (what == null) {
 			// special case since this does fuggly things on > 1.1

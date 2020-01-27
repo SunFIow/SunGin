@@ -12,30 +12,6 @@ import com.sunflow.gfx.DImage;
 import com.sunflow.math.Vertex2F;
 
 public interface GameUtils {
-	default void info() {
-		Log.info();
-	}
-
-	default void err() {
-		Log.err();
-	}
-
-	default void info(Object msg) {
-		Log.info(msg);
-	}
-
-	default void err(Object msg) {
-		Log.err(msg);
-	}
-
-	default void infoArray(Object msg) {
-		Log.infoArray(msg);
-	}
-
-	default void errArray(Object msg) {
-		Log.errArray(msg);
-	}
-
 	default public int index(int x, int y, int width) { return x + y * width; }
 
 	default public int indexRotated(int x, int y, int width, int height, byte rotation) {

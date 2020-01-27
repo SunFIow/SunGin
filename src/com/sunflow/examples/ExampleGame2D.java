@@ -16,6 +16,7 @@ public class ExampleGame2D extends Game2D {
 
 	@Override
 	public void setup() {
+		title("ExampleGame 2D");
 		createCanvas(1000, 500);
 		smooth();
 		frameRate(60);

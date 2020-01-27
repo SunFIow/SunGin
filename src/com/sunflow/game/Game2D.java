@@ -28,7 +28,6 @@ import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
-import com.sunflow.util.Log;
 import com.sunflow.util.MathUtils;
 
 public abstract class Game2D extends GameP5 implements Constants, MathUtils, GameUtils, GeometryUtils { // , Runnable {
@@ -82,6 +81,8 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	private float scaleWidth, scaleHeight;
 	private int scaledWidth, scaledHeight;
 
+	private String title;
+
 	@Override
 	protected final void init() {
 		super.init();
@@ -133,7 +134,8 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	}
 
 	void privatePreSetup() {
-		Log.info("starting 2D Game");
+		if (this instanceof Game3D) info("starting 3D Game");
+		else info("starting 2D Game");
 
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
@@ -168,9 +170,10 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		if (title != null) frame.setTitle(title);
+		frame.add(canvas);
 		frame.setVisible(true);
 		frame.setVisible(false);
-		frame.add(canvas);
 //		screen.addToFrame(frame);
 
 		canvas.createBufferStrategy(3);
@@ -299,6 +302,11 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 		if (running) frame.setVisible(true);
 		canvas.requestFocus();
 //		screen.requestFocus();
+	}
+
+	final protected void title(String title) {
+		this.title = title;
+		if (createdCanvas) frame.setTitle(title);
 	}
 
 	@Override

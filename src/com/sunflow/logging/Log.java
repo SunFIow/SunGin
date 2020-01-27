@@ -95,4 +95,14 @@ public class Log {
 	public static void error(String logMessage, Object... params) { sunLogger.log(ERROR, logMessage, params); }
 
 	public static void fatal(String logMessage, Object... params) { sunLogger.log(FATAL, logMessage, params); }
+
+	public static void debug(String logMessage, Throwable e) { sunLogger.log(DEBUG, logMessage, e); }
+
+	public static void info(String logMessage, Throwable e) { sunLogger.log(INFO, logMessage, e); }
+
+	public static void warn(String logMessage, Throwable e) { sunLogger.log(DEBUG, logMessage, e); }
+
+	public static void error(String logMessage, Throwable e) { sunLogger.log(WARN, logMessage, e); }
+
+	public static void fatal(String logMessage, Throwable e) { sunLogger.log(FATAL, logMessage, e); }
 }

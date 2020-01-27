@@ -20,6 +20,7 @@ public class ExampleGame3D extends Game3D {
 
 	@Override
 	public void setup() {
+		title("ExampleGame 3D");
 		createCanvas(1280, 720);
 		frameRate(600);
 		showInfo(true);

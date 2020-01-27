@@ -2,10 +2,10 @@ package com.sunflow.math3d;
 
 import java.io.Serializable;
 
-import com.sunflow.util.Log;
+import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
 
-public class MatrixD implements MathUtils, Cloneable, Serializable {
+public class MatrixD implements MathUtils, LogUtils, Cloneable, Serializable {
 	private static final long serialVersionUID = -6231402347735150578L;
 
 	private int rows;
@@ -48,9 +48,9 @@ public class MatrixD implements MathUtils, Cloneable, Serializable {
 
 	public MatrixD add(MatrixD b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixD#add: rows and cols didnt match");
-			Log.err("MatrixD#add this: \n" + this);
-			Log.err("MatrixD#add b: \n" + b);
+			error("MatrixD#add: rows and cols didnt match");
+			error("MatrixD#add this: \n" + this);
+			error("MatrixD#add b: \n" + b);
 		}
 		map((x, i, j) -> x + b.data[i][j]);
 		return this;
@@ -67,9 +67,9 @@ public class MatrixD implements MathUtils, Cloneable, Serializable {
 
 	public MatrixD substract(MatrixD b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixD#substract: rows and cols didnt match");
-			Log.err("MatrixD#substract this: \n" + this);
-			Log.err("MatrixD#substract b: \n" + b);
+			error("MatrixD#substract: rows and cols didnt match");
+			error("MatrixD#substract this: \n" + this);
+			error("MatrixD#substract b: \n" + b);
 		}
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
@@ -97,9 +97,9 @@ public class MatrixD implements MathUtils, Cloneable, Serializable {
 	// Hadamar product
 	public MatrixD multiply(MatrixD b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixD#multiply: rows and cols didnt match");
-			Log.err("MatrixD#multiply this: \n" + this);
-			Log.err("MatrixD#multiply b: \n" + b);
+			error("MatrixD#multiply: rows and cols didnt match");
+			error("MatrixD#multiply this: \n" + this);
+			error("MatrixD#multiply b: \n" + b);
 		}
 		map((x, i, j) -> x * b.data[i][j]);
 		return this;
@@ -113,9 +113,9 @@ public class MatrixD implements MathUtils, Cloneable, Serializable {
 	// Matrix dot product
 	public MatrixD dot(MatrixD b) {
 		if (this.cols != b.rows) {
-			Log.err("MatrixD#dot: cols and rows didnt match");
-			Log.err("MatrixD#dot this: \n" + this);
-			Log.err("MatrixD#dot b: \n" + b);
+			error("MatrixD#dot: cols and rows didnt match");
+			error("MatrixD#dot this: \n" + this);
+			error("MatrixD#dot b: \n" + b);
 		}
 		MatrixD result = new MatrixD(this.rows, b.cols);
 		result.map((x, i, j) -> {

@@ -2,10 +2,10 @@ package com.sunflow.math3d;
 
 import java.io.Serializable;
 
-import com.sunflow.util.Log;
+import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
 
-public class MatrixI implements MathUtils, Cloneable, Serializable {
+public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
 	private static final long serialVersionUID = 987250889582600596L;
 
 	private int rows;
@@ -48,9 +48,9 @@ public class MatrixI implements MathUtils, Cloneable, Serializable {
 
 	public MatrixI add(MatrixI b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixI#add: rows and cols didnt match");
-			Log.err("MatrixI#add this: \n" + this);
-			Log.err("MatrixI#add b: \n" + b);
+			error("MatrixI#add: rows and cols didnt match");
+			error("MatrixI#add this: \n" + this);
+			error("MatrixI#add b: \n" + b);
 		}
 		map((x, i, j) -> x + b.data[i][j]);
 		return this;
@@ -67,9 +67,9 @@ public class MatrixI implements MathUtils, Cloneable, Serializable {
 
 	public MatrixI substract(MatrixI b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixI#substract: rows and cols didnt match");
-			Log.err("MatrixI#substract this: \n" + this);
-			Log.err("MatrixI#substract b: \n" + b);
+			error("MatrixI#substract: rows and cols didnt match");
+			error("MatrixI#substract this: \n" + this);
+			error("MatrixI#substract b: \n" + b);
 		}
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
@@ -97,9 +97,9 @@ public class MatrixI implements MathUtils, Cloneable, Serializable {
 	// Hadamar product
 	public MatrixI multiply(MatrixI b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixI#multiply: rows and cols didnt match");
-			Log.err("MatrixI#multiply this: \n" + this);
-			Log.err("MatrixI#multiply b: \n" + b);
+			error("MatrixI#multiply: rows and cols didnt match");
+			error("MatrixI#multiply this: \n" + this);
+			error("MatrixI#multiply b: \n" + b);
 		}
 		map((x, i, j) -> x * b.data[i][j]);
 		return this;
@@ -113,9 +113,9 @@ public class MatrixI implements MathUtils, Cloneable, Serializable {
 	// Matrix dot product
 	public MatrixI dot(MatrixI b) {
 		if (this.cols != b.rows) {
-			Log.err("MatrixI#dot: cols and rows didnt match");
-			Log.err("MatrixI#dot this: \n" + this);
-			Log.err("MatrixI#dot b: \n" + b);
+			error("MatrixI#dot: cols and rows didnt match");
+			error("MatrixI#dot this: \n" + this);
+			error("MatrixI#dot b: \n" + b);
 		}
 		MatrixI result = new MatrixI(this.rows, b.cols);
 		result.map((x, i, j) -> {

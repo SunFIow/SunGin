@@ -16,7 +16,6 @@ import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.Vertex3D;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.DPolygon;
-import com.sunflow.util.Log;
 
 public class Game3D extends Game2D {
 
@@ -41,7 +40,6 @@ public class Game3D extends Game2D {
 	@Override
 	void privatePreSetup() {
 		super.privatePreSetup();
-		Log.info("starting 3D Game");
 
 		Models = new ArrayList<Base3DModel>();
 		DPolygone = new ArrayList<DPolygon>();

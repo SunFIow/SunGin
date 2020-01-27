@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.sunflow.util.Log;
+import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
 
-public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializable {
+public class Matrix<N extends Number> implements MathUtils, LogUtils, Cloneable, Serializable {
 	private static final long serialVersionUID = -6146337714963647821L;
 
 	private int rows, cols;
@@ -69,9 +69,9 @@ public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializa
 
 	public Matrix<N> add(Matrix<N> b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixF#add: rows and cols didnt match");
-			Log.err("MatrixF#add this: \n" + this);
-			Log.err("matrixF#add b: \n" + b);
+			error("MatrixF#add: rows and cols didnt match");
+			error("MatrixF#add this: \n" + this);
+			error("matrixF#add b: \n" + b);
 		}
 //		map((x, i, j) -> x + b.data[i][j]);
 		map((x, i, j) -> add(x, b.data[i][j]));
@@ -90,9 +90,9 @@ public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializa
 
 	public Matrix<N> substract(Matrix<N> b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixF#substract: rows and cols didnt match");
-			Log.err("MatrixF#substract this: \n" + this);
-			Log.err("matrixF#substract b: \n" + b);
+			error("MatrixF#substract: rows and cols didnt match");
+			error("MatrixF#substract this: \n" + this);
+			error("matrixF#substract b: \n" + b);
 		}
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
@@ -122,9 +122,9 @@ public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializa
 	// Hadamar product
 	public Matrix<N> multiply(Matrix<N> b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.err("MatrixF#multiply: rows and cols didnt match");
-			Log.err("MatrixF#multiply this: \n" + this);
-			Log.err("matrixF#multiply b: \n" + b);
+			error("MatrixF#multiply: rows and cols didnt match");
+			error("MatrixF#multiply this: \n" + this);
+			error("matrixF#multiply b: \n" + b);
 		}
 //		map((x, i, j) -> x * b.data[i][j]);
 		map((x, i, j) -> multiply(x, b.data[i][j]));
@@ -139,9 +139,9 @@ public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializa
 	// Matrix dot product
 	public Matrix<N> dot(Matrix<N> b) {
 		if (this.cols != b.rows) {
-			Log.err("MatrixF#dot: cols and rows didnt match");
-			Log.err("MatrixF#dot this: \n" + this);
-			Log.err("matrixF#dot b: \n" + b);
+			error("MatrixF#dot: cols and rows didnt match");
+			error("MatrixF#dot this: \n" + this);
+			error("matrixF#dot b: \n" + b);
 		}
 		Matrix<N> result = new Matrix<>(type, this.rows, b.cols);
 		result.map((x, i, j) -> {
@@ -229,7 +229,7 @@ public class Matrix<N extends Number> implements MathUtils, Cloneable, Serializa
 //			Log.infoArray(arr);
 			return arr;
 		} catch (Exception e) {
-			Log.err("FUCK");
+			error("FUCK", e);
 		}
 		return null;
 	}
