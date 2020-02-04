@@ -28,7 +28,7 @@ public class Log {
 
 		ConsoleHandler ch = new ConsoleHandler();
 		ch.setFormatter(new SunFormatter());
-		ch.setLevel(INFO);
+		ch.setLevel(ALL);
 		logger.addHandler(ch);
 
 		Path dir = Paths.get("logs");

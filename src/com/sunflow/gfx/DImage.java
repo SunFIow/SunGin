@@ -308,7 +308,11 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 	}
 
 	public final void pixel(float x, float y) {
-		pixels[index(x, y)] = calcColor;
+		pixel(x, y, fillColor);
+	}
+
+	public final void pixel(float x, float y, int color) {
+		pixels[index(x, y)] = color;
 	}
 
 	public final int index(float x, float y) { return index(Math.round(x), Math.round(y)); }

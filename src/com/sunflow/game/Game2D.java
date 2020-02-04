@@ -446,6 +446,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	}
 
 	private void render() {
+		if (!createdCanvas) return;
 		privateDraw();
 		draw();
 		render(graphics);
@@ -499,7 +500,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 		List<String> infos = getInfo();
 		if (infos == null || infos.isEmpty()) return;
 
-		float xoff = 5, yoff = 0;
+		float xoff = 5, yoff = 5;
 		float ychange = textSize * 1.25f;
 		for (String info : infos) {
 			text(info, xoff, yoff);
