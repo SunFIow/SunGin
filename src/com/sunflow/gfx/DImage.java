@@ -307,6 +307,18 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		}
 	}
 
+	public final void pixel(float x, float y) {
+		pixels[index(x, y)] = calcColor;
+	}
+
+	public final int index(float x, float y) { return index(Math.round(x), Math.round(y)); }
+
+	public final int index(int x, int y) { return x + y * width; }
+
+// 	PROCESSING CODE
+// 	| | | | | | | |
+// 	V V V V V V V V
+
 	final public void smooth() { // ignore
 		smooth(1);
 	}
@@ -1189,33 +1201,25 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		FontMetrics fm = graphics.getFontMetrics(f);
 		FontRenderContext frc = fm.getFontRenderContext();
 		TextLayout tl = new TextLayout(text, f, frc);
-		AffineTransform transform = new AffineTransform();
 		Shape shape = tl.getOutline(null);
 
-		float w = fm.stringWidth(text);
-		float h = fm.getHeight();
-//		float w = (float) shape.getBounds2D().getWidth();
-//		float h = (float) shape.getBounds2D().getHeight();
+		float w = (float) tl.getBounds().getWidth();
+		float h = (float) tl.getBounds().getHeight();
 
-		if (textAlign == CENTER) {
-			x -= w / 2;
-		} else if (textAlign == RIGHT) {
-			x -= w;
-		} else if (textAlign == LEFT) {}
+		if (textAlign == CENTER) x -= w / 2;
+		else if (textAlign == RIGHT) x -= w;
+//		else if (textAlign == LEFT) {} // default
 
-		if (textAlignY == TOP) {
-			y += h;
-		} else if (textAlignY == CENTER) {
-			y += h / 2;
-		} else if (textAlignY == BOTTOM) {
-			y -= textDescent();
-		} else if (textAlign == BASELINE) {}
+		if (textAlignY == TOP) y += h;
+		else if (textAlignY == CENTER) y += h / 2;
+		else if (textAlignY == BOTTOM) y -= textDescent();
+//		 else if (textAlign == BASELINE) {} // default
 
-		transform.translate(x, y);
-
-		shape = tl.getOutline(transform);
+		pushMatrix();
+		translate(x, y);
 		strokeShape(shape);
 		fillShape(shape);
+		popMatrix();
 	}
 
 	public final void ellipse(float x, float y, float w, float h) {
