@@ -3,6 +3,7 @@ package com.sunflow.math3d;
 import java.io.Serializable;
 
 import com.sunflow.util.LogUtils;
+import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
 
 public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
@@ -148,7 +149,7 @@ public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
-	public MatrixI map(Mapper mapper) {
+	public MatrixI map(Mapper.Int mapper) {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				data[i][j] = mapper.func(data[i][j], i, j);
@@ -157,7 +158,7 @@ public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
-	public static MatrixI map(MatrixI matrix, Mapper mapper) {
+	public static MatrixI map(MatrixI matrix, Mapper.Int mapper) {
 		return matrix.clone().map(mapper);
 	}
 
@@ -187,7 +188,7 @@ public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
 		return s;
 	}
 
-	public interface Mapper {
-		int func(int x, int i, int j);
-	}
+//	public interface Mapper {
+//		int func(int x, int i, int j);
+//	}
 }

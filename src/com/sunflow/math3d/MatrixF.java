@@ -3,6 +3,7 @@ package com.sunflow.math3d;
 import java.io.Serializable;
 
 import com.sunflow.util.LogUtils;
+import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
 
 public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
@@ -185,9 +186,5 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 			s += System.lineSeparator();
 		}
 		return s;
-	}
-
-	public interface Mapper {
-		float func(float x, int i, int j);
 	}
 }
