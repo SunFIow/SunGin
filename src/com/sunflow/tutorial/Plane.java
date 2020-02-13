@@ -1,4 +1,4 @@
-package com.sunflow.math1;
+package com.sunflow.tutorial;
 
 import com.sunflow.math3d.Vertex3D;
 

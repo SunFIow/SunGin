@@ -1,4 +1,4 @@
-package com.sunflow.examples;
+package com.sunflow.tutorial;
 
 import java.awt.AWTException;
 import java.awt.Color;
@@ -22,12 +22,6 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.sunflow.math1.Calculator;
-import com.sunflow.math1.Cube;
-import com.sunflow.math1.DPolygon;
-import com.sunflow.math1.GenerateTerrain;
-import com.sunflow.math1.IModel;
-import com.sunflow.math1.PolygonObject;
 import com.sunflow.math3d.Vertex3D;
 
 public class TutorialGame3D extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
@@ -96,7 +90,6 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		addMouseWheelListener(this);
 
 		invisibleMouse();
-		new GenerateTerrain(this);
 
 		Models.add(new Cube(this, 0, -5, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2, Color.red));
@@ -104,6 +97,7 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		Models.add(new Cube(this, 22, -5, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 20, -5, 2, 2, 2, 2, Color.red));
 
+		new GenerateTerrain(this);
 //		Models.add(new com.sunflow.math3d.models.Cube(this, 0, -5, 0, 2, 2, 2, Color.red));
 //		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2, Color.red));
 //		Models.add(new Cube(this, 20, -5, 0, 2, 2, 2, Color.red));
@@ -137,16 +131,9 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		controlSunAndLight();
 
 		// rotate and update shape examples
-		for (IModel m : Models) {
-			if (m instanceof Cube) {
-				m.rotate(0.005);
-				break;
-			}
-		}
+		Models.get(0).rotate(0.005);
 
-		for (IModel m : Models) {
-			m.updatePolygon();
-		}
+		for (IModel m : Models) m.updatePolygon();
 
 		// Set drawing order so closest polygons gets drawn last
 		setOrder();
@@ -252,21 +239,11 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		Vertex3D verticalVector = new Vertex3D(0, 0, 1);
 		Vertex3D sideViewVector = Vertex3D.cross(viewVector, verticalVector).normalized();
 
-		if (keys[0]) {
-			moveVector.add(viewVector.x, viewVector.y, viewVector.z);
-		}
+		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
+		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
+		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
+		if (keys[3]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
 
-		if (keys[2]) {
-			moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
-		}
-
-		if (keys[1]) {
-			moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		}
-
-		if (keys[3]) {
-			moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		}
 		moveVector.mult(movementSpeed);
 
 		Vertex3D newLocation = Vertex3D.add(vCameraPos, moveVector);
@@ -283,12 +260,13 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 
 	private void setPolygonOver() {
 		PolygonOver = null;
-		for (int i = newOrder.length - 1; i >= 0; i--)
-			if (DPolygons.get(newOrder[i]).drawablePolygon.MouseOver() && DPolygons.get(newOrder[i]).draw
-					&& DPolygons.get(newOrder[i]).drawablePolygon.visible) {
-						PolygonOver = DPolygons.get(newOrder[i]).drawablePolygon;
-						break;
-					}
+		for (int i = newOrder.length - 1; i >= 0; i--) {
+			DPolygon current = DPolygons.get(newOrder[i]);
+			if (current.draw && current.drawablePolygon.visible && current.drawablePolygon.MouseOver()) {
+				PolygonOver = DPolygons.get(newOrder[i]).drawablePolygon;
+				break;
+			}
+		}
 	}
 
 	private void mouseMovement(double NewMouseX, double NewMouseY) {

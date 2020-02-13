@@ -1,8 +1,6 @@
-package com.sunflow.math1;
+package com.sunflow.tutorial;
 
 import java.awt.Color;
-
-import com.sunflow.examples.TutorialGame3D;
 
 public class DPolygon extends IModel {
 	private Color c;

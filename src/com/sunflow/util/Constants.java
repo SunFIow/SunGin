@@ -51,8 +51,8 @@ public interface Constants {
 	static final byte L180 = 2;
 	static final byte L270 = 1;
 
-	static final double NANOSECOND = 1000000000;
-	static final double MILLISECOND = 1000;
+	static final int NANOSECOND = 1000000000;
+	static final int MILLISECOND = 1000;
 
 	static final int X = 0;
 	static final int Y = 1;

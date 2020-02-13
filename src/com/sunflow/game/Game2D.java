@@ -30,7 +30,7 @@ import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
 import com.sunflow.util.MathUtils;
 
-public abstract class Game2D extends GameP5 implements Constants, MathUtils, GameUtils, GeometryUtils { // , Runnable {
+public abstract class Game2D extends GameBase implements Constants, MathUtils, GameUtils, GeometryUtils { // , Runnable {
 
 //	private Thread thread;
 	private Thread threadTick;
@@ -48,6 +48,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	// Overlay
 	protected boolean showOverlay;
 	protected boolean showInfo;
+	protected boolean showCrosshair;
 
 	protected Random random;
 //	private ImprovedNoise perlinnoise;
@@ -82,6 +83,12 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	private int scaledWidth, scaledHeight;
 
 	private String title;
+
+	public Game2D() {
+		super();
+		if (this instanceof Game3D) info("starting 3D Game");
+		else info("starting 2D Game");
+	}
 
 	@Override
 	protected final void init() {
@@ -134,9 +141,6 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 	}
 
 	void privatePreSetup() {
-		if (this instanceof Game3D) info("starting 3D Game");
-		else info("starting 2D Game");
-
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
 //		perlinnoise = new ImprovedNoise();
@@ -145,7 +149,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 		noSmooth();
 
 		multiplierMin = 5;
-		deltaMin = timePerFrameNano / NANOSECOND * 5;
+		deltaMin = timePerFrameNano / NANOSECOND * multiplierMin;
 
 		savedSize = new Dimension();
 		savedPos = new Point(0, 0);
@@ -210,19 +214,11 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 
 		canvas.addMouseMotionListener(new MouseMotionListener() {
 			@Override
-			public void mouseMoved(MouseEvent e) {
-				updateMousePosition(e.getX(), e.getY());
-			}
+			public void mouseMoved(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
 
 			@Override
-			public void mouseDragged(MouseEvent e) {
-				updateMousePosition(e.getX(), e.getY());
-			}
+			public void mouseDragged(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
 
-			private void updateMousePosition(int x, int y) {
-				mouseX = x;
-				mouseY = y;
-			}
 		});
 
 		canvas.addComponentListener(new ComponentListener() {
@@ -270,6 +266,11 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 			@Override
 			public void componentHidden(ComponentEvent e) {}
 		});
+	}
+
+	void updateMousePosition(int x, int y) {
+		mouseX = x;
+		mouseY = y;
 	}
 
 	private void cResized(int w, int h) {
@@ -428,7 +429,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 		fillShape(shape);
 	}
 
-	final public void saveFrame(String fileName) { saveImageToFile(image, fileName); }
+	final public void saveFrame(String fileName) { saveImage(image, fileName); }
 
 	final public double noise(double xoff) { return noise.eval(xoff, 0); }
 
@@ -447,6 +448,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 
 	private void render() {
 		if (!createdCanvas) return;
+		if (!running) return;
 		privateDraw();
 		draw();
 		render(graphics);
@@ -491,6 +493,7 @@ public abstract class Game2D extends GameP5 implements Constants, MathUtils, Gam
 		textSize(13);
 		textAlign(LEFT, TOP);
 		if (showInfo) drawInfo();
+		if (showCrosshair) drawCrosshair();
 		// if(showX) drawX();
 		// if(show???) draw???();
 		pop();

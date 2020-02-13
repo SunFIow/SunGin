@@ -3,7 +3,7 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import com.sunflow.math3d.Vertex3D;
+import com.sunflow.math3d.Vertex3F;
 
 public class Base3DModel extends BaseModel implements Cloneable {
 
@@ -13,8 +13,8 @@ public class Base3DModel extends BaseModel implements Cloneable {
 		this(0, 0, 0, vs);
 	}
 
-	public Base3DModel(double x, double y, double z, DPolygon... vs) {
-		pos = new Vertex3D(x, y, z);
+	public Base3DModel(float x, float y, float z, DPolygon... vs) {
+		pos = new Vertex3F(x, y, z);
 		addPolygone(vs);
 	}
 
@@ -33,56 +33,45 @@ public class Base3DModel extends BaseModel implements Cloneable {
 
 	@Override
 	public void render(Graphics2D g, boolean drawFill, Color fill, boolean drawOutline, Color outline) {
-		g.setColor(outline);
-		for (DPolygon pol : polys) {
-			pol.render(g, drawFill, fill, drawOutline, outline);
-		}
+//		g.setColor(outline);
+		for (DPolygon pol : polys) pol.render(g, drawFill, fill, drawOutline, outline);
 	}
 
 	@Override
 	public void project() {
 		for (DPolygon pol : polys) {
-			pol.project();
 			pol.updatePolygon();
+//			pol.project();
 		}
 		needsUpdate = false;
 	}
 
 	@Override
-	public void translateModel(double x, double y, double z) {
+	public void translateModel(float x, float y, float z) {
 		pos.add(x, y, z);
 		needsUpdate = true;
 	}
 
 	@Override
-	public void rotateX(double angle) {
-		for (DPolygon pol : polys) {
-			pol.rotateX(angle);
-		}
+	public void rotateX(float angle) {
+		for (DPolygon pol : polys) pol.rotateX(angle);
 		needsUpdate = true;
 	}
 
 	@Override
-	public void rotateY(double angle) {
-		for (DPolygon pol : polys) {
-			pol.rotateY(angle);
-		}
-		needsUpdate = true;
-
-	}
-
-	@Override
-	public void rotateZ(double angle) {
-		for (DPolygon pol : polys) {
-			pol.rotateZ(angle);
-		}
+	public void rotateY(float angle) {
+		for (DPolygon pol : polys) pol.rotateY(angle);
 		needsUpdate = true;
 	}
 
 	@Override
-	public boolean needsUpdate() {
-		return needsUpdate;
+	public void rotateZ(float angle) {
+		for (DPolygon pol : polys) pol.rotateZ(angle);
+		needsUpdate = true;
 	}
+
+	@Override
+	public boolean needsUpdate() { return needsUpdate; }
 
 	@Override
 	protected Base3DModel clone() {

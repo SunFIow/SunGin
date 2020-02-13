@@ -12,6 +12,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.image.BufferedImage;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,10 +25,11 @@ import java.io.Serializable;
 import com.sunflow.gfx.DImage;
 import com.sunflow.math.Vertex2D;
 
-public abstract class GameP5 extends DImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
+abstract class GameBase extends DImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
 	protected int x, y;
-	protected float width, height;
+	public float width;
+	public float height;
 
 	public int width() { return (int) width; }
 
@@ -38,14 +40,12 @@ public abstract class GameP5 extends DImage implements MouseListener, MouseWheel
 	protected int mouseX, mouseY;
 	protected int mouseScreenX, mouseScreenY;
 
-	protected double aimSize;
+	protected float aimSize;
 	protected Color aimColor;
 
 	protected Robot robot;
 
-	public GameP5() {
-		init();
-	}
+	public GameBase() { init(); }
 
 	protected void init() {
 		try {
@@ -63,6 +63,18 @@ public abstract class GameP5 extends DImage implements MouseListener, MouseWheel
 		super.height = height();
 		super.format = RGB;
 		super.defaultSettings();
+	}
+
+	public final static DImage createImage(float width, float height) {
+		return new DImage(width, height);
+	}
+
+	public final static DImage createImage(float width, float height, int format) {
+		return new DImage(width, height, format);
+	}
+
+	public final static DImage createImage(BufferedImage bi) {
+		return new DImage(bi);
 	}
 
 	/**
@@ -138,16 +150,13 @@ public abstract class GameP5 extends DImage implements MouseListener, MouseWheel
 		return new File(name);
 	}
 
-	public final void drawMouseAim() {
-		int aimStrokeWidth = (int) (Math.round(aimSize / 8));
+	public final void drawCrosshair() {
+		int aimStrokeWidth = (Math.round(aimSize / 8));
 		int aimStroke = aimStrokeWidth * 2;
-
-		graphics.setColor(aimColor);
-
-		int xpos = width() / 2;
-		int ypos = height() / 2;
-		graphics.fillRect((int) (xpos - aimSize), ypos - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		graphics.fillRect(xpos - aimStrokeWidth, (int) (ypos - aimSize), aimStroke, (int) (aimSize * 2));
+		noStroke();
+		fill(aimColor.getRGB());
+		rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
 	public final void moveMouse(Vertex2D v) {

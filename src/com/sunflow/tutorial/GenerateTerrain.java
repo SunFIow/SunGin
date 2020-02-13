@@ -1,13 +1,11 @@
-package com.sunflow.math1;
+package com.sunflow.tutorial;
 
 import java.awt.Color;
 import java.util.Random;
 
-import com.sunflow.examples.TutorialGame3D;
-
 public class GenerateTerrain {
 
-	private Random r;
+	private Random r = new Random();
 	private double roughness = 1.5;
 	public static int mapSize = 50;
 	public static double Size = 2;
@@ -15,9 +13,8 @@ public class GenerateTerrain {
 //	static Color G = new Color(120, 100, 80);
 
 	public GenerateTerrain(TutorialGame3D screen) {
-		r = new Random();
 		double[] values1 = new double[mapSize];
-		double[] values2 = new double[values1.length];
+		double[] values2 = new double[mapSize];
 
 		for (int y = 0; y < values1.length / 2; y += 2) {
 
@@ -30,7 +27,6 @@ public class GenerateTerrain {
 				for (int x = 0; x < values1.length / 2; x++) {
 					screen.Models.add(new DPolygon(screen, new double[] { (Size * x), (Size * x), Size + (Size * x) }, new double[] { (Size * y), Size + (Size * y), Size + (Size * y) }, new double[] { values1[x], values2[x], values2[x + 1] }, G, false));
 					screen.Models.add(new DPolygon(screen, new double[] { (Size * x), Size + (Size * x), Size + (Size * x) }, new double[] { (Size * y), Size + (Size * y), (Size * y) }, new double[] { values1[x], values2[x + 1], values1[x + 1] }, G, false));
-
 				}
 			}
 

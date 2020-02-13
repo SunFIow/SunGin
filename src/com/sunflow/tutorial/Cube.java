@@ -1,8 +1,7 @@
-package com.sunflow.math1;
+package com.sunflow.tutorial;
 
 import java.awt.Color;
 
-import com.sunflow.examples.TutorialGame3D;
 import com.sunflow.util.MathUtils;
 
 public class Cube extends IModel implements MathUtils {
@@ -42,9 +41,7 @@ public class Cube extends IModel implements MathUtils {
 
 	@Override
 	public void updatePolygon() {
-		for (DPolygon poly : polys) {
-			poly.updatePolygon();
-		}
+		for (DPolygon poly : polys) poly.updatePolygon();
 		updatePoly();
 	}
 
@@ -87,9 +84,7 @@ public class Cube extends IModel implements MathUtils {
 	}
 
 	@Override
-	public void rotate(double angle) {
-		rotation += angle;
-	}
+	public void rotate(double angle) { rotation += angle; }
 
 	private void setRotAdd() {
 		angle = new double[4];

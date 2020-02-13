@@ -190,8 +190,8 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 	}
 
 	public DImage(BufferedImage bi) {
-		init(bi.getWidth(), bi.getHeight(), bi.getType());
-		image = bi;
+		init(bi.getWidth(), bi.getHeight(), RGB);
+		image(bi);
 	}
 
 	private void init(int width, int height, int format) {
@@ -199,6 +199,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		this.height = height;
 		this.format = format;
 		this.pixels = new int[width * height];
+		// TODO: Check if this calls defaultSettings of GameBase/... not on purpose
 		defaultSettings();
 	}
 
@@ -1329,40 +1330,40 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 
 	public final void image(Image img) { graphics.drawImage(img, 0, 0, null); }
 
-	public final void image(DImage img, float _x1, float _y1) { image(img.image, _x1, _y1); }
+	public final void image(DImage img, float x, float y) { image(img.image, x, y); }
 
-	public final void image(Image img, float _x1, float _y1) {
-		int x1 = Math.round(_x1);
-		int y1 = Math.round(_y1);
-		graphics.drawImage(img, x1, y1, null);
+	public final void image(Image img, float x, float y) {
+		int _x = Math.round(x);
+		int _y = Math.round(y);
+		graphics.drawImage(img, _x, _y, null);
 	}
 
-	public final void image(DImage img, float _x1, float _y1, float _x2, float _y2) { image(img.image, _x1, _y1, _x2, _y2); }
+	public final void image(DImage img, float x, float y, float w, float h) { image(img.image, x, y, w, h); }
 
-	public final void image(Image img, float _x1, float _y1, float _x2, float _y2) {
-		int x1 = Math.round(_x1);
-		int y1 = Math.round(_y1);
-		int x2 = Math.round(_x2);
-		int y2 = Math.round(_y2);
-		graphics.drawImage(img, x1, y1, x2, y2, null);
+	public final void image(Image img, float x, float y, float w, float h) {
+		int _x = Math.round(x);
+		int _y = Math.round(y);
+		int _w = Math.round(w);
+		int _h = Math.round(h);
+		graphics.drawImage(img, _x, _y, _w, _h, null);
 	}
 
 	public final void image(DImage img,
-			float _x1, float _y1, float _x2, float _y2,
-			float _u1, float _v1, float _u2, float _v2) { image(img.image, _x1, _y1, _x2, _y2, _u1, _v1, _u2, _v2); }
+			float x1, float y1, float x2, float y2,
+			float u1, float v1, float u2, float v2) { image(img.image, x1, y1, x2, y2, u1, v1, u2, v2); }
 
 	public final void image(Image img,
-			float _x1, float _y1, float _x2, float _y2,
-			float _u1, float _v1, float _u2, float _v2) {
-		int x1 = Math.round(_x1);
-		int y1 = Math.round(_y1);
-		int x2 = Math.round(_x2);
-		int y2 = Math.round(_y2);
-		int u1 = Math.round(_u1);
-		int v1 = Math.round(_v1);
-		int u2 = Math.round(_u2);
-		int v2 = Math.round(_v2);
-		graphics.drawImage(img, x1, y1, x2, y2, u1, v1, u2, v2, null);
+			float x1, float y1, float x2, float y2,
+			float u1, float v1, float u2, float v2) {
+		int _x1 = Math.round(x1);
+		int _y1 = Math.round(y1);
+		int _x2 = Math.round(x2);
+		int _y2 = Math.round(y2);
+		int _u1 = Math.round(u1);
+		int _v1 = Math.round(v1);
+		int _u2 = Math.round(u2);
+		int _v2 = Math.round(v2);
+		graphics.drawImage(img, _x1, _y1, _x2, _y2, _u1, _v1, _u2, _v2, null);
 	}
 
 	private final void rectImpl(float x1, float y1, float x2, float y2) {

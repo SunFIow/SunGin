@@ -6,15 +6,15 @@ import java.util.List;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math3d.models.Base3DModel;
-import com.sunflow.math3d.models.Cube;
 import com.sunflow.math3d.models.DPolygon;
-import com.sunflow.math3d.models.Sphere;
 
 public class ExampleGame3D extends Game3D {
 
 	private Base3DModel model;
 
 	private boolean auto = true;
+
+	private com.sunflow.math3d.Cube model2;
 
 	public static void main(String[] args) { new ExampleGame3D(); }
 
@@ -25,17 +25,20 @@ public class ExampleGame3D extends Game3D {
 		frameRate(600);
 		showInfo(true);
 
-		model = new Sphere(this, 0, 0, 1500, 750, 30);
-//		model = new Cube(0, 0, 1500, 750, 750, 750);
-		Models.add(model);
+//		model = new Sphere(this, 0, 0, 1500, 750, 30);
+//		model = new Cube(this, 0, 0, 1500, 750, 750, 750);
+//		model = new Cube(this, 0, 0, 0, 20, 20, 20);
+//		Models.add(model);
+		model2 = new com.sunflow.math3d.Cube(this, 0, 0, 0, 2, 2, 2, Color.red);
+//		Models.add(model2);
 
-		for (int i = 0; i < 5; i++) {
-			int x = random.nextInt(4000) - 2000;
-			int y = random.nextInt(4000) - 2000;
-			int z = random.nextInt(3000) + 1000;
-			Base3DModel cube = new Cube(this, x, y, z, 500, 500, 500);
-			Models.add(cube);
-		}
+//		for (int i = 0; i < 5; i++) {
+//			int x = random.nextInt(4000) - 2000;
+//			int y = random.nextInt(4000) - 2000;
+//			int z = random.nextInt(3000) + 1000;
+//			Base3DModel cube = new Cube(this, x, y, z, 500, 500, 500);
+//			Models.add(cube);
+//		}
 	}
 
 	double showDelta, showMult;
@@ -53,11 +56,10 @@ public class ExampleGame3D extends Game3D {
 	@Override
 	protected void update() {
 		// rotate and update shape examples
-		if (auto) {
-			for (int i = 1; i < Models.size(); i++) {
-				Base3DModel m = Models.get(i);
-				m.rotateX(0.5 * delta);
-			}
+		if (!auto) return;
+		for (int i = 1; i < Models.size(); i++) {
+			Base3DModel m = Models.get(i);
+			m.rotateX((float) (0.5 * delta));
 		}
 	}
 
@@ -74,23 +76,29 @@ public class ExampleGame3D extends Game3D {
 		background(168, 211, 255);
 
 		pushMatrix();
-		graphics.translate(width / 2, height / 2);
+//		graphics.translate(width / 2, height / 2);
 
-		for (int i = 0; i < drawOrder.length; i++) {
-			DPolygon pol = DPolygone.get(drawOrder[i]);
-
-			int scale = getFillScale(pol);
-			Color fill = new Color(scale, scale, scale);
-			pol.render(graphics, true, fill, outlines, new Color(50, 50, 50));
-//			pol.render(privateG, true, outlines);
-		}
+//		for (int i = 0; i < drawOrder.length; i++) {
+//			DPolygon current = DPolygone.get(drawOrder[i]);
+//
+//			int scale = getFillScale(current);
+//			Color fill = new Color(scale, scale, scale);
+//			current.render(graphics, true, fill, outlines, new Color(50, 50, 50));
+////			pol.render(privateG, true, outlines);
+//		}
 
 		// Draw Models in the Order that is set by the 'setOrder' function
 //		for (int i = 0; i < drawOrder.length; i++) DPolygone.get(drawOrder[i]).render(privateG, true, outlines);
+		model2.updatePolygon();
+		model2.draw(graphics);
+		graphics.setColor(Color.black);
+		graphics.drawRect(600, 600, 60, 60);
 
 //		info(vCameraPos);
 //		info(vCameraDir);
+		info(vertLook);
 
+		ellipse(width / 2, height / 2, 10, 10);
 		popMatrix();
 	}
 

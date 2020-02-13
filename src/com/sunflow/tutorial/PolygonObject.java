@@ -1,10 +1,8 @@
-package com.sunflow.math1;
+package com.sunflow.tutorial;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Polygon;
-
-import com.sunflow.examples.TutorialGame3D;
 
 public class PolygonObject {
 	private Polygon P;
@@ -18,8 +16,7 @@ public class PolygonObject {
 		this.screen = screen;
 
 		P = new Polygon();
-		for (int i = 0; i < x.length; i++)
-			P.addPoint((int) x[i], (int) y[i]);
+		for (int i = 0; i < x.length; i++) P.addPoint((int) x[i], (int) y[i]);
 		this.c = c;
 		this.seeThrough = seeThrough;
 	}
@@ -34,25 +31,22 @@ public class PolygonObject {
 	}
 
 	public void drawPolygon(Graphics g) {
-		if (draw && visible) {
-			g.setColor(new Color((int) (c.getRed() * lighting), (int) (c.getGreen() * lighting), (int) (c.getBlue() * lighting)));
-			if (seeThrough)
-				g.drawPolygon(P);
-			else
-				g.fillPolygon(P);
-			if (screen.outlines) {
-				g.setColor(new Color(0, 0, 0));
-				g.drawPolygon(P);
-			}
+		if (!draw || !visible) return;
+		g.setColor(new Color((int) (c.getRed() * lighting), (int) (c.getGreen() * lighting), (int) (c.getBlue() * lighting)));
 
-			if (screen.PolygonOver == this) {
-				g.setColor(new Color(255, 255, 255, 100));
-				g.fillPolygon(P);
-			}
+		if (seeThrough) g.drawPolygon(P);
+		else g.fillPolygon(P);
+
+		if (screen.outlines) {
+			g.setColor(new Color(0, 0, 0));
+			g.drawPolygon(P);
+		}
+
+		if (screen.PolygonOver == this) {
+			g.setColor(new Color(255, 255, 255, 100));
+			g.fillPolygon(P);
 		}
 	}
 
-	public boolean MouseOver() {
-		return P.contains(screen.width / 2, screen.height / 2);
-	}
+	public boolean MouseOver() { return P.contains(screen.width / 2f, screen.height / 2f); }
 }

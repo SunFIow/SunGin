@@ -3,31 +3,31 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Vertex3D;
+import com.sunflow.math3d.Vertex3F;
 
 public class Cube extends Base3DModel {
 
 //	private float width, height, depth;
 
-	public Cube(Game3D game, double x, double y, double z, double width, double height, double depth) {
+	public Cube(Game3D game, float x, float y, float z, float width, float height, float depth) {
 		this(game, x, y, z, width, height, depth, new Color(25, 25, 25));
 	}
 
-	public Cube(Game3D game, double x, double y, double z, double width, double height, double depth, Color outline) {
+	public Cube(Game3D game, float x, float y, float z, float width, float height, float depth, Color outline) {
 		super(x, y, z);
 //		this.width = width;
 //		this.height = height;
 //		this.depth = depth;
 
-		Vertex3D[] vs = new Vertex3D[8];
-		vs[0] = new Vertex3D(-width / 2, -height / 2, -depth / 2);
-		vs[1] = new Vertex3D(-width / 2, height / 2, -depth / 2);
-		vs[2] = new Vertex3D(width / 2, height / 2, -depth / 2);
-		vs[3] = new Vertex3D(width / 2, -height / 2, -depth / 2);
-		vs[4] = new Vertex3D(-width / 2, -height / 2, depth / 2);
-		vs[5] = new Vertex3D(-width / 2, height / 2, depth / 2);
-		vs[6] = new Vertex3D(width / 2, height / 2, depth / 2);
-		vs[7] = new Vertex3D(width / 2, -height / 2, depth / 2);
+		Vertex3F[] vs = new Vertex3F[8];
+		vs[0] = new Vertex3F(-width / 2, -height / 2, -depth / 2);
+		vs[1] = new Vertex3F(-width / 2, height / 2, -depth / 2);
+		vs[2] = new Vertex3F(width / 2, height / 2, -depth / 2);
+		vs[3] = new Vertex3F(width / 2, -height / 2, -depth / 2);
+		vs[4] = new Vertex3F(-width / 2, -height / 2, depth / 2);
+		vs[5] = new Vertex3F(-width / 2, height / 2, depth / 2);
+		vs[6] = new Vertex3F(width / 2, height / 2, depth / 2);
+		vs[7] = new Vertex3F(width / 2, -height / 2, depth / 2);
 
 		DPolygon[] polygone = new DPolygon[6];
 

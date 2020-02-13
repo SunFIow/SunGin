@@ -1,6 +1,6 @@
-package com.sunflow.math3d;
+package com.sunflow.tutorial_copy;
 
-import com.sunflow.game.Game3D;
+import com.sunflow.math3d.Vertex3F;
 
 public class Calculator {
 	public static float t = 0;
@@ -50,7 +50,7 @@ public class Calculator {
 		return V;
 	}
 
-	public static void SetPrederterminedInfo(Game3D screen) {
+	public static void SetPrederterminedInfo(TutorialGame3D screen) {
 		viewVector = new Vertex3F(screen.vCameraDir.x - screen.vCameraPos.x, screen.vCameraDir.y - screen.vCameraPos.y, screen.vCameraDir.z - screen.vCameraPos.z).normalized();
 		dirVector = new Vertex3F(1, 1, 1).normalized();
 		planeVector1 = Vertex3F.cross(viewVector, dirVector).normalized();
@@ -62,8 +62,8 @@ public class Calculator {
 		w2 = Vertex3F.cross(viewVector, w1).normalized();
 
 		calcFocusPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, screen.vCameraDir.x, screen.vCameraDir.y, screen.vCameraDir.z);
-		calcFocusPos[0] = screen.zoom * calcFocusPos[0];
-		calcFocusPos[1] = screen.zoom * calcFocusPos[1];
+		calcFocusPos[0] = TutorialGame3D.zoom * calcFocusPos[0];
+		calcFocusPos[1] = TutorialGame3D.zoom * calcFocusPos[1];
 
 //		Log.info(rotVector);
 	}

@@ -67,11 +67,11 @@ public interface GameUtils {
 		return strBuilder.toString();
 	}
 
-	default DImage loadFileAsDImage(String fileName) {
-		return new DImage(loadFileAsImage(fileName));
+	default DImage loadDImage(String fileName) {
+		return new DImage(loadImage(fileName));
 	}
 
-	default BufferedImage loadFileAsImage(String fileName) {
+	default BufferedImage loadImage(String fileName) {
 		BufferedImage img = null;
 		try {
 //		    URL url = new URL(getCodeBase(), "examples/strawberry.jpg");
@@ -84,7 +84,7 @@ public interface GameUtils {
 		return img;
 	}
 
-	default void saveImageToFile(BufferedImage image, String fileName) {
+	default void saveImage(BufferedImage image, String fileName) {
 		try {
 			File outputfile = new File(fileName);
 			ImageIO.write(image, "png", outputfile);

@@ -1,9 +1,9 @@
-package com.sunflow.math1;
+package com.sunflow.math3d;
 
 public abstract class IModel {
 	public DPolygon[] polys = new DPolygon[0];
 
-	public abstract void rotate(double angle);
+	public abstract void rotate(float angle);
 
 	public abstract void updatePolygon();
 }
