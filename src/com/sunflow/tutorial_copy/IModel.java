@@ -1,12 +1,41 @@
 package com.sunflow.tutorial_copy;
 
+import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.MathUtils;
 
 public abstract class IModel implements MathUtils {
-	protected float x, y, z;
+
+	public static IModel ZERO = new IModel() {
+		@Override
+		public void updatePolygon() {}
+	};
+
+	protected IModel parent = ZERO;
+
+	protected Vertex3F pos;
+
 	protected DPolygon[] polys = new DPolygon[0];
 
+	public IModel(DPolygon... vs) {
+		this(0, 0, 0, vs);
+	}
+
+	public IModel(float x, float y, float z, DPolygon... vs) {
+		pos = new Vertex3F(x, y, z);
+		addPolygone(vs);
+	}
+
 	public abstract void updatePolygon();
+
+	public void translateModel(float x, float y, float z) {
+		this.pos.add(x, y, z);
+//		needsUpdate = true;
+	}
+
+	public void translateModel(Vertex3F pos) {
+		this.pos.add(pos);
+//		needsUpdate = true;
+	}
 
 //	@Override
 	public void rotateX(float angle) {
@@ -26,46 +55,20 @@ public abstract class IModel implements MathUtils {
 //		needsUpdate = true;
 	}
 
-	public void rotateX1(float angle) {
-		float cos = cos(angle);
-		float sin = sin(angle);
+//	public boolean needsUpdate() { return needsUpdate; }
 
-		for (DPolygon pol : polys) {
-			for (int i = 0; i < pol.x.length; i++) {
-				float newY = (pol.y[i] - y) * cos - (pol.z[i] - z) * sin;
-				float newZ = (pol.z[i] - z) * cos + (pol.y[i] - y) * sin;
-				pol.y[i] = newY + y;
-				pol.z[i] = newZ + z;
-			}
+	public void setParent(IModel parent) { this.parent = parent; }
+
+	protected void addPolygone(DPolygon... vs) {
+		DPolygon[] newPolygone = new DPolygon[polys.length + vs.length];
+		for (int i = 0; i < polys.length; i++) {
+			newPolygone[i] = polys[i];
 		}
-	}
+		for (int i = 0; i < vs.length; i++) {
+			newPolygone[polys.length + i] = vs[i];
+			newPolygone[polys.length + i].setParent(this);
 
-	public void rotateY1(float angle) {
-		float cos = cos(angle);
-		float sin = sin(angle);
-
-		for (DPolygon pol : polys) {
-			for (int i = 0; i < pol.x.length; i++) {
-
-				float newX = (pol.x[i] - x) * cos - (pol.z[i] - z) * sin;
-				float newZ = (pol.z[i] - z) * cos + (pol.x[i] - x) * sin;
-				pol.x[i] = newX + x;
-				pol.z[i] = newZ + z;
-			}
 		}
-	}
-
-	public void rotateZ1(float angle) {
-		float cos = cos(angle);
-		float sin = sin(angle);
-
-		for (DPolygon pol : polys) {
-			for (int i = 0; i < pol.x.length; i++) {
-				float newX = (pol.x[i] - x) * cos - (pol.y[i] - y) * sin;
-				float newY = (pol.y[i] - y) * cos + (pol.x[i] - x) * sin;
-				pol.x[i] = newX + x;
-				pol.y[i] = newY + y;
-			}
-		}
+		polys = newPolygone;
 	}
 }

@@ -26,7 +26,6 @@ public class Base3DModel extends BaseModel implements Cloneable {
 		for (int i = 0; i < vs.length; i++) {
 			newPolygone[polys.length + i] = vs[i];
 			newPolygone[polys.length + i].setParent(this);
-
 		}
 		polys = newPolygone;
 	}

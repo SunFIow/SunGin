@@ -38,6 +38,7 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 	protected int frameWidth, frameHeight;
 
 	protected int mouseX, mouseY;
+	protected int prevMouseX, prevMouseY;
 	protected int mouseScreenX, mouseScreenY;
 
 	protected float aimSize;
@@ -188,11 +189,7 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 	}
 
 	public final void moveMouseOnScreenTo(int x, int y) {
-		try {
-			new Robot().mouseMove(x, y);
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
+		robot.mouseMove(x, y);
 	}
 
 	@Override

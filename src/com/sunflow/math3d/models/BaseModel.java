@@ -31,13 +31,9 @@ public abstract class BaseModel implements MathUtils {
 		needsUpdate = true;
 	}
 
-	public boolean needsUpdate() {
-		return needsUpdate;
-	}
+	public boolean needsUpdate() { return needsUpdate; }
 
-	public void setParent(Base3DModel parent) {
-		this.parent = parent;
-	}
+	public void setParent(Base3DModel parent) { this.parent = parent; }
 
 	public abstract void project();
 

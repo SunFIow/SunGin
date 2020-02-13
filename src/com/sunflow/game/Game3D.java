@@ -1,9 +1,7 @@
 package com.sunflow.game;
 
-import java.awt.AWTException;
 import java.awt.Cursor;
 import java.awt.Point;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.event.KeyAdapter;
@@ -86,7 +84,6 @@ public class Game3D extends Game2D {
 		canvas.addKeyListener(new Game3DKeyListeners());
 		Game3DMouseListeners ml = new Game3DMouseListeners();
 		canvas.addMouseListener(ml);
-		canvas.addMouseMotionListener(ml);
 		canvas.addMouseWheelListener(ml);
 		invisibleMouse();
 	}
@@ -137,9 +134,8 @@ public class Game3D extends Game2D {
 	}
 
 	private void mouseMovement(float NewMouseX, float NewMouseY) {
-		if (robot) return;
-		float difX = (NewMouseX - mouseX);
-		float difY = (NewMouseY - mouseY) * (6 - Math.abs(vertLook) * 5);
+		float difX = (NewMouseX - width / 2);
+		float difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
 		Log.debug(difY);
 
 		vertLook -= difY / vertRotSpeed;
@@ -158,18 +154,9 @@ public class Game3D extends Game2D {
 		vCameraDir.z = vCameraPos.z + vertLook;
 	}
 
-	boolean robot;
-
 //	private void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
 	private void centerMouse() {
-		try {
-			Robot r = new Robot();
-			robot = true;
-			r.mouseMove(x + width() / 2, y + height() / 2);
-			robot = false;
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
+		robot.mouseMove(x + width() / 2, y + height() / 2);
 	}
 
 	private void invisibleMouse() {
@@ -252,27 +239,12 @@ public class Game3D extends Game2D {
 	@Override
 	void updateMousePosition(int x, int y) {
 		mouseMovement(x, y);
-		super.updateMousePosition(x, y);
+		mouseX = x;
+		mouseY = y;
 		centerMouse();
 	}
 
 	private class Game3DMouseListeners extends MouseAdapter {
-		@Override
-		public void mouseDragged(MouseEvent e) {
-//			mouseMovement(e.getX(), e.getY());
-//			mouseX = e.getX();
-//			mouseY = e.getY();
-//			centerMouse();
-		}
-
-		@Override
-		public void mouseMoved(MouseEvent e) {
-//			mouseMovement(e.getX(), e.getY());
-//			mouseX = e.getX();
-//			mouseY = e.getY();
-//			centerMouse();
-		}
-
 		@Override
 		public void mousePressed(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough = false;
@@ -281,8 +253,9 @@ public class Game3D extends Game2D {
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			if (e.getUnitsToScroll() > 0) if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
-			else if (zoom < maxZoom) zoom -= 25 * e.getUnitsToScroll();
+			if (e.getUnitsToScroll() > 0) {
+				if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
+			} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
 		}
 	}
 }

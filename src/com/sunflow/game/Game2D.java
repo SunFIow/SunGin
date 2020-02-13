@@ -83,6 +83,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	private int scaledWidth, scaledHeight;
 
 	private String title;
+	private boolean undecorated;
 
 	public Game2D() {
 		super();
@@ -175,6 +176,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		if (title != null) frame.setTitle(title);
+		frame.setUndecorated(undecorated);
 		frame.add(canvas);
 		frame.setVisible(true);
 		frame.setVisible(false);
@@ -234,7 +236,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				if (!fullscreen) return;
 				x += 4;
 				y += 23;
-
 			}
 
 			@Override
@@ -269,6 +270,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	}
 
 	void updateMousePosition(int x, int y) {
+		prevMouseX = mouseX;
+		prevMouseY = mouseY;
 		mouseX = x;
 		mouseY = y;
 	}
@@ -308,6 +311,16 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	final protected void title(String title) {
 		this.title = title;
 		if (createdCanvas) frame.setTitle(title);
+	}
+
+	final protected void undecorated(boolean undecorated) {
+		if (createdCanvas && this.undecorated != undecorated) {
+			boolean visible = frame.isVisible();
+			frame.dispose();
+			frame.setUndecorated(undecorated);
+			frame.setVisible(visible);
+		}
+		this.undecorated = undecorated;
 	}
 
 	@Override

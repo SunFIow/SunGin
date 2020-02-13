@@ -2,55 +2,40 @@ package com.sunflow.tutorial_copy;
 
 import java.awt.Color;
 
+import com.sunflow.math3d.Vertex3F;
+
 public class Pyramid extends IModel {
-	private float width, length, height, rotation = (float) (Math.PI * 0.75);
-	private float[] rotAdd = new float[4];
-	@SuppressWarnings("unused")
-	private Color c;
-	private float x1, x2, x3, x4, y1, y2, y3, y4;
-	private float[] angle;
+//	private float width, length, height, rotation = (float) (Math.PI * 0.75);
 
-//	private Game3D screen;
+	public Pyramid(TutorialGame3D screen, float x, float y, float z, float width, float depth, float height, Color c) {
+		super(x, y, z);
+		DPolygon[] polygone = new DPolygon[5];
 
-	public Pyramid(TutorialGame3D screen, float x, float y, float z, float width, float length, float height, Color c) {
-//		this.screen = screen;
-		this.c = c;
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.width = width;
-		this.length = length;
-		this.height = height;
+		Vertex3F[] vs = new Vertex3F[8];
+		vs[0] = new Vertex3F(-width / 2, -height / 2, -depth / 2);
+		vs[1] = new Vertex3F(-width / 2, -height / 2, depth / 2);
+		vs[2] = new Vertex3F(width / 2, -height / 2, depth / 2);
+		vs[3] = new Vertex3F(width / 2, -height / 2, -depth / 2);
+		vs[4] = new Vertex3F(0, height / 2, 0);
 
-		this.polys = new DPolygon[5];
+		polygone[0] = new DPolygon(screen, vs[0], vs[1], vs[2], vs[3]);
+		polygone[1] = new DPolygon(screen, vs[0], vs[4], vs[3]);
+		polygone[2] = new DPolygon(screen, vs[1], vs[4], vs[0]);
+		polygone[3] = new DPolygon(screen, vs[2], vs[4], vs[1]);
+		polygone[4] = new DPolygon(screen, vs[3], vs[4], vs[2]);
 
-		float x1 = x - width / 2, x2 = x + width / 2, x3 = x;
-		float y1 = y - height / 2, y2 = y + height / 2;
-		float z1 = z - length / 2, z2 = z + length / 2, z3 = z;
-
-		polys[0] = new DPolygon(screen, new float[] { x1, x1, x2, x2 }, new float[] { y1, y1, y1, y1 }, new float[] { z1, z2, z2, z1 }, c, false);
-		polys[1] = new DPolygon(screen, new float[] { x1, x3, x2 }, new float[] { y1, y2, y1 }, new float[] { z1, z3, z1 }, c, false);
-		polys[2] = new DPolygon(screen, new float[] { x1, x3, x1 }, new float[] { y1, y2, y1 }, new float[] { z2, z3, z1 }, c, false);
-		polys[3] = new DPolygon(screen, new float[] { x2, x3, x1 }, new float[] { y1, y2, y1 }, new float[] { z2, z3, z2 }, c, false);
-		polys[4] = new DPolygon(screen, new float[] { x2, x3, x2 }, new float[] { y1, y2, y1 }, new float[] { z1, z3, z2 }, c, false);
-
-		for (DPolygon pol : polys) pol.setParent(this);
+		for (int i = 0; i < polygone.length; i++) {
+			Color fill = c;
+			Color outline = new Color(25, 25, 25);
+			polygone[i].drawablePolygon.fill = fill;
+			polygone[i].drawablePolygon.outline = outline;
+			polygone[i].drawablePolygon.drawFill = true;
+			polygone[i].drawablePolygon.drawOutline = false;
+			polygone[i].drawablePolygon.seeThrough = false;
+		}
+		addPolygone(polygone);
 	}
 
 	@Override
-	public void updatePolygon() {
-		for (DPolygon poly : polys) poly.updatePolygon();
-	}
-
-	@SuppressWarnings("unused")
-	private void updateDirection(float toX, float toY) {
-		float xdif = toX - (x + width / 2) + 0.00001f;
-		float ydif = toY - (y + length / 2) + 0.00001f;
-
-		float angle = (float) Math.atan(ydif / xdif) + 0.75f * (float) Math.PI;
-
-		if (xdif < 0) angle += (float) Math.PI;
-
-		rotation = angle;
-	}
+	public void updatePolygon() { for (DPolygon poly : polys) poly.updatePolygon(); }
 }

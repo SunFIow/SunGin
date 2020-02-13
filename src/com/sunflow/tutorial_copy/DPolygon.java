@@ -1,43 +1,55 @@
 package com.sunflow.tutorial_copy;
 
-import java.awt.Color;
+import com.sunflow.math3d.Vertex3F;
 
 public class DPolygon extends IModel {
-	private Color c;
-	public float[] x, y, z;
+
+//	public float[] x, y, z;
+
+//	private Color c;
 	public boolean draw = true, seeThrough = false;
 	private float[] calcPos, newX, newY;
 	public PolygonObject drawablePolygon;
 	public float avgDist;
 
-	private IModel parent;
-
-	public void setParent(IModel parent) { this.parent = parent; }
+	public Vertex3F[] vertices = new Vertex3F[0];
 
 	private TutorialGame3D screen;
 
-	public DPolygon(TutorialGame3D screen, float[] x, float[] y, float[] z, Color c, boolean seeThrough) {
-		this.screen = screen;
-
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.c = c;
-		this.seeThrough = seeThrough;
-		createPolygon();
+	public DPolygon(TutorialGame3D screen, Vertex3F... vs) {
+		this(screen, 0, 0, 0, vs);
 	}
 
-	private void createPolygon() {
-		drawablePolygon = new PolygonObject(screen, new float[x.length], new float[x.length], c, seeThrough);
+	public DPolygon(TutorialGame3D screen, float x, float y, float z, Vertex3F... vs) {
+		this(new Vertex3F(x, y, z), screen, vs);
+	}
+
+	public DPolygon(Vertex3F pos, TutorialGame3D screen, Vertex3F... vs) {
+		addVertices(vs);
+
+		this.screen = screen;
+		this.pos = pos;
+		this.drawablePolygon = new PolygonObject(screen, new float[vertices.length], new float[vertices.length]);
+	}
+
+	protected void addVertices(Vertex3F... vs) {
+		Vertex3F[] newVertices = new Vertex3F[vertices.length + vs.length];
+		for (int i = 0; i < vertices.length; i++) newVertices[i] = vertices[i];
+		for (int i = vertices.length; i < vertices.length + vs.length; i++) newVertices[i] = vs[i].clone();
+		vertices = newVertices;
 	}
 
 	@Override
 	public void updatePolygon() {
-		newX = new float[x.length];
-		newY = new float[x.length];
+		newX = new float[vertices.length];
+		newY = new float[vertices.length];
 		draw = true;
-		for (int i = 0; i < x.length; i++) {
-			calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x[i], y[i], z[i]);
+		for (int i = 0; i < vertices.length; i++) {
+			Vertex3F v = vertices[i];
+			float x = parent.pos.x + pos.x + v.x;
+			float y = parent.pos.y + pos.y + v.y;
+			float z = parent.pos.z + pos.z + v.z;
+			calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
 			newX[i] = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * TutorialGame3D.zoom;
 			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * TutorialGame3D.zoom;
 			if (Calculator.t < 0) draw = false;
@@ -63,11 +75,16 @@ public class DPolygon extends IModel {
 
 	private float GetDist(float x, float y, float z) {
 		float total = 0;
-		for (int i = 0; i < this.x.length; i++)
-			total += Math.sqrt((x - this.x[i]) * (x - this.x[i]) +
-					(y - this.y[i]) * (y - this.y[i]) +
-					(z - this.z[i]) * (z - this.z[i]));
-		return total / this.x.length;
+		for (int i = 0; i < vertices.length; i++) {
+			Vertex3F v = vertices[i];
+			float _x = parent.pos.x + pos.x + v.x;
+			float _y = parent.pos.y + pos.y + v.y;
+			float _z = parent.pos.z + pos.z + v.z;
+			total += Math.sqrt((x - _x) * (x - _x)
+					+ (y - _y) * (y - _y)
+					+ (z - _z) * (z - _z));
+		}
+		return total / vertices.length;
 	}
 
 	@Override
@@ -75,15 +92,13 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (int i = 0; i < x.length; i++) {
-			float currentY = y[i] - parent.y;
-			float currentZ = z[i] - parent.z;
-			float newY = currentY * cos - currentZ * sin;
-			float newZ = currentZ * cos + currentY * sin;
-			y[i] = newY + parent.y;
-			z[i] = newZ + parent.z;
+		for (Vertex3F v : vertices) {
+			float newY = v.y * cos - v.z * sin;
+			float newZ = v.z * cos + v.y * sin;
+			v.y = newY;
+			v.z = newZ;
 		}
-
+//		needsUpdate = true;
 	}
 
 	@Override
@@ -91,15 +106,13 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (int i = 0; i < x.length; i++) {
-			float currentX = x[i] - parent.x;
-			float currentZ = z[i] - parent.z;
-			float newX = currentX * cos - currentZ * sin;
-			float newZ = currentZ * cos + currentX * sin;
-			x[i] = newX + parent.x;
-			z[i] = newZ + parent.z;
+		for (Vertex3F v : vertices) {
+			float newX = v.x * cos - v.z * sin;
+			float newZ = v.z * cos + v.x * sin;
+			v.x = newX;
+			v.z = newZ;
 		}
-
+//		needsUpdate = true;
 	}
 
 	@Override
@@ -107,13 +120,12 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (int i = 0; i < x.length; i++) {
-			float currentX = x[i] - parent.x;
-			float currentY = y[i] - parent.y;
-			float newX = currentX * cos - currentY * sin;
-			float newY = currentY * cos + currentX * sin;
-			x[i] = newX + parent.x;
-			y[i] = newY + parent.y;
+		for (Vertex3F v : vertices) {
+			float newX = v.x * cos - v.y * sin;
+			float newY = v.y * cos + v.x * sin;
+			v.x = newX;
+			v.y = newY;
 		}
+//		needsUpdate = true;
 	}
 }

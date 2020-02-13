@@ -6,19 +6,20 @@ import java.awt.Polygon;
 
 public class PolygonObject {
 	private Polygon P;
-	private Color c;
+//	private Color c;
 	public boolean draw = true, visible = true, seeThrough, highlight;
 	public float lighting = 1;
 
 	private TutorialGame3D screen;
 
-	public PolygonObject(TutorialGame3D screen, float[] x, float[] y, Color c, boolean seeThrough) {
+	protected Color fill = Color.magenta, outline = Color.black;
+	protected boolean drawFill, drawOutline;
+
+	public PolygonObject(TutorialGame3D screen, float[] x, float[] y) {
 		this.screen = screen;
 
 		P = new Polygon();
 		for (int i = 0; i < x.length; i++) P.addPoint((int) x[i], (int) y[i]);
-		this.c = c;
-		this.seeThrough = seeThrough;
 	}
 
 	public void updatePolygon(float[] x, float[] y) {
@@ -32,7 +33,7 @@ public class PolygonObject {
 
 	public void drawPolygon(Graphics g) {
 		if (!draw || !visible) return;
-		g.setColor(new Color((int) (c.getRed() * lighting), (int) (c.getGreen() * lighting), (int) (c.getBlue() * lighting)));
+		g.setColor(new Color((int) (fill.getRed() * lighting), (int) (fill.getGreen() * lighting), (int) (fill.getBlue() * lighting)));
 
 		if (seeThrough) g.drawPolygon(P);
 		else g.fillPolygon(P);

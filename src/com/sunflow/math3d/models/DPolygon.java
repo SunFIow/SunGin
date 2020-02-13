@@ -72,8 +72,10 @@ public class DPolygon extends BaseModel {
 		}
 
 		p.reset();
-		p.xpoints = xP;
-		p.ypoints = yP;
+		for (int i = 0; i < xP.length; i++) {
+			p.xpoints[i] = xP[i];
+			p.ypoints[i] = yP[i];
+		}
 		p.npoints = xP.length;
 
 		dist = getDistToP();

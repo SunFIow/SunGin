@@ -36,8 +36,7 @@ public class DPolygon extends IModel {
 			calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x[i], y[i], z[i]);
 			newX[i] = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * TutorialGame3D.zoom;
 			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * TutorialGame3D.zoom;
-			if (Calculator.t < 0)
-				draw = false;
+			if (Calculator.t < 0) draw = false;
 		}
 
 		calcLighting();
@@ -54,10 +53,8 @@ public class DPolygon extends IModel {
 
 		drawablePolygon.lighting = 0.2 + 1 - Math.sqrt(Math.toDegrees(angle) / 180);
 
-		if (drawablePolygon.lighting > 1)
-			drawablePolygon.lighting = 1;
-		if (drawablePolygon.lighting < 0)
-			drawablePolygon.lighting = 0;
+		if (drawablePolygon.lighting > 1) drawablePolygon.lighting = 1;
+		if (drawablePolygon.lighting < 0) drawablePolygon.lighting = 0;
 	}
 
 	private double GetDist() {

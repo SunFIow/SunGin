@@ -278,6 +278,7 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	private void mouseMovement(float NewMouseX, float NewMouseY) {
 		float difX = (NewMouseX - width / 2);
 		float difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
+//		Log.debug(difY);
 
 		vertLook -= difY / vertRotSpeed;
 		horLook += difX / horRotSpeed;
@@ -316,45 +317,46 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	}
 
 	@Override
-	public void mouseDragged(MouseEvent arg0) {
-		mouseMovement(arg0.getX(), arg0.getY());
-		mouseX = arg0.getX();
-		mouseY = arg0.getY();
+	public void mouseDragged(MouseEvent e) {
+		mouseMovement(e.getX(), e.getY());
+		mouseX = e.getX();
+		mouseY = e.getY();
 		centerMouse();
 	}
 
 	@Override
-	public void mouseMoved(MouseEvent arg0) {
-		mouseMovement(arg0.getX(), arg0.getY());
-		mouseX = arg0.getX();
-		mouseY = arg0.getY();
+	public void mouseMoved(MouseEvent e) {
+		mouseMovement(e.getX(), e.getY());
+		mouseX = e.getX();
+		mouseY = e.getY();
 		centerMouse();
 	}
 
 	@Override
-	public void mousePressed(MouseEvent arg0) {
-		if (arg0.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough = false;
-		if (arg0.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough = true;
+	public void mousePressed(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough = false;
+		if (e.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough = true;
 	}
 
 	@Override
-	public void mouseWheelMoved(MouseWheelEvent arg0) {
-		if (arg0.getUnitsToScroll() > 0) if (zoom > minZoom) zoom -= 25 * arg0.getUnitsToScroll();
-		else if (zoom < maxZoom) zoom -= 25 * arg0.getUnitsToScroll();
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		if (e.getUnitsToScroll() > 0) {
+			if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
+		} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	@Override
-	public void mouseClicked(MouseEvent arg0) {}
+	public void mouseClicked(MouseEvent e) {}
 
 	@Override
-	public void mouseEntered(MouseEvent arg0) {}
+	public void mouseEntered(MouseEvent e) {}
 
 	@Override
-	public void mouseExited(MouseEvent arg0) {}
+	public void mouseExited(MouseEvent e) {}
 
 	@Override
-	public void mouseReleased(MouseEvent arg0) {}
+	public void mouseReleased(MouseEvent e) {}
 }

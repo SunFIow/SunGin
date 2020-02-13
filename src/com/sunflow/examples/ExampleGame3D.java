@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math3d.models.Base3DModel;
+import com.sunflow.math3d.models.Cube;
 import com.sunflow.math3d.models.DPolygon;
 
 public class ExampleGame3D extends Game3D {
@@ -21,14 +22,15 @@ public class ExampleGame3D extends Game3D {
 	@Override
 	public void setup() {
 		title("ExampleGame 3D");
+		undecorated(true);
 		createCanvas(1280, 720);
 		frameRate(600);
 		showInfo(true);
 
 //		model = new Sphere(this, 0, 0, 1500, 750, 30);
-//		model = new Cube(this, 0, 0, 1500, 750, 750, 750);
+		model = new Cube(this, 0, 0, 0, 5, 5, 5);
 //		model = new Cube(this, 0, 0, 0, 20, 20, 20);
-//		Models.add(model);
+		Models.add(model);
 		model2 = new com.sunflow.math3d.Cube(this, 0, 0, 0, 2, 2, 2, Color.red);
 //		Models.add(model2);
 
@@ -78,14 +80,14 @@ public class ExampleGame3D extends Game3D {
 		pushMatrix();
 //		graphics.translate(width / 2, height / 2);
 
-//		for (int i = 0; i < drawOrder.length; i++) {
-//			DPolygon current = DPolygone.get(drawOrder[i]);
-//
-//			int scale = getFillScale(current);
-//			Color fill = new Color(scale, scale, scale);
-//			current.render(graphics, true, fill, outlines, new Color(50, 50, 50));
-////			pol.render(privateG, true, outlines);
-//		}
+		for (int i = 0; i < drawOrder.length; i++) {
+			DPolygon current = DPolygone.get(drawOrder[i]);
+
+			int scale = getFillScale(current);
+			Color fill = new Color(scale, scale, scale);
+			current.render(graphics, true, fill, outlines, new Color(50, 50, 50));
+//			pol.render(privateG, true, outlines);
+		}
 
 		// Draw Models in the Order that is set by the 'setOrder' function
 //		for (int i = 0; i < drawOrder.length; i++) DPolygone.get(drawOrder[i]).render(privateG, true, outlines);
@@ -96,7 +98,7 @@ public class ExampleGame3D extends Game3D {
 
 //		info(vCameraPos);
 //		info(vCameraDir);
-		info(vertLook);
+//		info(vertLook);
 
 		ellipse(width / 2, height / 2, 10, 10);
 		popMatrix();

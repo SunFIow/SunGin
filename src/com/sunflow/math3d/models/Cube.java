@@ -10,10 +10,6 @@ public class Cube extends Base3DModel {
 //	private float width, height, depth;
 
 	public Cube(Game3D game, float x, float y, float z, float width, float height, float depth) {
-		this(game, x, y, z, width, height, depth, new Color(25, 25, 25));
-	}
-
-	public Cube(Game3D game, float x, float y, float z, float width, float height, float depth, Color outline) {
 		super(x, y, z);
 //		this.width = width;
 //		this.height = height;
@@ -44,6 +40,7 @@ public class Cube extends Base3DModel {
 //			int grayScale = (int) map(i, 0, polygone.length - 1, 100, 200);
 //			Color fill = new Color(grayScale, grayScale, grayScale, 160);
 			Color fill = cs[i];
+			Color outline = new Color(25, 25, 25);
 			polygone[i].fill = fill;
 			polygone[i].outline = outline;
 			polygone[i].drawFill = true;
