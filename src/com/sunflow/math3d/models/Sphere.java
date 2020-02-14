@@ -37,8 +37,8 @@ public class Sphere extends Base3DModel {
 				Vertex3F v3 = globe[i][j + 1];
 				Vertex3F v4 = globe[i + 1][j + 1];
 
-				pol1.addVertices(v1.clone(), v2.clone(), v3.clone());
-				pol2.addVertices(v2.clone(), v3.clone(), v4.clone());
+				pol1.addVertices(v1, v2, v3);
+				pol2.addVertices(v4, v3, v2);
 
 				addPolygone(pol1);
 				addPolygone(pol2);

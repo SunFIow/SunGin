@@ -27,7 +27,7 @@ import com.sunflow.math.Vertex2D;
 
 abstract class GameBase extends DImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
-	protected int x, y;
+//	protected int x, y;
 	public float width;
 	public float height;
 
@@ -65,6 +65,14 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 		super.format = RGB;
 		super.defaultSettings();
 	}
+
+	protected abstract int x();
+
+	protected abstract int y();
+
+	protected abstract int frameX();
+
+	protected abstract int frameY();
 
 	public final static DImage createImage(float width, float height) {
 		return new DImage(width, height);
@@ -172,8 +180,8 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 		moveMouseTo(v.x(), v.y());
 	}
 
-	public final void moveMouseTo(int x, int y) {
-		robot.mouseMove(this.x + x, this.y + y);
+	public void moveMouseTo(int x, int y) {
+		robot.mouseMove(x() + x, y() + y);
 	}
 
 	public final void moveMouseOnScreen(Vertex2D v) {

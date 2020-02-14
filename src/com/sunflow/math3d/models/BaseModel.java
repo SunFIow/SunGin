@@ -1,7 +1,5 @@
 package com.sunflow.math3d.models;
 
-import java.awt.Graphics2D;
-
 import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.MathUtils;
 
@@ -21,7 +19,7 @@ public abstract class BaseModel implements MathUtils {
 		public void rotateZ(float angle) {}
 
 		@Override
-		public void render(Graphics2D g) {}
+		public void render() {}
 	};
 
 	protected BaseModel parent = ZERO;
@@ -53,5 +51,5 @@ public abstract class BaseModel implements MathUtils {
 
 	public abstract void rotateZ(float angle);
 
-	public abstract void render(Graphics2D g);
+	public abstract void render();
 }

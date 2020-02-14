@@ -1,7 +1,6 @@
 package com.sunflow.math3d.models;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Polygon;
 
 import com.sunflow.game.Game3D;
@@ -14,8 +13,8 @@ public class PolygonObject {
 	public float lighting = 1;
 
 	public Color fill = Color.magenta;
-	public Color outline = Color.black;
-	protected boolean renderFill, renderOutline;
+	public Color outline = new Color(10, 10, 10);
+	protected boolean renderFill = true, renderOutline = true;
 
 	private Game3D screen;
 
@@ -35,7 +34,7 @@ public class PolygonObject {
 		P.npoints = x.length;
 	}
 
-	public void render(Graphics2D g) {
+	public void render() {
 		if (!draw || !visible) return;
 
 		if (seeThrough) {
@@ -60,7 +59,7 @@ public class PolygonObject {
 	// If seeThrough and renderOutline only renders a black stroke instead of colored and black
 	// no improvment observed
 
-//	public void render(Graphics2D g) {
+//	public void render() {
 //		if (!draw || !visible) return;
 //		
 //		if (seeThrough) {

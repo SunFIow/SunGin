@@ -30,11 +30,11 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	}
 
 	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderOutline, Color outline, boolean highlight, boolean seeThrough) {
-		for (DPolygon pol : polys) pol.render(g, renderFill, fill, renderOutline, outline, highlight, seeThrough);
+		for (DPolygon pol : polys) pol.render(renderFill, fill, renderOutline, outline, highlight, seeThrough);
 	}
 
 	@Override
-	public void render(Graphics2D g) { for (DPolygon pol : polys) pol.render(g); }
+	public void render() { for (DPolygon pol : polys) pol.render(); }
 
 	@Override
 	public void updateModel() {

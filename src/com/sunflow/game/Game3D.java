@@ -17,7 +17,7 @@ import com.sunflow.math3d.Vertex3F;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.DPolygon;
-import com.sunflow.tutorial.GenerateTerrain;
+import com.sunflow.math3d.models.GenerateTerrain;
 
 public class Game3D extends Game2D {
 
@@ -133,10 +133,11 @@ public class Game3D extends Game2D {
 		updateView();
 	}
 
+	float difX, difY;
+
 	private void mouseMovement(float NewMouseX, float NewMouseY) {
-		float difX = (NewMouseX - width / 2);
-		float difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
-//		Log.debug(difY);
+		difX = (NewMouseX - width / 2);
+		difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
 
 		vertLook -= difY / vertRotSpeed;
 		horLook += difX / horRotSpeed;
@@ -157,6 +158,8 @@ public class Game3D extends Game2D {
 	}
 
 	private void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
+
+//	private void centerMouse() { moveMouse((int) -difX, (int) -difY); }
 
 	private void invisibleMouse() {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();

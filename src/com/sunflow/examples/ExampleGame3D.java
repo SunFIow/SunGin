@@ -22,7 +22,7 @@ public class ExampleGame3D extends Game3D {
 	@Override
 	public void setup() {
 		title("ExampleGame 3D");
-		undecorated(true);
+//		undecorated(true);
 		createCanvas(1280, 720);
 		mode(ASYNC);
 		frameRate(144);
@@ -32,14 +32,15 @@ public class ExampleGame3D extends Game3D {
 		Models.add(new Pyramid(this, 0, -5, 0, 2, 2, 2, Color.green));
 
 		Models.add(new Cube(this, 0, 0, 0, 2, 2, 2));
-		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2));
-		Models.add(new Cube(this, 20, -5, 0, 2, 2, 2));
-		Models.add(new Cube(this, 22, -5, 0, 2, 2, 2));
-		Models.add(new Cube(this, 20, -5, 2, 2, 2, 2));
+
+		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2, Color.red));
+		Models.add(new Cube(this, 20, -5, 0, 2, 2, 2, Color.red));
+		Models.add(new Cube(this, 22, -5, 0, 2, 2, 2, Color.red));
+		Models.add(new Cube(this, 20, -5, 2, 2, 2, 2, Color.red));
 
 		new GenerateTerrain(this, Models);
 
-		model = new Sphere(this, 50, 0, 15, 10, 30);
+		model = new Sphere(this, 50, 0, 15, 10, 10);
 		Models.add(model);
 	}
 
@@ -66,9 +67,11 @@ public class ExampleGame3D extends Game3D {
 	@Override
 	protected void update() {
 		// rotate and update shape examples
-//		if (!auto) return;
+		if (!auto) return;
 		Models.get(0).rotateX(2f * delta);
 		Models.get(1).rotateX(0.5f * delta);
+		Models.get(1).rotateY(0.2f * delta);
+		Models.get(1).rotateZ(0.1f * delta);
 	}
 
 	@Override
@@ -78,17 +81,13 @@ public class ExampleGame3D extends Game3D {
 			showMult = multiplier;
 		}
 
-//		// Calculated all that is general for this camera position
-//		Calculator.SetPrederterminedInfo(this);
-//		cameraMovement();
-
 		background(168, 211, 255);
 
 		// Draw Models in the Order that is set by the 'setOrder' function
 		for (int i = 0; i < drawOrder.length; i++) {
 			DPolygon current = DPolygone.get(drawOrder[i]);
 			current.renderOutline(outlines);
-			current.render(graphics);
+			current.render();
 		}
 	}
 

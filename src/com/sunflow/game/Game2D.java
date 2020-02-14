@@ -9,8 +9,8 @@ import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Shape;
 import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -111,6 +111,9 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	protected void refresh() {}
 
 	void privateRefresh() {
+		frame = null;
+		canvas = null;
+
 		frameCount = 0;
 		frameRate = 0;
 		tickCount = 0;
@@ -120,9 +123,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		frameHeight = 0;
 		width = 0;
 		height = 0;
-
-		x = 0;
-		y = 0;
 
 		fullscreen = false;
 
@@ -188,9 +188,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 
-		x = frame.getX();
-		y = frame.getY();
-
 		canvas.addKeyListener(this);
 		canvas.addMouseListener(this);
 		canvas.addMouseMotionListener(this);
@@ -220,52 +217,21 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 			@Override
 			public void mouseDragged(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
-
 		});
 
-		canvas.addComponentListener(new ComponentListener() {
+		canvas.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
 			}
-
-			@Override
-			public void componentMoved(ComponentEvent e) {
-				x = e.getComponent().getX();
-				y = e.getComponent().getY();
-				if (!fullscreen) return;
-				x += 4;
-				y += 23;
-			}
-
-			@Override
-			public void componentShown(ComponentEvent e) {}
-
-			@Override
-			public void componentHidden(ComponentEvent e) {}
 		});
 
-		frame.addComponentListener(new ComponentListener() {
+		frame.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				frameWidth = e.getComponent().getWidth();
 				frameHeight = e.getComponent().getHeight();
 			}
-
-			@Override
-			public void componentMoved(ComponentEvent e) {
-				x = e.getComponent().getX();
-				y = e.getComponent().getY();
-				if (fullscreen) return;
-				x += 4;
-				y += 23;
-			}
-
-			@Override
-			public void componentShown(ComponentEvent e) {}
-
-			@Override
-			public void componentHidden(ComponentEvent e) {}
 		});
 	}
 
@@ -360,16 +326,12 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				w = savedSize.width;
 				h = savedSize.height;
 				frame.setLocation(savedPos);
-				x = frame.getX();
-				y = frame.getY();
 			} else {
 				savedSize.setSize(scaledWidth, scaledHeight);
 				savedPos = frame.getLocation();
 				w = Toolkit.getDefaultToolkit().getScreenSize().width;
 				h = Toolkit.getDefaultToolkit().getScreenSize().height;
 				frame.setLocation(0, 0);
-				x = 0;
-				y = 0;
 			}
 			fullscreen = !fullscreen;
 			frame.dispose();
@@ -451,6 +413,18 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	final public double noise(double xoff, double yoff, double zoff) { return noise.eval(xoff, yoff, zoff); }
 
 	final public double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
+
+	@Override
+	protected int x() { return canvas.getLocationOnScreen().x; }
+
+	@Override
+	protected int y() { return canvas.getLocationOnScreen().y; }
+
+	@Override
+	protected int frameX() { return frame.getLocationOnScreen().x; }
+
+	@Override
+	protected int frameY() { return frame.getLocationOnScreen().y; }
 
 	private void tick() {
 		privateUpdate();

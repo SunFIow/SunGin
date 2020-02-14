@@ -1,7 +1,6 @@
 package com.sunflow.math3d.models;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math3d.Calculator;
@@ -176,18 +175,18 @@ public class DPolygon extends BaseModel {
 
 	public boolean contains(float x, float y) { return drawablePolygon.contains(x, y); }
 
-	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderOutline, Color outline, boolean highlight, boolean seeThrough) {
+	public void render(boolean renderFill, Color fill, boolean renderOutline, Color outline, boolean highlight, boolean seeThrough) {
 		drawablePolygon.renderFill(renderFill);
 		drawablePolygon.fill(fill);
 		drawablePolygon.renderOutline(renderOutline);
 		drawablePolygon.outline(outline);
 		drawablePolygon.highlight(highlight);
 		drawablePolygon.seeThrough(seeThrough);
-		drawablePolygon.render(g);
+		drawablePolygon.render();
 	}
 
 	@Override
-	public void render(Graphics2D g) { drawablePolygon.render(g); }
+	public void render() { drawablePolygon.render(); }
 
 	public void fill(Color fill) { drawablePolygon.fill(fill); }
 

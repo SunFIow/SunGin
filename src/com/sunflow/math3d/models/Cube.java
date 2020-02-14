@@ -41,16 +41,8 @@ public class Cube extends Base3DModel {
 		Color[] cs = new Color[] { Color.red, Color.green, Color.blue, Color.orange, Color.magenta, new Color(150, 50, 0) };
 
 		for (int i = 0; i < polygone.length; i++) {
-//			int grayScale = (int) map(i, 0, polygone.length - 1, 100, 200);
-//			Color fill = new Color(grayScale, grayScale, grayScale, 160);
 			Color fill = c != null ? c : cs[i];
-			Color outline = new Color(25, 25, 25);
 			polygone[i].fill(fill);
-			polygone[i].outline(outline);
-			polygone[i].renderFill(true);
-			polygone[i].renderOutline(false);
-			polygone[i].highlight(false);
-			polygone[i].seeThrough(false);
 		}
 
 		addPolygone(polygone);
