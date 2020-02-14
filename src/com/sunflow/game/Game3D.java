@@ -12,26 +12,21 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import com.sunflow.logging.Log;
 import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.Vertex3F;
 import com.sunflow.math3d.models.Base3DModel;
+import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.DPolygon;
-import com.sunflow.tutorial_copy.GenerateTerrain;
+import com.sunflow.tutorial.GenerateTerrain;
 
 public class Game3D extends Game2D {
 
 	// ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
-	protected ArrayList<Base3DModel> Models;
+	protected ArrayList<BaseModel> Models;
 	protected ArrayList<DPolygon> DPolygone;
 
 	// The polygon that the mouse is currently over
 	private DPolygon PolygonOver = null;
-
-//	public Vertex3F vCameraPos;
-//	public Vertex3F vCameraDir;
-//
-//	public Vertex3F vLightDir;
 
 	public Vertex3F vCameraPos;
 	public Vertex3F vCameraDir;
@@ -39,8 +34,9 @@ public class Game3D extends Game2D {
 	public Vertex3F vLightDir;
 
 	// The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
-	public float zoom;
-	protected float minZoom, maxZoom;
+	protected float zoom, minZoom, maxZoom;
+
+	public float zoom() { return zoom; }
 
 	protected int[] drawOrder;
 
@@ -54,10 +50,10 @@ public class Game3D extends Game2D {
 	void privatePreSetup() {
 		super.privatePreSetup();
 
-		Models = new ArrayList<Base3DModel>();
-		DPolygone = new ArrayList<DPolygon>();
+		Models = new ArrayList<>();
+		DPolygone = new ArrayList<>();
 
-		vCameraPos = new Vertex3F(0, 0, 100);
+		vCameraPos = new Vertex3F(0, 0, 20);
 		vCameraDir = new Vertex3F(0, 0, 0);
 		vLightDir = new Vertex3F(1, 1, 1);
 
@@ -99,7 +95,11 @@ public class Game3D extends Game2D {
 
 		controlSunAndLight();
 
-		for (Base3DModel model : Models) if (model.needsUpdate()) model.project();
+		Models.forEach(model -> model.updateModel());
+
+//		Models.forEach(model -> {
+//			if (model.needsUpdate()) model.updateModel();
+//		});
 
 		// Set drawing order so closest polygons gets drawn last
 		setDrawOrder();
@@ -136,13 +136,13 @@ public class Game3D extends Game2D {
 	private void mouseMovement(float NewMouseX, float NewMouseY) {
 		float difX = (NewMouseX - width / 2);
 		float difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
-		Log.debug(difY);
+//		Log.debug(difY);
 
 		vertLook -= difY / vertRotSpeed;
 		horLook += difX / horRotSpeed;
 
-		if (vertLook > 0.999f) vertLook = 0.999f;
-		if (vertLook < -0.999f) vertLook = -0.999f;
+		if (vertLook > 0.998f) vertLook = 0.998f;
+		if (vertLook < -0.998f) vertLook = -0.998f;
 
 		updateView();
 	}
@@ -152,12 +152,11 @@ public class Game3D extends Game2D {
 		vCameraDir.x = vCameraPos.x + r * (float) Math.cos(horLook);
 		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
 		vCameraDir.z = vCameraPos.z + vertLook;
+
+//		Models.forEach(model -> model.markDirty());
 	}
 
-//	private void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
-	private void centerMouse() {
-		robot.mouseMove(x + width() / 2, y + height() / 2);
-	}
+	private void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
 
 	private void invisibleMouse() {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -167,17 +166,29 @@ public class Game3D extends Game2D {
 	}
 
 	private void setPolygonOver() {
-		int mX = mouseX - width() / 2;
-		int mY = mouseY - height() / 2;
+//		int mX = mouseX - width() / 2;
+//		int mY = mouseY - height() / 2;
+//
+//		DPolygone.forEach(p -> p.highlight(false));
+//
+//		for (int i = drawOrder.length - 1; i >= 0; i--) {
+//			DPolygon current = DPolygone.get(drawOrder[i]);
+////			if (current.draw && current.visible && current.isOver(mX, mY)) {
+//			if (current.contains(mX, mY)) {
+//				PolygonOver = current;
+//				current.highlight(true);
+//				break;
+//			}
+//		}
 
-		DPolygone.forEach(p -> p.highlight = false);
-
+		PolygonOver = null;
+		DPolygone.forEach(p -> p.drawablePolygon.highlight = false);
 		for (int i = drawOrder.length - 1; i >= 0; i--) {
 			DPolygon current = DPolygone.get(drawOrder[i]);
-//			if (current.draw && current.visible && current.isOver(mX, mY)) {
-			if (current.contains(mX, mY)) {
+//			current.drawablePolygon.highlight = true;
+			if (current.drawablePolygon.draw && current.drawablePolygon.visible && current.contains(width / 2, height / 2)) {
 				PolygonOver = current;
-				current.highlight = true;
+				current.drawablePolygon.highlight = true;
 				break;
 			}
 		}
@@ -186,11 +197,11 @@ public class Game3D extends Game2D {
 	private void setDrawOrder() {
 		DPolygone.clear();
 
-		for (Base3DModel m : Models) {
-			for (DPolygon pol : m.polys) {
-				DPolygone.add(pol);
-			}
-		}
+		Models.forEach(model -> {
+			if (model instanceof DPolygon) DPolygone.add((DPolygon) model);
+			else if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DPolygone.add(pol);
+		});
+
 		float[] dists = new float[DPolygone.size()];
 		drawOrder = new int[DPolygone.size()];
 
@@ -247,8 +258,8 @@ public class Game3D extends Game2D {
 	private class Game3DMouseListeners extends MouseAdapter {
 		@Override
 		public void mousePressed(MouseEvent e) {
-			if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough = false;
-			if (e.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough = true;
+			if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough(false);
+			if (e.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough(true);
 		}
 
 		@Override

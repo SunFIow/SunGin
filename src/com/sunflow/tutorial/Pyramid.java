@@ -1,4 +1,4 @@
-package com.sunflow.tutorial_copy;
+package com.sunflow.tutorial;
 
 import java.awt.Color;
 
@@ -35,7 +35,4 @@ public class Pyramid extends IModel {
 		}
 		addPolygone(polygone);
 	}
-
-	@Override
-	public void updatePolygon() { for (DPolygon poly : polys) poly.updatePolygon(); }
 }

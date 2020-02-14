@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.sunflow.math3d.Vertex3D;
+import com.sunflow.math3d.Vertex3F;
 
 public class TutorialGame3D extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
 
@@ -34,41 +34,44 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	}
 
 	// ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
-	public ArrayList<IModel> Models = new ArrayList<IModel>();
-	public ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
+	private ArrayList<IModel> Models = new ArrayList<IModel>();
+	private ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
 
 	// The polygon that the mouse is currently over
-	public PolygonObject PolygonOver = null;
+	private PolygonObject PolygonOver = null;
 
-	public Vertex3D vCameraPos = new Vertex3D(15, 5, 10);
-	public Vertex3D vCameraDir = new Vertex3D(0, 0, 0);
+	public Vertex3F vCameraPos = new Vertex3F(0, 0, 20);
+	public Vertex3F vCameraDir = new Vertex3F(0, 0, 0);
 
-	public Vertex3D vLightDir = new Vertex3D(1, 1, 1);
+	public Vertex3F vLightDir = new Vertex3F(1, 1, 1);
 
 	// The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
-	public static double zoom = 1000;
+	private float zoom = 1000;
 
-	private double minZoom = 500;
-	private double maxZoom = 2500;
+	public float zoom() { return zoom; }
+
+	private float minZoom = 500;
+	private float maxZoom = 2500;
 
 	// Used for keeping mouse in center
 	private Robot r;
 	@SuppressWarnings("unused")
-	private double mouseX = 0;
+	private float mouseX = 0;
 	@SuppressWarnings("unused")
-	private double mouseY = 0;
+	private float mouseY = 0;
 
-	private double movementSpeed = 0.2;
+	private float movementSpeed = 0.2f;
 
 	// FPS is a bit primitive, you can set the MaxFPS as high as u want
-	private double drawFPS = 0, MaxFPS = 1000, LastRefresh = 0, LastFPSCheck = 0, Checks = 0;
+	private int drawFPS = 0, MaxFPS = 1000, framesSLFC;
+	long LastRefresh = 0, LastFPSCheck = 0;
 
 	@SuppressWarnings("unused")
-	private double SleepTime = 1000.0 / MaxFPS, StartTime = System.currentTimeMillis();
+	private float SleepTime = 1000.0f / MaxFPS, StartTime = System.currentTimeMillis();
 
 	// VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
 	// aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
-	private double vertLook = -0.9, horLook = 0, aimSight = 4, horRotSpeed = 900, vertRotSpeed = 2200, sunPos = 0;
+	private float vertLook = -0.99f, horLook = 0, aimSight = 4, horRotSpeed = 900, vertRotSpeed = 2200, sunPos = 0;
 
 	// will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
 	private int[] newOrder;
@@ -78,9 +81,16 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 
 	public int x, y, width, height;
 
+	private IModel model;
+
 	public TutorialGame3D(int width, int height) {
 		this.width = width;
 		this.height = height;
+		try {
+			r = new Robot();
+		} catch (AWTException e) {
+			e.printStackTrace();
+		}
 
 		addKeyListener(this);
 		setFocusable(true);
@@ -91,19 +101,18 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 
 		invisibleMouse();
 
-		Models.add(new Cube(this, 0, -5, 0, 2, 2, 2, Color.red));
+		Models.add(new Pyramid(this, 0, -5, 0, 2, 2, 2, Color.green));
+
+		Models.add(new Cube(this, 0, 0, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 20, -5, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 22, -5, 0, 2, 2, 2, Color.red));
 		Models.add(new Cube(this, 20, -5, 2, 2, 2, 2, Color.red));
 
-		new GenerateTerrain(this);
-//		Models.add(new com.sunflow.math3d.models.Cube(this, 0, -5, 0, 2, 2, 2, Color.red));
-//		Models.add(new Cube(this, 18, -5, 0, 2, 2, 2, Color.red));
-//		Models.add(new Cube(this, 20, -5, 0, 2, 2, 2, Color.red));
-//		Models.add(new Cube(this, 22, -5, 0, 2, 2, 2, Color.red));
-//		Models.add(new Cube(this, 20, -5, 2, 2, 2, 2, Color.red));
-//		com.sunflow.math3d.models.Cube
+		new GenerateTerrain(this, Models);
+
+		model = new Sphere(this, 50, 0, 15, 10, 30);
+		Models.add(model);
 
 		JFrame F = new JFrame();
 		F.setUndecorated(true);
@@ -118,8 +127,7 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	}
 
 	@Override
-	public void paintComponent(Graphics g) {
-		// Clear screen and draw background color
+	public void paintComponent(Graphics g) { // Clear screen and draw background color
 		g.setColor(new Color(140, 180, 180));
 		g.fillRect(0, 0, width, height);
 
@@ -131,7 +139,12 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		controlSunAndLight();
 
 		// rotate and update shape examples
-		Models.get(0).rotate(0.005);
+		Models.get(0).rotateX(0.005f);
+		Models.get(1).rotateX(0.005f);
+//		for (int i = 1; i < Models.size(); i++) {
+//			Base3DModel m = Models.get(i);
+//			m.rotateX((float) (0.5 * delta));
+//		}
 
 		for (IModel m : Models) m.updatePolygon();
 
@@ -149,7 +162,18 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		drawMouseAim(g);
 
 		// FPS display
-		g.drawString("FPS: " + (int) drawFPS + " (Benchmark)", 40, 40);
+		g.drawString("FPS: " + drawFPS + " (Benchmark)", 40, 40);
+		float x = vCameraPos.x;
+		float y = vCameraPos.y;
+		float z = vCameraPos.z;
+		g.drawString("[" + (int) x + "]" + "[" + (int) y + "]" + "[" + (int) z + "]", 40, 60);
+		x = vCameraDir.x - x;
+		y = vCameraDir.y - y;
+		z = vCameraDir.z - z;
+		g.drawString("[" + x + "]" + "[" + y + "]" + "[" + z + "]", 40, 80);
+
+//		Log.info(vCameraPos);
+//		Log.info(vCameraDir);
 
 		SleepAndRefresh();
 	}
@@ -158,15 +182,13 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 		DPolygons.clear();
 
 		for (IModel m : Models) {
-			if (m instanceof DPolygon) {
+			if (m instanceof DPolygon)
 				DPolygons.add((DPolygon) m);
-			} else if (m instanceof IModel) {
-				for (DPolygon dp : m.polys) {
+			else if (m instanceof IModel)
+				for (DPolygon dp : m.polys)
 					DPolygons.add(dp);
-				}
-			}
 		}
-		double[] k = new double[DPolygons.size()];
+		float[] k = new float[DPolygons.size()];
 		newOrder = new int[DPolygons.size()];
 
 		for (int i = 0; i < DPolygons.size(); i++) {
@@ -174,19 +196,18 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 			newOrder[i] = i;
 		}
 
-		double temp;
+		float temp;
 		int tempr;
-		for (int a = 0; a < k.length - 1; a++)
-			for (int b = 0; b < k.length - 1; b++)
-				if (k[b] < k[b + 1]) {
-					temp = k[b];
-					tempr = newOrder[b];
-					newOrder[b] = newOrder[b + 1];
-					k[b] = k[b + 1];
+		for (int a = 0; a < k.length - 1; a++) for (int b = 0; b < k.length - 1; b++)
+			if (k[b] < k[b + 1]) {
+				temp = k[b];
+				tempr = newOrder[b];
+				newOrder[b] = newOrder[b + 1];
+				k[b] = k[b + 1];
 
-					newOrder[b + 1] = tempr;
-					k[b + 1] = temp;
-				}
+				newOrder[b + 1] = tempr;
+				k[b + 1] = temp;
+			}
 	}
 
 	private void invisibleMouse() {
@@ -203,182 +224,150 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	}
 
 	private void SleepAndRefresh() {
-		long timeSLU = (long) (System.currentTimeMillis() - LastRefresh);
+		long current = System.currentTimeMillis();
+		long timeSLU = current - LastRefresh;
+		long timeSLFC = current - LastFPSCheck;
 
-		Checks++;
-		if (Checks >= 15) {
-			drawFPS = Checks / ((System.currentTimeMillis() - LastFPSCheck) / 1000.0);
-			LastFPSCheck = System.currentTimeMillis();
-			Checks = 0;
+		if (timeSLFC > 1000.0f) {
+			drawFPS = framesSLFC;
+			LastFPSCheck = current;
+			framesSLFC = 0;
 		}
 
-		if (timeSLU < 1000.0 / MaxFPS) {
+		if (timeSLU < 1000.0f / MaxFPS) {
 			try {
-				Thread.sleep((long) (1000.0 / MaxFPS - timeSLU));
+				Thread.sleep((long) (1000.0f / MaxFPS - timeSLU));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 
-		LastRefresh = System.currentTimeMillis();
+		LastRefresh = current;
+		framesSLFC++;
 
 		repaint();
 	}
 
 	private void controlSunAndLight() {
-		sunPos += 0.005;
-		double mapSize = GenerateTerrain.mapSize * GenerateTerrain.Size;
-		vLightDir.x = mapSize / 2 - (mapSize / 2 + Math.cos(sunPos) * mapSize * 10);
-		vLightDir.y = mapSize / 2 - (mapSize / 2 + Math.sin(sunPos) * mapSize * 10);
-		vLightDir.z = -200;
+		sunPos += 0.005f;
+		float mapSize = GenerateTerrain.mapSize * GenerateTerrain.Size;
+		vLightDir.x = mapSize / 2 - (mapSize / 2 + (float) Math.cos(sunPos) * mapSize * 10);
+		vLightDir.y = mapSize / 2 - (mapSize / 2 + (float) Math.sin(sunPos) * mapSize * 10);
+		vLightDir.z = -200.0f;
 	}
 
 	private void cameraMovement() {
-		Vertex3D moveVector = new Vertex3D();
-		Vertex3D viewVector = new Vertex3D(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
-		Vertex3D verticalVector = new Vertex3D(0, 0, 1);
-		Vertex3D sideViewVector = Vertex3D.cross(viewVector, verticalVector).normalized();
+		Vertex3F viewVector = new Vertex3F(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
+		Vertex3F verticalVector = new Vertex3F(0, 0, 1);
+		Vertex3F sideViewVector = Vertex3F.cross(viewVector, verticalVector).normalized();
 
+		Vertex3F moveVector = new Vertex3F();
 		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
 		if (keys[3]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-
 		moveVector.mult(movementSpeed);
 
-		Vertex3D newLocation = Vertex3D.add(vCameraPos, moveVector);
-
-		moveTo(newLocation.x, newLocation.y, newLocation.z);
-	}
-
-	private void moveTo(double x, double y, double z) {
-		vCameraPos.x = x;
-		vCameraPos.y = y;
-		vCameraPos.z = z;
+		vCameraPos.add(moveVector);
 		updateView();
 	}
 
 	private void setPolygonOver() {
 		PolygonOver = null;
+		DPolygons.forEach(p -> p.drawablePolygon.highlight = false);
 		for (int i = newOrder.length - 1; i >= 0; i--) {
 			DPolygon current = DPolygons.get(newOrder[i]);
-			if (current.draw && current.drawablePolygon.visible && current.drawablePolygon.MouseOver()) {
-				PolygonOver = DPolygons.get(newOrder[i]).drawablePolygon;
+//			current.drawablePolygon.highlight = true;
+			if (current.drawablePolygon.draw && current.drawablePolygon.visible && current.drawablePolygon.MouseOver()) {
+				PolygonOver = current.drawablePolygon;
+				current.drawablePolygon.highlight = true;
 				break;
 			}
 		}
 	}
 
-	private void mouseMovement(double NewMouseX, double NewMouseY) {
-		double difX = (NewMouseX - width / 2);
-		double difY = (NewMouseY - height / 2);
-		difY *= 6 - Math.abs(vertLook) * 5;
+	private void mouseMovement(float NewMouseX, float NewMouseY) {
+		float difX = (NewMouseX - width / 2);
+		float difY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
+//		Log.debug(difY);
+
 		vertLook -= difY / vertRotSpeed;
 		horLook += difX / horRotSpeed;
 
-		if (vertLook > 0.999)
-			vertLook = 0.999;
-
-		if (vertLook < -0.999)
-			vertLook = -0.999;
+		if (vertLook > 0.999f) vertLook = 0.999f;
+		if (vertLook < -0.999f) vertLook = -0.999f;
 
 		updateView();
 	}
 
 	private void updateView() {
-		double r = Math.sqrt(1 - (vertLook * vertLook));
-		vCameraDir.x = vCameraPos.x + r * Math.cos(horLook);
-		vCameraDir.y = vCameraPos.y + r * Math.sin(horLook);
+		float r = (float) Math.sqrt(1 - (vertLook * vertLook));
+		vCameraDir.x = vCameraPos.x + r * (float) Math.cos(horLook);
+		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
 		vCameraDir.z = vCameraPos.z + vertLook;
 	}
 
-	private void centerMouse() {
-		try {
-			r = new Robot();
-			r.mouseMove(x + width / 2, y + height / 2);
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
-	}
+	private void centerMouse() { r.mouseMove(x + width / 2, y + height / 2); }
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_W)
-			keys[0] = true;
-		if (e.getKeyCode() == KeyEvent.VK_A)
-			keys[1] = true;
-		if (e.getKeyCode() == KeyEvent.VK_S)
-			keys[2] = true;
-		if (e.getKeyCode() == KeyEvent.VK_D)
-			keys[3] = true;
-		if (e.getKeyCode() == KeyEvent.VK_O)
-			outlines = !outlines;
-		if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
-			System.exit(0);
+		if (e.getKeyCode() == KeyEvent.VK_W) keys[0] = true;
+		if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = true;
+		if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = true;
+		if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = true;
+		if (e.getKeyCode() == KeyEvent.VK_O) outlines = !outlines;
+		if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_W)
-			keys[0] = false;
-		if (e.getKeyCode() == KeyEvent.VK_A)
-			keys[1] = false;
-		if (e.getKeyCode() == KeyEvent.VK_S)
-			keys[2] = false;
-		if (e.getKeyCode() == KeyEvent.VK_D)
-			keys[3] = false;
+		if (e.getKeyCode() == KeyEvent.VK_W) keys[0] = false;
+		if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = false;
+		if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = false;
+		if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = false;
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		mouseMovement(e.getX(), e.getY());
+		mouseX = e.getX();
+		mouseY = e.getY();
+		centerMouse();
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		mouseMovement(e.getX(), e.getY());
+		mouseX = e.getX();
+		mouseY = e.getY();
+		centerMouse();
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough = false;
+		if (e.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough = true;
+	}
+
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		if (e.getUnitsToScroll() > 0) {
+			if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
+		} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	@Override
-	public void mouseDragged(MouseEvent arg0) {
-		mouseMovement(arg0.getX(), arg0.getY());
-		mouseX = arg0.getX();
-		mouseY = arg0.getY();
-		centerMouse();
-	}
+	public void mouseClicked(MouseEvent e) {}
 
 	@Override
-	public void mouseMoved(MouseEvent arg0) {
-		mouseMovement(arg0.getX(), arg0.getY());
-		mouseX = arg0.getX();
-		mouseY = arg0.getY();
-		centerMouse();
-	}
+	public void mouseEntered(MouseEvent e) {}
 
 	@Override
-	public void mouseClicked(MouseEvent arg0) {}
+	public void mouseExited(MouseEvent e) {}
 
 	@Override
-	public void mouseEntered(MouseEvent arg0) {}
-
-	@Override
-	public void mouseExited(MouseEvent arg0) {}
-
-	@Override
-	public void mousePressed(MouseEvent arg0) {
-		if (arg0.getButton() == MouseEvent.BUTTON1)
-			if (PolygonOver != null)
-				PolygonOver.seeThrough = false;
-
-		if (arg0.getButton() == MouseEvent.BUTTON3)
-			if (PolygonOver != null)
-				PolygonOver.seeThrough = true;
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent arg0) {}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent arg0) {
-		if (arg0.getUnitsToScroll() > 0) {
-			if (zoom > minZoom)
-				zoom -= 25 * arg0.getUnitsToScroll();
-		} else {
-			if (zoom < maxZoom)
-				zoom -= 25 * arg0.getUnitsToScroll();
-		}
-	}
+	public void mouseReleased(MouseEvent e) {}
 }

@@ -61,9 +61,9 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	private byte mode;
 
-	private double timePerTickNano, timePerTickMilli;
-	private double timePerFrameNano, timePerFrameMilli;
-	private double infoUpdateIntervall;
+	private float timePerTickNano, timePerTickMilli;
+	private float timePerFrameNano, timePerFrameMilli;
+	private float infoUpdateIntervall;
 
 	private int fps, tps;
 
@@ -71,8 +71,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	protected long frameCount, tickCount;
 	int frames, ticks;
 
-	protected double delta, deltaMin;
-	protected double multiplier, multiplierMin;
+	protected float delta, deltaMin;
+	protected float multiplier, multiplierMin;
 
 	protected boolean fullscreen;
 
@@ -350,7 +350,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	final protected void noLoop() {
 		noLoop = true;
 		running = false;
-		timePerFrameNano = Double.MAX_VALUE;
+		timePerFrameNano = MAX_FLOAT;
 	}
 
 	final protected void toggleFullscreen() {
@@ -551,14 +551,13 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 				if (timeSinceLastTick >= timePerTickNano) {
 					timeSinceLastTick -= timePerTickNano;
-					delta = (currentTime - lastTick) / NANOSECOND;
+					delta = (currentTime - lastTick) / (float) NANOSECOND;
 					delta = Math.min(delta, deltaMin);
 					multiplier = (currentTime - lastTick) / timePerTickNano;
 					multiplier = Math.min(multiplier, multiplierMin);
 					lastTick = currentTime;
-					if (!paused) {
-						if (mode == ASYNC) tick();
-					}
+					if (!paused) if (mode == ASYNC) tick();
+
 				}
 			}
 		}
@@ -606,59 +605,4 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 			}
 		}
 	}
-
-//	@Override
-//	public void run() {
-//		long currentTime = 0;
-//		long passedTime = 0;
-//		long previousTime = System.nanoTime();
-//		long lastTick = System.nanoTime();
-//
-//		double timeSinceLastTick = 0;
-//		double timeSinceLastFrame = 0;
-//		double timeSinceLastInfoUpdate = 0;
-//
-//		int ticks = 0;
-//
-////		render();
-//		if (noLoop) {
-//			render();
-////			screen.render();
-//			return;
-//		}
-//		while (running) {
-//			currentTime = System.nanoTime();
-//			passedTime = currentTime - previousTime;
-//			previousTime = currentTime;
-//
-//			timeSinceLastTick += passedTime;
-//			timeSinceLastFrame += passedTime;
-//			timeSinceLastInfoUpdate += passedTime;
-//
-//			if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
-//				timeSinceLastInfoUpdate -= infoUpdateIntervall;
-//				tps = ticks;
-//				ticks = 0;
-//				fps = frames;
-//				frames = 0;
-//			}
-//
-//			if (timeSinceLastTick >= timePerTickNano) {
-//				timeSinceLastTick -= timePerTickNano;
-//				delta = (currentTime - lastTick) / NANOSECOND;
-//				delta = Math.min(delta, deltaMin);
-//				multiplier = (currentTime - lastTick) / timePerTickNano;
-//				multiplier = Math.min(multiplier, multiplierMin);
-//				lastTick = currentTime;
-//				ticks++;
-//				if (!paused) tick();
-//			}
-//
-//			if (timeSinceLastFrame >= timePerFrameNano) {
-//				timeSinceLastFrame -= timePerFrameNano;
-//				render();
-////				screen.render();
-//			}
-//		}
-//	}
 }

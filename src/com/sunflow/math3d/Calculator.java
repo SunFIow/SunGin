@@ -62,8 +62,8 @@ public class Calculator {
 		w2 = Vertex3F.cross(viewVector, w1).normalized();
 
 		calcFocusPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, screen.vCameraDir.x, screen.vCameraDir.y, screen.vCameraDir.z);
-		calcFocusPos[0] = screen.zoom * calcFocusPos[0];
-		calcFocusPos[1] = screen.zoom * calcFocusPos[1];
+		calcFocusPos[0] = screen.zoom() * calcFocusPos[0];
+		calcFocusPos[1] = screen.zoom() * calcFocusPos[1];
 
 //		Log.info(rotVector);
 	}

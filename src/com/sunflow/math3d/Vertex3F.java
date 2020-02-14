@@ -5,30 +5,13 @@ import com.sunflow.math.Vertex2F;
 public class Vertex3F extends Vertex2F implements Cloneable {
 	public float z;
 
-	public float x2D;
-	public float y2D;
+	public Vertex3F() { this(0, 0, 0); }
 
-	public Vertex3F() {
-		this(0, 0, 0);
-	}
-
-	public Vertex3F(Vertex3F v) {
-		this(v.x, v.y, v.z);
-	}
+	public Vertex3F(Vertex3F v) { this(v.x, v.y, v.z); }
 
 	public Vertex3F(float x, float y, float z) {
-		this(x, y, z, 0, 0);
-	}
-
-	public Vertex3F(Vertex3F v, float x2D, float y2D) {
-		this(v.x, v.y, v.z, x2D, y2D);
-	}
-
-	public Vertex3F(float x, float y, float z, float x2D, float y2D) {
 		super(x, y);
 		this.z = z;
-		this.x2D = x2D;
-		this.y2D = y2D;
 	}
 
 	public static Vertex3F of() {
@@ -48,17 +31,7 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return (Vertex3F) super.clone();
 	}
 
-	public int z() {
-		return (int) z;
-	}
-
-	public int x2D() {
-		return (int) x2D;
-	}
-
-	public int y2D() {
-		return (int) y2D;
-	}
+	public int z() { return (int) z; }
 
 	public Vertex3F set(float x, float y, float z) {
 		this.x = x;

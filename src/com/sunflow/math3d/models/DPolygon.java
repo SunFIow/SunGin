@@ -2,7 +2,6 @@ package com.sunflow.math3d.models;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math3d.Calculator;
@@ -13,35 +12,28 @@ public class DPolygon extends BaseModel {
 
 	public Vertex3F[] vertices = new Vertex3F[0];
 
-	private Polygon p;
-
 	public float dist;
 
-	public boolean visible;
-	public boolean draw;
-	public boolean highlight;
-	public boolean seeThrough;
+	private Game3D screen;
 
-	private float lighting = 1;
+	public PolygonObject drawablePolygon;
+//	private Polygon p;
+//	public boolean draw, visible, seeThrough, highlight;
+//	private float lighting = 1;
 
-	private Game3D game;
-
-	public DPolygon(Game3D game, Vertex3F... vs) {
-		this(game, 0, 0, 0, vs);
+	public DPolygon(Game3D screen, Vertex3F... vs) {
+		this(screen, 0, 0, 0, vs);
 	}
 
-	public DPolygon(Game3D game, float x, float y, float z, Vertex3F... vs) {
-		this(new Vertex3F(x, y, z), game, vs);
+	public DPolygon(Game3D screen, float x, float y, float z, Vertex3F... vs) {
+		this(new Vertex3F(x, y, z), screen, vs);
 	}
 
-	public DPolygon(Vertex3F pos, Game3D game, Vertex3F... vs) {
-		this.game = game;
+	public DPolygon(Vertex3F pos, Game3D screen, Vertex3F... vs) {
+		this.screen = screen;
 		this.pos = pos;
-		p = new Polygon();
+		this.drawablePolygon = new PolygonObject(screen, new float[vs.length], new float[vs.length]);
 
-		visible = true;
-		draw = true;
-		highlight = false;
 		addVertices(vs);
 	}
 
@@ -51,78 +43,75 @@ public class DPolygon extends BaseModel {
 			newVertices[i] = vertices[i];
 		}
 		for (int i = 0; i < vs.length; i++) {
-			newVertices[vertices.length + i] = vs[i];
+			newVertices[vertices.length + i] = vs[i].clone();
 		}
 		vertices = newVertices;
 	}
 
+//	@Override
+//	public void project() {
+//		int[] xP = new int[vertices.length];
+//		int[] yP = new int[vertices.length];
+//
+//		for (int i = 0; i < vertices.length; i++) {
+//			Vertex3F v = vertices[i];
+//			float scale = fl / (fl + parent.pos.z + pos.z + v.z);
+//
+//			v.x2D = (parent.pos.x + pos.x + v.x) * scale;
+//			v.y2D = (parent.pos.y + pos.y + v.y) * scale;
+//			xP[i] = v.x2D();
+//			yP[i] = v.y2D();
+//		}
+//
+//		p.reset();
+//		for (int i = 0; i < xP.length; i++) {
+//			p.xpoints[i] = xP[i];
+//			p.ypoints[i] = yP[i];
+//		}
+//		p.npoints = xP.length;
+//
+//		dist = getDistToP();
+//
+//		calcLighting();
+//
+//		needsUpdate = false;
+//	}
+
 	@Override
-	public void project() {
-		int[] xP = new int[vertices.length];
-		int[] yP = new int[vertices.length];
-
+	public void updateModel() {
+		float[] newX = new float[vertices.length];
+		float[] newY = new float[vertices.length];
+		boolean draw = true;
 		for (int i = 0; i < vertices.length; i++) {
 			Vertex3F v = vertices[i];
-			float scale = fl / (fl + parent.pos.z + pos.z + v.z);
-
-			v.x2D = (parent.pos.x + pos.x + v.x) * scale;
-			v.y2D = (parent.pos.y + pos.y + v.y) * scale;
-			xP[i] = v.x2D();
-			yP[i] = v.y2D();
-		}
-
-		p.reset();
-		for (int i = 0; i < xP.length; i++) {
-			p.xpoints[i] = xP[i];
-			p.ypoints[i] = yP[i];
-		}
-		p.npoints = xP.length;
-
-		dist = getDistToP();
-
-		calcLighting();
-
-		needsUpdate = false;
-	}
-
-	public void updatePolygon() {
-		draw = true;
-		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
-			float[] calcPos;
-			float newX = 0, newY = 0;
-			calcPos = Calculator.CalculatePositionP(game.vCameraPos, game.vCameraDir, v.x, v.y, v.z);
-			newX = (game.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * game.zoom;
-			newY = (game.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * game.zoom;
+			float x = parent.pos.x + pos.x + v.x;
+			float y = parent.pos.y + pos.y + v.y;
+			float z = parent.pos.z + pos.z + v.z;
+			float[] calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
+			newX[i] = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * screen.zoom();
+			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
 			if (Calculator.t < 0) draw = false;
-			v.x2D = newX;
-			v.y2D = newY;
 		}
-		dist = getDistToP();
 
 		calcLighting();
 
-		p.reset();
-		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
-			p.xpoints[i] = v.x2D();
-			p.ypoints[i] = v.y2D();
-		}
-		p.npoints = vertices.length;
-		needsUpdate = false;
+		drawablePolygon.draw = draw;
+		drawablePolygon.updatePolygon(newX, newY);
+		dist = getDistToP(screen.vCameraPos.x, screen.vCameraPos.y, screen.vCameraPos.z);
+//		needsUpdate = false;
 	}
 
 	private void calcLighting() {
 		Plane lightingPlane = new Plane(this);
-		float angle = (float) Math.acos(((lightingPlane.NV.x * game.vLightDir.x) + (lightingPlane.NV.y * game.vLightDir.y) + (lightingPlane.NV.z * game.vLightDir.z)) / (game.vLightDir.mag()));
+		float angle = (float) Math.acos(((lightingPlane.NV.x * screen.vLightDir.x) + (lightingPlane.NV.y * screen.vLightDir.y) + (lightingPlane.NV.z * screen.vLightDir.z)) / (screen.vLightDir.mag()));
 //		float angle = Math.acos(Vertex3F.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
 
-		lighting = (float) (0.2 + 1 - Math.sqrt(Math.toDegrees(angle) / 180));
+		float lighting = (float) (0.2 + 1 - Math.sqrt(Math.toDegrees(angle) / 180));
 
-		if (lighting > 1)
-			lighting = 1;
-		if (lighting < 0)
-			lighting = 0;
+		if (lighting > 1) lighting = 1;
+		if (lighting < 0) lighting = 0;
+
+		drawablePolygon.lighting = lighting;
 	}
 
 	@Override
@@ -136,7 +125,7 @@ public class DPolygon extends BaseModel {
 			v.y = newY;
 			v.z = newZ;
 		}
-		needsUpdate = true;
+//		markDirty();
 	}
 
 	@Override
@@ -150,7 +139,7 @@ public class DPolygon extends BaseModel {
 			v.x = newX;
 			v.z = newZ;
 		}
-		needsUpdate = true;
+//		markDirty();
 	}
 
 	@Override
@@ -164,35 +153,51 @@ public class DPolygon extends BaseModel {
 			v.x = newX;
 			v.y = newY;
 		}
-		needsUpdate = true;
+//		markDirty();
 	}
 
-	@Override
-	public void render(Graphics2D g, boolean drawFill, Color fill, boolean drawOutline, Color outline) {
-		if (!drawFill && !drawOutline) return;
-		if (drawFill) {
-//				g.setColor(fill);
-			g.setColor(new Color((int) (fill.getRed() * lighting), (int) (fill.getGreen() * lighting), (int) (fill.getBlue() * lighting)));
+	public float getDistToP() { return getDistToP(screen.vCameraPos); }
 
-			if (!seeThrough) g.fillPolygon(p);
-		}
-		if (drawOutline) {
-//				g.setColor(outline);
-			g.setColor(new Color((int) (outline.getRed() * lighting), (int) (outline.getGreen() * lighting), (int) (outline.getBlue() * lighting)));
-			g.drawPolygon(p);
-		}
-//			if (screen.polygonOver == this) {
-		if (highlight) {
-			g.setColor(new Color(255, 255, 0, 35));
-			g.fillPolygon(p);
-		}
-	}
+	public float getDistToP(Vertex3F p) { return getDistToP(p.x, p.y, p.z); }
 
-	public float getDistToP() {
+	public float getDistToP(float x, float y, float z) {
 		float total = 0;
-		for (Vertex3F v : vertices) total += Vertex3F.add(v, parent.pos).dist(game.vCameraPos);
+		for (int i = 0; i < vertices.length; i++) {
+			Vertex3F v = vertices[i];
+			float _x = parent.pos.x + pos.x + v.x;
+			float _y = parent.pos.y + pos.y + v.y;
+			float _z = parent.pos.z + pos.z + v.z;
+			total += Math.sqrt((x - _x) * (x - _x)
+					+ (y - _y) * (y - _y)
+					+ (z - _z) * (z - _z));
+		}
 		return total / vertices.length;
 	}
 
-	public boolean contains(float x, float y) { return p.contains(x, y); }
+	public boolean contains(float x, float y) { return drawablePolygon.contains(x, y); }
+
+	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderOutline, Color outline, boolean highlight, boolean seeThrough) {
+		drawablePolygon.renderFill(renderFill);
+		drawablePolygon.fill(fill);
+		drawablePolygon.renderOutline(renderOutline);
+		drawablePolygon.outline(outline);
+		drawablePolygon.highlight(highlight);
+		drawablePolygon.seeThrough(seeThrough);
+		drawablePolygon.render(g);
+	}
+
+	@Override
+	public void render(Graphics2D g) { drawablePolygon.render(g); }
+
+	public void fill(Color fill) { drawablePolygon.fill(fill); }
+
+	public void outline(Color outline) { drawablePolygon.outline(outline); }
+
+	public void renderFill(boolean renderFill) { drawablePolygon.renderFill(renderFill); }
+
+	public void renderOutline(boolean renderOutline) { drawablePolygon.renderOutline(renderOutline); }
+
+	public void highlight(boolean highlight) { drawablePolygon.highlight(highlight); }
+
+	public void seeThrough(boolean seeThrough) { drawablePolygon.seeThrough(seeThrough); }
 }

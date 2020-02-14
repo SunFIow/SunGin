@@ -1,9 +1,10 @@
-package com.sunflow.tutorial_copy;
+package com.sunflow.math3d.models;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Random;
 
+import com.sunflow.game.Game3D;
 import com.sunflow.math3d.Vertex3F;
 
 public class GenerateTerrain {
@@ -15,7 +16,7 @@ public class GenerateTerrain {
 	private Color G = new Color(155, 155, 155);
 //	static Color G = new Color(120, 100, 80);
 
-	public GenerateTerrain(TutorialGame3D screen, ArrayList<IModel> Models) {
+	public GenerateTerrain(Game3D screen, ArrayList<BaseModel> Models) {
 		float[] values1 = new float[mapSize];
 		float[] values2 = new float[mapSize];
 
@@ -46,10 +47,10 @@ public class GenerateTerrain {
 					Vertex3F v5 = new Vertex3F(Size + Size * x, Size * y, values1[x + 1]);
 
 					DPolygon pol0 = new DPolygon(screen, v0, v1, v2);
-					pol0.drawablePolygon.fill = G;
+					pol0.fill(G);
 
 					DPolygon pol1 = new DPolygon(screen, v3, v4, v5);
-					pol1.drawablePolygon.fill = G;
+					pol1.fill(G);
 
 					Models.add(pol0);
 					Models.add(pol1);
@@ -81,10 +82,10 @@ public class GenerateTerrain {
 					Vertex3F v5 = new Vertex3F(Size + Size * x, Size * (y + 1), values1[x + 1]);
 
 					DPolygon pol0 = new DPolygon(screen, v0, v1, v2);
-					pol0.drawablePolygon.fill = G;
+					pol0.fill(G);
 
 					DPolygon pol1 = new DPolygon(screen, v3, v4, v5);
-					pol1.drawablePolygon.fill = G;
+					pol1.fill(G);
 
 					Models.add(pol0);
 					Models.add(pol1);

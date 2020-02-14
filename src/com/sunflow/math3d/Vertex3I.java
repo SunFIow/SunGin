@@ -5,9 +5,6 @@ import com.sunflow.math.Vertex2I;
 public class Vertex3I extends Vertex2I implements Cloneable {
 	public int z;
 
-	public int x2D;
-	public int y2D;
-
 	public Vertex3I() {
 		this(0, 0, 0);
 	}
@@ -17,18 +14,8 @@ public class Vertex3I extends Vertex2I implements Cloneable {
 	}
 
 	public Vertex3I(int x, int y, int z) {
-		this(x, y, z, 0, 0);
-	}
-
-	public Vertex3I(Vertex3I v, int x2D, int y2D) {
-		this(v.x, v.y, v.z, x2D, y2D);
-	}
-
-	public Vertex3I(int x, int y, int z, int x2D, int y2D) {
 		super(x, y);
 		this.z = z;
-		this.x2D = x2D;
-		this.y2D = y2D;
 	}
 
 	public static Vertex3I of() {

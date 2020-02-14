@@ -5,30 +5,13 @@ import com.sunflow.math.Vertex2D;
 public class Vertex3D extends Vertex2D implements Cloneable {
 	public double z;
 
-	public double x2D;
-	public double y2D;
+	public Vertex3D() { this(0, 0, 0); }
 
-	public Vertex3D() {
-		this(0, 0, 0);
-	}
-
-	public Vertex3D(Vertex3D v) {
-		this(v.x, v.y, v.z);
-	}
+	public Vertex3D(Vertex3D v) { this(v.x, v.y, v.z); }
 
 	public Vertex3D(double x, double y, double z) {
-		this(x, y, z, 0, 0);
-	}
-
-	public Vertex3D(Vertex3D v, double x2D, double y2D) {
-		this(v.x, v.y, v.z, x2D, y2D);
-	}
-
-	public Vertex3D(double x, double y, double z, double x2D, double y2D) {
 		super(x, y);
 		this.z = z;
-		this.x2D = x2D;
-		this.y2D = y2D;
 	}
 
 	public static Vertex3D of() {
@@ -48,17 +31,7 @@ public class Vertex3D extends Vertex2D implements Cloneable {
 		return (Vertex3D) super.clone();
 	}
 
-	public int z() {
-		return (int) z;
-	}
-
-	public int x2D() {
-		return (int) x2D;
-	}
-
-	public int y2D() {
-		return (int) y2D;
-	}
+	public int z() { return (int) z; }
 
 	public Vertex3D set(double x, double y, double z) {
 		this.x = x;
