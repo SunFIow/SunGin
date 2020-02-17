@@ -17,6 +17,7 @@ import java.awt.image.BufferStrategy;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+@Deprecated
 public class Screen {
 
 	private Game2D game;

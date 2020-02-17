@@ -252,9 +252,9 @@ public class Game3D extends Game2D {
 
 	@Override
 	void updateMousePosition(int x, int y) {
+		if (!canvas.hasFocus()) return;
 		mouseMovement(x, y);
-		mouseX = x;
-		mouseY = y;
+		super.updateMousePosition(x, y);
 		centerMouse();
 	}
 

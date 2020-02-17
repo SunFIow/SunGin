@@ -24,6 +24,7 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
+import com.sunflow.gfx.DImage;
 import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
@@ -46,6 +47,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	private boolean createdCanvas;
 
 	// Overlay
+//	protected DImage overlay;
 	protected boolean showOverlay;
 	protected boolean showInfo;
 	protected boolean showCrosshair;
@@ -65,7 +67,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	private float timePerFrameNano, timePerFrameMilli;
 	private float infoUpdateIntervall;
 
-	private int fps, tps;
+	protected int fps, tps;
 
 	protected int frameRate, tickRate;
 	protected long frameCount, tickCount;
@@ -147,7 +149,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 //		perlinnoise = new ImprovedNoise();
 		frameRate(60);
 		mode(SYNC);
-		noSmooth();
 
 		multiplierMin = 5;
 		deltaMin = timePerFrameNano / NANOSECOND * multiplierMin;
@@ -238,8 +239,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	void updateMousePosition(int x, int y) {
 		prevMouseX = mouseX;
 		prevMouseY = mouseY;
-		mouseX = x;
-		mouseY = y;
+		mouseX = x / scaleWidth;
+		mouseY = y / scaleHeight;
 	}
 
 	private void cResized(int w, int h) {
@@ -297,6 +298,12 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		paused = false;
 
 		super.defaultSettings();
+
+//		noSmooth();
+		smooth();
+
+		overlay = new DImage(scaledWidth, scaledHeight, ARGB);
+		overlay.smooth();
 	}
 
 	final protected void start() {
@@ -437,18 +444,23 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		if (!createdCanvas) return;
 		if (!running) return;
 		privateDraw();
+		push();
 		draw();
+		pop();
+		push();
 		render(graphics);
+		pop();
 
 		if (showOverlay) drawOverlay();
 
-//		Drawing the image.
+//		Drawing the image
 //		screen.render();
 		do {
 			do {
 				Graphics g = bs.getDrawGraphics();
 //				g.drawImage(image, 0, 0, null);
 				g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
+				g.drawImage(overlay.image, 0, 0, null);
 				g.dispose();
 			} while (bs.contentsRestored());
 			bs.show();
@@ -465,35 +477,40 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		handleOverlay();
 	}
 
+	final public void showCrosshair(boolean show) {
+		showCrosshair = show;
+		handleOverlay();
+	}
+
 	private void handleOverlay() {
-		if (showInfo) showOverlay = true; // if(showInfo || showX || show??? || ...
+		if (showInfo || showCrosshair) showOverlay = true; // if(showInfo || showX || show??? || ...
 		else showOverlay = false;
 	}
 
 	final public void drawOverlay() {
-		push();
-		colorMode(RGB);
-		smooth();
-		fill(255, 255, 0);
-		stroke(0, 100);
-		strokeWeight(5);
-		textSize(13);
-		textAlign(LEFT, TOP);
+		overlay.clear();
 		if (showInfo) drawInfo();
 		if (showCrosshair) drawCrosshair();
 		// if(showX) drawX();
 		// if(show???) draw???();
-		pop();
 	}
 
 	final public void drawInfo() {
 		List<String> infos = getInfo();
 		if (infos == null || infos.isEmpty()) return;
 
+//		overlay.colorMode(RGB);
+//		overlay.smooth();
+		overlay.fill(255, 255, 0);
+		overlay.stroke(0, 100);
+		overlay.strokeWeight(5);
+		overlay.textSize(13);
+		overlay.textAlign(LEFT, TOP);
+
 		float xoff = 5, yoff = 5;
 		float ychange = textSize * 1.25f;
 		for (String info : infos) {
-			text(info, xoff, yoff);
+			overlay.text(info, xoff, yoff);
 			yoff += ychange;
 		}
 	}

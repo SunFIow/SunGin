@@ -23,7 +23,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import com.sunflow.gfx.DImage;
-import com.sunflow.math.Vertex2D;
+import com.sunflow.math.Vertex2F;
 
 abstract class GameBase extends DImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
@@ -31,15 +31,21 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 	public float width;
 	public float height;
 
+	protected DImage overlay;
+
 	public int width() { return (int) width; }
 
 	public int height() { return (int) height; }
 
+	public int mouseX() { return (int) mouseX; }
+
+	public int mouseY() { return (int) mouseY; }
+
 	protected int frameWidth, frameHeight;
 
-	protected int mouseX, mouseY;
-	protected int prevMouseX, prevMouseY;
-	protected int mouseScreenX, mouseScreenY;
+	protected float mouseX, mouseY;
+	protected float prevMouseX, prevMouseY;
+	protected float mouseScreenX, mouseScreenY;
 
 	protected float aimSize;
 	protected Color aimColor;
@@ -162,42 +168,42 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 	public final void drawCrosshair() {
 		int aimStrokeWidth = (Math.round(aimSize / 8));
 		int aimStroke = aimStrokeWidth * 2;
-		noStroke();
-		fill(aimColor.getRGB());
-		rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
+		overlay.noStroke();
+		overlay.fill(aimColor.getRGB());
+		overlay.rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
-	public final void moveMouse(Vertex2D v) {
+	public final void moveMouse(Vertex2F v) {
 		moveMouse(v.x(), v.y());
 	}
 
-	public final void moveMouse(int x, int y) {
+	public final void moveMouse(float x, float y) {
 		moveMouseTo(mouseX + x, mouseY + y);
 	}
 
-	public final void moveMouseTo(Vertex2D v) {
-		moveMouseTo(v.x(), v.y());
+	public final void moveMouseTo(Vertex2F v) {
+		moveMouseTo(v.x, v.y);
 	}
 
-	public void moveMouseTo(int x, int y) {
-		robot.mouseMove(x() + x, y() + y);
+	public void moveMouseTo(float x, float y) {
+		robot.mouseMove((int) (x() + x), (int) (y() + y));
 	}
 
-	public final void moveMouseOnScreen(Vertex2D v) {
-		moveMouseOnScreen(v.x(), v.y());
+	public final void moveMouseOnScreen(Vertex2F v) {
+		moveMouseOnScreen(v.x, v.y);
 	}
 
-	public final void moveMouseOnScreen(int x, int y) {
+	public final void moveMouseOnScreen(float x, float y) {
 		moveMouseOnScreenTo(mouseScreenX + x, mouseScreenY + y);
 	}
 
-	public final void moveMouseOnScreenTo(Vertex2D v) {
-		moveMouseOnScreenTo(v.x(), v.y());
+	public final void moveMouseOnScreenTo(Vertex2F v) {
+		moveMouseOnScreenTo(v.x, v.y);
 	}
 
-	public final void moveMouseOnScreenTo(int x, int y) {
-		robot.mouseMove(x, y);
+	public final void moveMouseOnScreenTo(float x, float y) {
+		robot.mouseMove((int) x, (int) y);
 	}
 
 	@Override
