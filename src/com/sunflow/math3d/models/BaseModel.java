@@ -20,10 +20,28 @@ public abstract class BaseModel implements MathUtils {
 
 		@Override
 		public void render() {}
+
+		@Override
+		public void highlight(boolean highlight) {}
+
+		@Override
+		public void seeThrough(boolean seeThrough) {}
+
+		@Override
+		public boolean draw() { return false; }
+
+		@Override
+		public boolean visible() { return false; }
+
+		@Override
+		public float dist() { return 0; }
+
+		@Override
+		public boolean contains(float x, float y) { return false; }
 	};
 
 	protected BaseModel parent = ZERO;
-	protected Vertex3F pos = new Vertex3F();
+	public Vertex3F pos = new Vertex3F();
 
 //	protected boolean needsUpdate = true;
 
@@ -52,4 +70,16 @@ public abstract class BaseModel implements MathUtils {
 	public abstract void rotateZ(float angle);
 
 	public abstract void render();
+
+	public abstract void highlight(boolean highlight);
+
+	public abstract void seeThrough(boolean seeThrough);
+
+	public abstract boolean draw();
+
+	public abstract boolean visible();
+
+	public abstract float dist();
+
+	public abstract boolean contains(float x, float y);
 }

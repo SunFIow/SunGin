@@ -29,8 +29,8 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 //		for (DPolygon pol : polys) pol.markDirty();
 	}
 
-	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderOutline, Color outline, boolean highlight, boolean seeThrough) {
-		for (DPolygon pol : polys) pol.render(renderFill, fill, renderOutline, outline, highlight, seeThrough);
+	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderStroke, Color stroke, boolean highlight, boolean seeThrough) {
+		for (DPolygon pol : polys) pol.render(renderFill, fill, renderStroke, stroke, highlight, seeThrough);
 	}
 
 	@Override
@@ -79,14 +79,40 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 
 	public void fill(Color fill) { for (DPolygon pol : polys) pol.fill(fill); }
 
-	public void outline(Color outline) { for (DPolygon pol : polys) pol.outline(outline); }
+	public void stroke(Color stroke) { for (DPolygon pol : polys) pol.stroke(stroke); }
 
 	public void renderFill(boolean renderFill) { for (DPolygon pol : polys) pol.renderFill(renderFill); }
 
-	public void renderOutline(boolean renderOutline) { for (DPolygon pol : polys) pol.renderOutline(renderOutline); }
+	public void renderStroke(boolean renderStroke) { for (DPolygon pol : polys) pol.renderStroke(renderStroke); }
 
+	@Override
 	public void highlight(boolean highlight) { for (DPolygon pol : polys) pol.highlight(highlight); }
 
+	@Override
 	public void seeThrough(boolean seeThrough) { for (DPolygon pol : polys) pol.seeThrough(seeThrough); }
 
+	@Override
+	public boolean draw() {
+		for (DPolygon pol : polys) if (pol.draw()) return true;
+		return false;
+	}
+
+	@Override
+	public boolean visible() {
+		for (DPolygon pol : polys) if (pol.visible()) return true;
+		return false;
+	}
+
+	@Override
+	public float dist() {
+		float total = 0;
+		for (DPolygon pol : polys) total += pol.dist();
+		return total / polys.length;
+	}
+
+	@Override
+	public boolean contains(float x, float y) {
+		for (DPolygon pol : polys) if (pol.contains(x, y)) return true;
+		return false;
+	}
 }

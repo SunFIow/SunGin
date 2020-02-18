@@ -1,5 +1,6 @@
 package com.sunflow.util;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -80,4 +81,13 @@ public interface GeometryUtils {
 	default boolean hitCircleCircle(double x1, double y1, double r1, double x2, double y2, double r2) {
 		return (StaticUtils.instance.dist(x1, y1, x2, y2) <= r1 + r2);
 	}
+
+	default boolean hitBoxPoint(float bx, float by, float w, float h, float px, float py) {
+		return new Rectangle2D.Double(bx, by, w, h).contains(px, py);
+	}
+
+	default double distLinePoint(float x1, float y1, float x2, float y2, float px, float py) {
+		return Line2D.ptLineDist(x1, y1, x2, y2, px, py);
+	}
+
 }

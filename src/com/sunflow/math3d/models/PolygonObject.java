@@ -5,27 +5,24 @@ import java.awt.Polygon;
 
 import com.sunflow.game.Game3D;
 
-public class PolygonObject {
+public class PolygonObject extends DrawableObject {
 
 	private Polygon P;
 
-	public boolean draw = true, visible = true, seeThrough, highlight;
-	public float lighting = 1;
-
 	public Color fill = Color.magenta;
-	public Color outline = new Color(10, 10, 10);
-	protected boolean renderFill = true, renderOutline = true;
+	public Color stroke = new Color(10, 10, 10);
+	protected boolean renderFill = true, renderStroke = true;
 
-	private Game3D screen;
+	public float strokeWeight = 1;
 
 	public PolygonObject(Game3D screen, float[] x, float[] y) {
-		this.screen = screen;
+		super(screen);
 
 		P = new Polygon();
 		for (int i = 0; i < x.length; i++) P.addPoint((int) x[i], (int) y[i]);
 	}
 
-	public void updatePolygon(float[] x, float[] y) {
+	public void update(float[] x, float[] y) {
 		P.reset();
 		for (int i = 0; i < x.length; i++) {
 			P.xpoints[i] = (int) x[i];
@@ -34,19 +31,32 @@ public class PolygonObject {
 		P.npoints = x.length;
 	}
 
+	@Override
 	public void render() {
 		if (!draw || !visible) return;
+		float r = fill.getRed();
+		float g = fill.getGreen();
+		float b = fill.getBlue();
+		float a = seeThrough ? 100 : 255;
 
-		if (seeThrough) {
-			screen.stroke((fill.getRed() * lighting), (fill.getGreen() * lighting), (fill.getBlue() * lighting));
-			screen.strokeShape(P);
-		} else {
-			screen.fill((fill.getRed() * lighting), (fill.getGreen() * lighting), (fill.getBlue() * lighting));
-			screen.fillShape(P);
+		if (useLighting) {
+			r *= lighting;
+			g *= lighting;
+			b *= lighting;
 		}
 
-		if (renderOutline) {
-			screen.stroke(0, 0, 0);
+		if (renderFill) {
+			screen.fill(r, g, b, a);
+			screen.fillShape(P);
+		} else {
+			screen.stroke(r, g, b, a);
+			screen.strokeWeight(strokeWeight);
+			screen.strokeShape(P);
+		}
+
+		if (renderStroke) {
+			screen.stroke(stroke.getRed(), stroke.getGreen(), stroke.getBlue());
+			screen.strokeWeight(strokeWeight);
 			screen.strokeShape(P);
 		}
 
@@ -56,14 +66,45 @@ public class PolygonObject {
 		}
 	}
 
-	// If seeThrough and renderOutline only renders a black stroke instead of colored and black
+	@Override
+	public boolean contains(float x, float y) { return P.contains(x, y); }
+
+	public void fill(Color fill) {
+		this.fill = fill;
+	}
+
+	public void stroke(Color stroke) {
+		this.stroke = stroke;
+	}
+
+	public void renderFill(boolean renderFill) {
+		this.renderFill = renderFill;
+	}
+
+	public void renderStroke(boolean renderStroke) {
+		this.renderStroke = renderStroke;
+	}
+
+	public void strokeWeight(float strokeWeight) {
+		this.strokeWeight = strokeWeight;
+	}
+
+	public void highlight(boolean highlight) {
+		this.highlight = highlight;
+	}
+
+	public void seeThrough(boolean seeThrough) {
+		this.seeThrough = seeThrough;
+	}
+
+	// If seeThrough and renderStroke only renders a black stroke instead of colored and black
 	// no improvment observed
 
 //	public void render() {
 //		if (!draw || !visible) return;
 //		
 //		if (seeThrough) {
-//			if (renderOutline) {
+//			if (renderStroke) {
 //				screen.stroke(0, 0, 0);
 //				screen.strokeShape(P);
 //			} else {
@@ -76,7 +117,7 @@ public class PolygonObject {
 //				screen.fillShape(P);
 //			}
 //		} else {
-//			if (renderOutline) {
+//			if (renderStroke) {
 //				screen.fill((fill.getRed() * lighting), (fill.getGreen() * lighting), (fill.getBlue() * lighting));
 //				screen.fillShape(P);
 //				screen.stroke(0, 0, 0);
@@ -92,30 +133,4 @@ public class PolygonObject {
 //			}
 //		}
 //	}
-
-	public boolean contains(float x, float y) { return P.contains(x, y); }
-
-	public void fill(Color fill) {
-		this.fill = fill;
-	}
-
-	public void outline(Color outline) {
-		this.outline = outline;
-	}
-
-	public void renderFill(boolean renderFill) {
-		this.renderFill = renderFill;
-	}
-
-	public void renderOutline(boolean renderOutline) {
-		this.renderOutline = renderOutline;
-	}
-
-	public void highlight(boolean highlight) {
-		this.highlight = highlight;
-	}
-
-	public void seeThrough(boolean seeThrough) {
-		this.seeThrough = seeThrough;
-	}
 }

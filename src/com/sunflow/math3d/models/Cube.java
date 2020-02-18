@@ -46,7 +46,6 @@ public class Cube extends Base3DModel {
 		}
 
 		addPolygone(polygone);
-
 	}
 
 }

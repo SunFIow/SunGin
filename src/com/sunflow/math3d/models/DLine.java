@@ -7,49 +7,34 @@ import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.Plane;
 import com.sunflow.math3d.Vertex3F;
 
-public class DPolygon extends BaseModel {
+public class DLine extends BaseModel {
 
-	public Vertex3F[] vertices = new Vertex3F[0];
+	public Vertex3F[] vertices = new Vertex3F[2];
 
 	protected float dist;
 
 	protected Game3D screen;
 
-	protected PolygonObject drawablePolygon;
+	protected LineObject drawableLine;
 
-	public DPolygon(Game3D screen, Vertex3F... vs) {
-		this(screen, 0, 0, 0, vs);
+	public DLine(Game3D screen, float x1, float y1, float z1, float x2, float y2, float z2) {
+		this(screen, new Vertex3F(x1, y1, z1), new Vertex3F(x2, y2, z2));
 	}
 
-	public DPolygon(Game3D screen, float x, float y, float z, Vertex3F... vs) {
-		this(new Vertex3F(x, y, z), screen, vs);
-	}
-
-	public DPolygon(Vertex3F pos, Game3D screen, Vertex3F... vs) {
+	public DLine(Game3D screen, Vertex3F start, Vertex3F end) {
 		this.screen = screen;
-		this.pos = pos;
-		this.drawablePolygon = new PolygonObject(screen, new float[vs.length], new float[vs.length]);
-
-		addVertices(vs);
-	}
-
-	protected void addVertices(Vertex3F... vs) {
-		Vertex3F[] newVertices = new Vertex3F[vertices.length + vs.length];
-		for (int i = 0; i < vertices.length; i++) {
-			newVertices[i] = vertices[i];
-		}
-		for (int i = 0; i < vs.length; i++) {
-			newVertices[vertices.length + i] = vs[i].clone();
-		}
-		vertices = newVertices;
+//		this.pos;
+		vertices[0] = start;
+		vertices[1] = end;
+		this.drawableLine = new LineObject(screen, 0, 0, 0, 0);
 	}
 
 	@Override
 	public void updateModel() {
-		float[] newX = new float[vertices.length];
-		float[] newY = new float[vertices.length];
+		float[] newX = new float[2];
+		float[] newY = new float[2];
 		boolean draw = true;
-		for (int i = 0; i < vertices.length; i++) {
+		for (int i = 0; i < 2; i++) {
 			Vertex3F v = vertices[i];
 			float x = parent.pos.x + pos.x + v.x;
 			float y = parent.pos.y + pos.y + v.y;
@@ -62,14 +47,14 @@ public class DPolygon extends BaseModel {
 
 		calcLighting();
 
-		drawablePolygon.draw = draw;
-		drawablePolygon.update(newX, newY);
+		drawableLine.draw = draw;
+		drawableLine.update(newX[0], newY[0], newX[1], newY[1]);
 		dist = getDistToP(screen.vCameraPos.x, screen.vCameraPos.y, screen.vCameraPos.z);
 //		needsUpdate = false;
 	}
 
 	private void calcLighting() {
-		Plane lightingPlane = new Plane(this);
+		Plane lightingPlane = new Plane(vertices[0], vertices[1]);
 		Vertex3F NV = lightingPlane.NV;
 		float angle = (float) Math.acos(((NV.x * screen.vLightDir.x) + (NV.y * screen.vLightDir.y) + (NV.z * screen.vLightDir.z)) / (screen.vLightDir.mag()));
 //		float angle = Math.acos(Vertex3F.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
@@ -79,7 +64,7 @@ public class DPolygon extends BaseModel {
 		if (lighting > 1) lighting = 1;
 		if (lighting < 0) lighting = 0;
 
-		drawablePolygon.lighting = lighting;
+		drawableLine.lighting = lighting;
 	}
 
 	@Override
@@ -146,45 +131,49 @@ public class DPolygon extends BaseModel {
 	public float dist() { return dist; }
 
 	@Override
-	public boolean contains(float x, float y) { return drawablePolygon.contains(x, y); }
+	public boolean contains(float x, float y) { return drawableLine.contains(x, y); }
 
-	public void render(boolean renderFill, Color fill, boolean renderStroke, Color stroke, boolean highlight, boolean seeThrough) {
-		drawablePolygon.renderFill(renderFill);
-		drawablePolygon.fill(fill);
-		drawablePolygon.renderStroke(renderStroke);
-		drawablePolygon.stroke(stroke);
-		drawablePolygon.highlight(highlight);
-		drawablePolygon.seeThrough(seeThrough);
+	public void render(boolean renderStroke, Color stroke, float strokeWeight, boolean highlight, boolean seeThrough) {
+		drawableLine.renderStroke(renderStroke);
+		drawableLine.stroke(stroke);
+		drawableLine.strokeWeight(strokeWeight);
+		drawableLine.highlight(highlight);
+		drawableLine.seeThrough(seeThrough);
 		render();
 	}
 
 	@Override
-	public void render() { drawablePolygon.render(); }
+	public void render() { drawableLine.render(); }
 
-	public void fill(Color fill) { drawablePolygon.fill(fill); }
+	public void stroke(Color stroke) {
+		drawableLine.stroke(stroke);
+	}
 
-	public void stroke(Color stroke) { drawablePolygon.stroke(stroke); }
+	public void renderStroke(boolean renderStroke) {
+		drawableLine.renderStroke(renderStroke);
+	}
 
-	public void renderFill(boolean renderFill) { drawablePolygon.renderFill(renderFill); }
-
-	public void renderStroke(boolean renderStroke) { drawablePolygon.renderStroke(renderStroke); }
-
-	public void strokeWeight(float strokeWeight) { drawablePolygon.strokeWeight(strokeWeight); }
-
-	@Override
-	public void highlight(boolean highlight) { drawablePolygon.highlight(highlight); }
-
-	@Override
-	public void seeThrough(boolean seeThrough) { drawablePolygon.seeThrough(seeThrough); }
-
-	public void lighting(boolean lighting) {
-		drawablePolygon.lighting(lighting);
+	public void strokeWeight(float strokeWeight) {
+		drawableLine.strokeWeight(strokeWeight);
 	}
 
 	@Override
-	public boolean draw() { return drawablePolygon.draw; }
+	public void highlight(boolean highlight) {
+		drawableLine.highlight(highlight);
+	}
 
 	@Override
-	public boolean visible() { return drawablePolygon.visible; }
+	public void seeThrough(boolean seeThrough) {
+		drawableLine.seeThrough(seeThrough);
+	}
 
+	public void lighting(boolean lighting) {
+		drawableLine.lighting(lighting);
+	}
+
+	@Override
+	public boolean draw() { return drawableLine.draw; }
+
+	@Override
+	public boolean visible() { return drawableLine.visible; }
 }

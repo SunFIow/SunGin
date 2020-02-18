@@ -17,6 +17,10 @@ public class GenerateTerrain {
 //	static Color G = new Color(120, 100, 80);
 
 	public GenerateTerrain(Game3D screen, ArrayList<BaseModel> Models) {
+		this(screen, Models, mapSize, Size);
+	}
+
+	public GenerateTerrain(Game3D screen, ArrayList<BaseModel> Models, int mapSize, float Size) {
 		float[] values1 = new float[mapSize];
 		float[] values2 = new float[mapSize];
 

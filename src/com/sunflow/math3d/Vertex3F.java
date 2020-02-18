@@ -128,8 +128,7 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 
 	@Override
 	public Vertex3F normalize() {
-		if (mag() > 0)
-			div(mag());
+		if (mag() > 0) div(mag());
 		return this;
 	}
 

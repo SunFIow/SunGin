@@ -23,15 +23,19 @@ public class Game3D extends Game2D {
 
 	// ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
 	protected ArrayList<BaseModel> Models;
-	protected ArrayList<DPolygon> DPolygone;
+	protected ArrayList<BaseModel> DModels;
 
 	// The polygon that the mouse is currently over
-	private DPolygon PolygonOver = null;
+	private BaseModel PolygonOver = null;
 
 	public Vertex3F vCameraPos;
 	public Vertex3F vCameraDir;
+	protected float vertLook, horLook, horRotSpeed, vertRotSpeed;
 
 	public Vertex3F vLightDir;
+	protected float sunPos;
+
+	public boolean isCameraActivated;
 
 	// The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
 	protected float zoom, minZoom, maxZoom;
@@ -39,19 +43,19 @@ public class Game3D extends Game2D {
 	public float zoom() { return zoom; }
 
 	protected int[] drawOrder;
+	public boolean outlines;
+	public boolean highlight;
 
 	protected boolean[] keys;
-	public boolean outlines;
 
 	protected float movementSpeed;
-	protected float vertLook, horLook, horRotSpeed, vertRotSpeed, sunPos;
 
 	@Override
 	void privatePreSetup() {
 		super.privatePreSetup();
 
 		Models = new ArrayList<>();
-		DPolygone = new ArrayList<>();
+		DModels = new ArrayList<>();
 
 		vCameraPos = new Vertex3F(0, 0, 20);
 		vCameraDir = new Vertex3F(0, 0, 0);
@@ -104,9 +108,24 @@ public class Game3D extends Game2D {
 		// Set drawing order so closest polygons gets drawn last
 		setDrawOrder();
 		// Set the polygon that the mouse is currently over
-		setPolygonOver();
+		setModelOver();
 
 //		drawCrosshair();
+	}
+
+	protected void render() {
+//		for (int i = 0; i < drawOrder.length; i++) {
+//			DPolygon current = DModels.get(drawOrder[i]);
+//			current.renderStroke(outlines);
+//			current.render();
+//		}
+
+		// Draw Models in the Order that is set by the 'setOrder' function
+		for (int i = 0; i < drawOrder.length; i++) {
+			BaseModel current = DModels.get(drawOrder[i]);
+			if (current instanceof DPolygon) ((DPolygon) current).renderStroke(outlines);
+			current.render();
+		}
 	}
 
 	private void controlSunAndLight() {
@@ -142,8 +161,8 @@ public class Game3D extends Game2D {
 		vertLook -= difY / vertRotSpeed;
 		horLook += difX / horRotSpeed;
 
-		if (vertLook > 0.998f) vertLook = 0.998f;
-		if (vertLook < -0.998f) vertLook = -0.998f;
+		if (vertLook > 0.9999f) vertLook = 0.9999f;
+		if (vertLook < -0.9999f) vertLook = -0.9999f;
 
 		updateView();
 	}
@@ -168,7 +187,11 @@ public class Game3D extends Game2D {
 		canvas.setCursor(invisibleCursor);
 	}
 
-	private void setPolygonOver() {
+	final public void highlight(boolean highlight) {
+		this.highlight = highlight;
+	}
+
+	private void setModelOver() {
 //		int mX = mouseX - width() / 2;
 //		int mY = mouseY - height() / 2;
 //
@@ -185,31 +208,33 @@ public class Game3D extends Game2D {
 //		}
 
 		PolygonOver = null;
-		DPolygone.forEach(p -> p.drawablePolygon.highlight = false);
+		DModels.forEach(p -> p.highlight(false));
 		for (int i = drawOrder.length - 1; i >= 0; i--) {
-			DPolygon current = DPolygone.get(drawOrder[i]);
+			BaseModel current = DModels.get(drawOrder[i]);
 //			current.drawablePolygon.highlight = true;
-			if (current.drawablePolygon.draw && current.drawablePolygon.visible && current.contains(width / 2, height / 2)) {
+			if (current.draw() && current.visible() && current.contains(width / 2, height / 2)) {
 				PolygonOver = current;
-				current.drawablePolygon.highlight = true;
+				if (highlight) current.highlight(true);
 				break;
 			}
 		}
 	}
 
 	private void setDrawOrder() {
-		DPolygone.clear();
+		DModels.clear();
 
 		Models.forEach(model -> {
-			if (model instanceof DPolygon) DPolygone.add((DPolygon) model);
-			else if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DPolygone.add(pol);
+//			if (model instanceof DPolygon) DModels.add((DPolygon) model);
+//			else if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DModels.add(pol);
+			if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DModels.add(pol);
+			else DModels.add(model);
 		});
 
-		float[] dists = new float[DPolygone.size()];
-		drawOrder = new int[DPolygone.size()];
+		float[] dists = new float[DModels.size()];
+		drawOrder = new int[DModels.size()];
 
-		for (int i = 0; i < DPolygone.size(); i++) {
-			dists[i] = DPolygone.get(i).dist;
+		for (int i = 0; i < DModels.size(); i++) {
+			dists[i] = DModels.get(i).dist();
 			drawOrder[i] = i;
 		}
 
@@ -253,6 +278,10 @@ public class Game3D extends Game2D {
 	@Override
 	void updateMousePosition(int x, int y) {
 		if (!canvas.hasFocus()) return;
+		if (!isCameraActivated) {
+			super.updateMousePosition(x, y);
+			return;
+		}
 		mouseMovement(x, y);
 		super.updateMousePosition(x, y);
 		centerMouse();

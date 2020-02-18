@@ -27,14 +27,15 @@ public class Pyramid extends Base3DModel {
 
 		for (DPolygon pol : polygone) {
 			Color fill = c;
-			Color outline = new Color(25, 25, 25);
+			Color stroke = new Color(25, 25, 25);
 			pol.fill(fill);
-			pol.outline(outline);
+			pol.stroke(stroke);
 			pol.renderFill(true);
-			pol.renderOutline(false);
+			pol.renderStroke(false);
 			pol.seeThrough(false);
 		}
 
 		addPolygone(polygone);
 	}
+
 }
