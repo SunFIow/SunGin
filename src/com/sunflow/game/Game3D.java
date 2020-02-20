@@ -229,6 +229,7 @@ public class Game3D extends Game2D {
 	}
 
 	private void cameraMovement() {
+		if (!isCameraActivated) return;
 		Vertex3F viewVector = new Vertex3F(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
 		Vertex3F verticalVector = new Vertex3F(0, 0, 1);
 		Vertex3F sideViewVector = Vertex3F.cross(viewVector, verticalVector).normalized();
@@ -241,6 +242,7 @@ public class Game3D extends Game2D {
 		moveVector.mult(movementSpeed);
 
 		vCameraPos.add(moveVector);
+
 		updateView();
 	}
 
@@ -259,7 +261,7 @@ public class Game3D extends Game2D {
 		updateView();
 	}
 
-	private void updateView() {
+	protected void updateView() {
 		float r = (float) Math.sqrt(1 - (vertLook * vertLook));
 		vCameraDir.x = vCameraPos.x + r * (float) Math.cos(horLook);
 		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
