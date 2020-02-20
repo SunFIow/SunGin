@@ -14,15 +14,15 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		this.z = z;
 	}
 
-	public static Vertex3F of() {
+	static public Vertex3F of() {
 		return of(0, 0, 0);
 	}
 
-	public static Vertex3F of(Vertex3F v) {
+	static public Vertex3F of(Vertex3F v) {
 		return of(v.x, v.y, v.z);
 	}
 
-	public static Vertex3F of(float x, float y, float z) {
+	static public Vertex3F of(float x, float y, float z) {
 		return new Vertex3F(x, y, z);
 	}
 
@@ -55,11 +55,11 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return add(b.x, b.y, b.z);
 	}
 
-	public static Vertex3F add(Vertex3F a, Vertex3F b) {
+	static public Vertex3F add(Vertex3F a, Vertex3F b) {
 		return add(a.x, a.y, a.z, b.x, b.y, b.z);
 	}
 
-	public static Vertex3F add(float x1, float y1, float z1, float x2, float y2, float z2) {
+	static public Vertex3F add(float x1, float y1, float z1, float x2, float y2, float z2) {
 		return new Vertex3F(
 				x1 + x2,
 				y1 + y2,
@@ -77,11 +77,11 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return sub(b.x, b.y, b.z);
 	}
 
-	public static Vertex3F sub(Vertex3F a, Vertex3F b) {
+	static public Vertex3F sub(Vertex3F a, Vertex3F b) {
 		return sub(a.x, a.y, a.z, b.x, b.y, b.z);
 	}
 
-	public static Vertex3F sub(float x1, float y1, float z1, float x2, float y2, float z2) {
+	static public Vertex3F sub(float x1, float y1, float z1, float x2, float y2, float z2) {
 		return new Vertex3F(
 				x1 - x2,
 				y1 - y2,
@@ -107,7 +107,7 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return dot(this, b);
 	}
 
-	public static float dot(Vertex3F a, Vertex3F b) {
+	static public float dot(Vertex3F a, Vertex3F b) {
 		return (a.x * b.x + a.y * b.y + a.z * b.z);
 	}
 
@@ -115,14 +115,14 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return cross(this, b);
 	}
 
-	public static Vertex3F cross(Vertex3F a, Vertex3F b) {
+	static public Vertex3F cross(Vertex3F a, Vertex3F b) {
 		return new Vertex3F(
 				(a.y * b.z - a.z * b.y),
 				(a.z * b.x - a.x * b.z),
 				(a.x * b.y - a.y * b.x));
 	}
 
-	public static Vertex3F normal(Vertex3F a, Vertex3F b, Vertex3F c) {
+	static public Vertex3F normal(Vertex3F a, Vertex3F b, Vertex3F c) {
 		return cross(Vertex3F.sub(b, a), Vertex3F.sub(c, a)).normalized();
 	}
 
@@ -170,7 +170,7 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return this;
 	}
 
-	public static Vertex3F avg(Vertex3F... ins) {
+	static public Vertex3F avg(Vertex3F... ins) {
 		Vertex3F avg = new Vertex3F();
 		for (int i = 0; i < ins.length; i++) {
 			avg.add(ins[i]);
@@ -179,8 +179,27 @@ public class Vertex3F extends Vertex2F implements Cloneable {
 		return avg;
 	}
 
-	public static float dist(Vertex3F v1, Vertex3F v2) {
+	static public float dist(Vertex3F v1, Vertex3F v2) {
 		return Vertex3F.sub(v2, v1).mag();
+	}
+
+	public MatrixF toMatrix() {
+		float[][] m = new float[3][1];
+		m[0][0] = x;
+		m[1][0] = y;
+		m[2][0] = z;
+		return new MatrixF(3, 1).set(m);
+	}
+
+	static public MatrixF toMatrix(Vertex3F v) {
+		return v.toMatrix();
+	}
+
+	static public Vertex3F fromMatrix(MatrixF m) {
+		return new Vertex3F(
+				m.data.length > 0 ? m.data[0][0] : 0,
+				m.data.length > 1 ? m.data[1][0] : 0,
+				m.data.length > 2 ? m.data[2][0] : 0);
 	}
 
 	@Override

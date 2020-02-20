@@ -186,6 +186,25 @@ public class Vertex3I extends Vertex2I implements Cloneable {
 		return Vertex3I.sub(v2, v1).mag();
 	}
 
+	public MatrixI toMatrix() {
+		int[][] m = new int[3][1];
+		m[0][0] = x;
+		m[1][0] = y;
+		m[2][0] = z;
+		return new MatrixI(3, 1).set(m);
+	}
+
+	static public MatrixI toMatrix(Vertex3I v) {
+		return v.toMatrix();
+	}
+
+	static public Vertex3I fromMatrix(MatrixI m) {
+		return new Vertex3I(
+				m.data.length > 0 ? m.data[0][0] : 0,
+				m.data.length > 1 ? m.data[1][0] : 0,
+				m.data.length > 2 ? m.data[2][0] : 0);
+	}
+
 	@Override
 	public String toString() {
 		return "Vertex3I[x=" + x + ",y=" + y + ",z=" + z + "]";

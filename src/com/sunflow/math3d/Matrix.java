@@ -10,12 +10,11 @@ import com.sunflow.util.MathUtils;
 import com.sunflow.util.SimpleMapper;
 
 public class Matrix<T extends Number> implements MathUtils, LogUtils, Cloneable, Serializable {
-	private static final long serialVersionUID = -6146337714963647821L;
 
-	private int rows, cols;
+	public int rows, cols;
 
 //	private float[][] data;
-	private T[][] data;
+	public T[][] data;
 
 	private Class<T> type;
 	private Method valueOf;
@@ -51,6 +50,17 @@ public class Matrix<T extends Number> implements MathUtils, LogUtils, Cloneable,
 		type = m.type;
 		valueOf = m.valueOf;
 
+		return this;
+	}
+
+	public Matrix<T> set(T[][] data) {
+		if (this.rows != data.length || this.cols != data[0].length) {
+			error("MatrixF#add: rows and cols didnt match");
+			error("MatrixF#add this: \n" + this);
+			error("matrixF#add data: \n" + data);
+		}
+
+		this.data = data;
 		return this;
 	}
 

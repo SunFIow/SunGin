@@ -39,33 +39,33 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	@Override
 	public void updateModel() {
 		for (DPolygon pol : polys) pol.updateModel();
-//		needsUpdate = false;
+		needsUpdate = false;
 	}
 
 	@Override
 	public void rotateX(float angle) {
 		for (DPolygon pol : polys) pol.rotateX(angle);
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
 	public void rotateY(float angle) {
 		for (DPolygon pol : polys) pol.rotateY(angle);
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
 	public void rotateZ(float angle) {
 		for (DPolygon pol : polys) pol.rotateZ(angle);
-//		markDirty();
+		markDirty();
 	}
 
-//	@Override
-//	public boolean needsUpdate() {
-//		if (needsUpdate) return true;
-//		for (DPolygon pol : polys) if (pol.needsUpdate()) return true;
-//		return false;
-//	}
+	@Override
+	public boolean needsUpdate() {
+		if (needsUpdate) return true;
+		for (DPolygon pol : polys) if (pol.needsUpdate()) return true;
+		return false;
+	}
 
 	@Override
 	protected Base3DModel clone() {

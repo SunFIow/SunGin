@@ -7,12 +7,11 @@ import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
 
 public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
-	private static final long serialVersionUID = 6051103583793756019L;
 
-	private int rows;
-	private int cols;
+	public int rows;
+	public int cols;
 
-	private float[][] data;
+	public float[][] data;
 
 	public MatrixF(int r, int c) {
 		rows = r;
@@ -33,12 +32,23 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
+	public MatrixF set(float[][] data) {
+		if (this.rows != data.length || this.cols != data[0].length) {
+			error("MatrixF#add: rows and cols didnt match");
+			error("MatrixF#add this: \n" + this);
+			error("matrixF#add data: \n" + data);
+		}
+
+		this.data = data;
+		return this;
+	}
+
 	@Override
 	public MatrixF clone() {
 		return new MatrixF(rows, cols).set(this);
 	}
 
-	public static MatrixF transpose(MatrixF m) {
+	static public MatrixF transpose(MatrixF m) {
 		return m.clone().transpose();
 	}
 
@@ -57,7 +67,7 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
-	public static MatrixF add(MatrixF a, MatrixF b) {
+	static public MatrixF add(MatrixF a, MatrixF b) {
 		return a.clone().add(b);
 	}
 
@@ -80,7 +90,7 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
-	public static MatrixF substract(MatrixF a, MatrixF b) {
+	static public MatrixF substract(MatrixF a, MatrixF b) {
 		return a.clone().substract(b);
 	}
 
@@ -91,7 +101,7 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 	}
 
 	// Hadamar product
-	public static MatrixF multiply(MatrixF a, float n) {
+	static public MatrixF multiply(MatrixF a, float n) {
 		return a.clone().multiply(n);
 	}
 
@@ -107,7 +117,7 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 	}
 
 	// Hadamar product
-	public static MatrixF multiply(MatrixF a, MatrixF b) {
+	static public MatrixF multiply(MatrixF a, MatrixF b) {
 		return a.clone().multiply(b);
 	}
 
@@ -131,7 +141,7 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 	}
 
 	// Matrix dot product
-	public static MatrixF dot(MatrixF a, MatrixF b) {
+	static public MatrixF dot(MatrixF a, MatrixF b) {
 		return a.clone().dot(b);
 	}
 
@@ -158,11 +168,11 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 		return this;
 	}
 
-	public static MatrixF map(MatrixF matrix, Mapper mapper) {
+	static public MatrixF map(MatrixF matrix, Mapper mapper) {
 		return matrix.clone().map(mapper);
 	}
 
-	public static MatrixF fromArray(float[] arr) {
+	static public MatrixF fromArray(float[] arr) {
 		return new MatrixF(arr.length, 1).map((x, i, j) -> arr[i]);
 	}
 
@@ -187,4 +197,5 @@ public class MatrixF implements MathUtils, LogUtils, Cloneable, Serializable {
 		}
 		return s;
 	}
+
 }

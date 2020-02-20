@@ -8,6 +8,10 @@ public class Calculator {
 	private static Plane plane;
 	public static float[] calcFocusPos = new float[2];
 
+	public static float[] CalculatePositionP(Vertex3F viewFrom, Vertex3F viewTo, Vertex3F pos) {
+		return CalculatePositionP(viewFrom, viewTo, pos.x, pos.y, pos.z);
+	}
+
 	public static float[] CalculatePositionP(Vertex3F viewFrom, Vertex3F viewTo, float x, float y, float z) {
 		float[] projP = getProj(viewFrom, viewTo, x, y, z, plane);
 		float[] drawP = getDrawP(projP[0], projP[1], projP[2]);

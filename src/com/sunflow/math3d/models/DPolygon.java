@@ -65,7 +65,7 @@ public class DPolygon extends BaseModel {
 		drawablePolygon.draw = draw;
 		drawablePolygon.update(newX, newY);
 		dist = getDistToP(screen.vCameraPos.x, screen.vCameraPos.y, screen.vCameraPos.z);
-//		needsUpdate = false;
+		needsUpdate = false;
 	}
 
 	private void calcLighting() {

@@ -184,6 +184,25 @@ public class Vertex3D extends Vertex2D implements Cloneable {
 		return Vertex3D.sub(v2, v1).mag();
 	}
 
+	public MatrixD toMatrix() {
+		double[][] m = new double[3][1];
+		m[0][0] = x;
+		m[1][0] = y;
+		m[2][0] = z;
+		return new MatrixD(3, 1).set(m);
+	}
+
+	static public MatrixD toMatrix(Vertex3D v) {
+		return v.toMatrix();
+	}
+
+	static public Vertex3D fromMatrix(MatrixD m) {
+		return new Vertex3D(
+				m.data.length > 0 ? m.data[0][0] : 0,
+				m.data.length > 1 ? m.data[1][0] : 0,
+				m.data.length > 2 ? m.data[2][0] : 0);
+	}
+
 	@Override
 	public String toString() {
 		return "Vertex3D[x=" + x + ",y=" + y + ",z=" + z + "]";

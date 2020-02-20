@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import com.sunflow.math3d.Calculator;
+import com.sunflow.math3d.MatrixF;
 import com.sunflow.math3d.Vertex3F;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
@@ -76,6 +77,10 @@ public class Game3D extends Game2D {
 		sunPos = 0;
 
 		showCrosshair = true;
+
+		rotateX(0);
+		rotateY(0);
+		rotateZ(0);
 	}
 
 	@Override
@@ -99,11 +104,11 @@ public class Game3D extends Game2D {
 
 		controlSunAndLight();
 
-		Models.forEach(model -> model.updateModel());
+//		Models.forEach(model -> model.updateModel());
 
-//		Models.forEach(model -> {
-//			if (model.needsUpdate()) model.updateModel();
-//		});
+		Models.forEach(model -> {
+			if (model.needsUpdate()) model.updateModel();
+		});
 
 		// Set drawing order so closest polygons gets drawn last
 		setDrawOrder();
@@ -126,6 +131,93 @@ public class Game3D extends Game2D {
 			if (current instanceof DPolygon) ((DPolygon) current).renderStroke(outlines);
 			current.render();
 		}
+	}
+
+	public final void point(float x, float y, float z) {
+		float x2d, y2d;
+		boolean draw = true;
+
+//		Vertex3F rotated = matmul(rotY, new Vertex3F(x, y, z));
+//		float[] pos2d = convert3Dto2D(rotated);
+		float[] pos2d = convert3Dto2D(rotated(x, y, z));
+		x2d = pos2d[0];
+		y2d = pos2d[1];
+		if (pos2d[2] < 0) draw = false;
+
+		if (draw) point(x2d, y2d);
+	}
+
+	public final void line(float x1, float y1, float z1, float x2, float y2, float z2) {
+		float x2d1, y2d1, x2d2, y2d2;
+		boolean draw = true;
+
+		float[] pos2d = convert3Dto2D(rotated(x1, y1, z1));
+		x2d1 = pos2d[0];
+		y2d1 = pos2d[1];
+		if (pos2d[2] < 0) draw = false;
+
+		pos2d = convert3Dto2D(rotated(x2, y2, z2));
+		x2d2 = pos2d[0];
+		y2d2 = pos2d[1];
+		if (pos2d[2] < 0) draw = false;
+
+		if (draw) line(x2d1, y2d1, x2d2, y2d2);
+	}
+
+	public final float[] convert3Dto2D(Vertex3F pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
+
+	public final float[] convert3Dto2D(float x, float y, float z) {
+		float[] calcPos = Calculator.CalculatePositionP(vCameraPos, vCameraDir, x, y, z);
+		float x2d = (width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * zoom();
+		float y2d = (height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * zoom();
+		return new float[] { x2d, y2d, Calculator.t };
+	}
+
+	public final Vertex3F rotated(float x, float y, float z) { return rotated(new Vertex3F(x, y, z)); }
+
+	public final Vertex3F rotated(Vertex3F pos) {
+		Vertex3F rotated = matmul(rotX, pos);
+		rotated = matmul(rotY, rotated);
+		rotated = matmul(rotZ, rotated);
+		return rotated;
+	}
+
+	public final Vertex3F matmul(MatrixF a, Vertex3F b) {
+		MatrixF m = b.toMatrix();
+		MatrixF matmul = a.dot(m);
+		return Vertex3F.fromMatrix(matmul);
+	}
+
+	public final void rotateX(float angle) {
+		float[][] rotArrX = {
+				{ 1, 0, 0 },
+				{ 0, cos(angle), -sin(angle) },
+				{ 0, sin(angle), cos(angle) }
+		};
+		rotX = new MatrixF(3, 3);
+		rotX.set(rotArrX);
+	}
+
+	MatrixF rotX, rotY, rotZ;
+
+	public final void rotateY(float angle) {
+		float[][] rotArrY = {
+				{ cos(angle), 0, sin(angle) },
+				{ 0, 1, 0 },
+				{ -sin(angle), 0, cos(angle) }
+		};
+		rotY = new MatrixF(3, 3);
+		rotY.set(rotArrY);
+	}
+
+	public final void rotateZ(float angle) {
+		float[][] rotArrZ = {
+				{ cos(angle), -sin(angle), 0 },
+				{ sin(angle), cos(angle), 0 },
+				{ 0, 0, 1 }
+		};
+		rotZ = new MatrixF(3, 3);
+		rotZ.set(rotArrZ);
 	}
 
 	private void controlSunAndLight() {
@@ -173,7 +265,7 @@ public class Game3D extends Game2D {
 		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
 		vCameraDir.z = vCameraPos.z + vertLook;
 
-//		Models.forEach(model -> model.markDirty());
+		Models.forEach(model -> model.markDirty());
 	}
 
 	private void centerMouse() { moveMouseTo(width() / 2, height() / 2); }

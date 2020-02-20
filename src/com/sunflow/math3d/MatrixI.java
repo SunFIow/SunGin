@@ -7,12 +7,11 @@ import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
 
 public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
-	private static final long serialVersionUID = 987250889582600596L;
 
-	private int rows;
-	private int cols;
+	public int rows;
+	public int cols;
 
-	private int[][] data;
+	public int[][] data;
 
 	public MatrixI(int r, int c) {
 		rows = r;
@@ -30,6 +29,17 @@ public class MatrixI implements MathUtils, LogUtils, Cloneable, Serializable {
 		cols = m.cols;
 		data = new int[rows][cols];
 		map((x, i, j) -> m.data[i][j]);
+		return this;
+	}
+
+	public MatrixI set(int[][] data) {
+		if (this.rows != data.length || this.cols != data[0].length) {
+			error("MatrixF#add: rows and cols didnt match");
+			error("MatrixF#add this: \n" + this);
+			error("matrixF#add data: \n" + data);
+		}
+
+		this.data = data;
 		return this;
 	}
 

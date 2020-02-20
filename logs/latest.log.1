@@ -1,1 +1,17 @@
-[14 Feb 2020 13:30:26.544] [main/INFO] [com.sunflow.logging.Log/]: starting 3D Game
+[20 Feb 2020 13:33:49.663] [main/INFO] [com.sunflow.logging.Log/]: starting 3D Game
+[20 Feb 2020 13:33:55.471] [Thread-3/ERROR] [com.sunflow.logging.Log/]: Uncaught Exception
+sun.dc.pr.PRError: appendLine: unexpected
+	at sun.dc.pr.Rasterizer.appendLine(Unknown Source)
+	at sun.dc.DuctusRenderingEngine.getAATileGenerator(Unknown Source)
+	at sun.java2d.pipe.AAShapePipe.renderPath(Unknown Source)
+	at sun.java2d.pipe.AAShapePipe.draw(Unknown Source)
+	at sun.java2d.pipe.PixelToParallelogramConverter.draw(Unknown Source)
+	at sun.java2d.SunGraphics2D.draw(Unknown Source)
+	at com.sunflow.gfx.DImage.strokeShape(DImage.java:1425)
+	at com.sunflow.math3d.models.PolygonObject.render(PolygonObject.java:60)
+	at com.sunflow.math3d.models.DPolygon.render(DPolygon.java:162)
+	at com.sunflow.examples.ExampleGame3D.draw(ExampleGame3D.java:120)
+	at com.sunflow.game.Game2D.render(Game2D.java:448)
+	at com.sunflow.game.Game2D.access$23(Game2D.java:443)
+	at com.sunflow.game.Game2D$RenderThread.run(Game2D.java:590)
+

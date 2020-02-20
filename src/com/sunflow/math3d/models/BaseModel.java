@@ -43,21 +43,21 @@ public abstract class BaseModel implements MathUtils {
 	protected BaseModel parent = ZERO;
 	public Vertex3F pos = new Vertex3F();
 
-//	protected boolean needsUpdate = true;
+	protected boolean needsUpdate = true;
 
 	public void translateModel(Vertex3F pos) {
 		this.pos.add(pos);
-//		markDirty();
+		markDirty();
 	}
 
 	public void translateModel(float x, float y, float z) {
 		this.pos.add(x, y, z);
-//		markDirty();
+		markDirty();
 	}
 
-//	public boolean needsUpdate() { return needsUpdate; }
+	public boolean needsUpdate() { return needsUpdate; }
 
-//	public void markDirty() { needsUpdate = true; }
+	public void markDirty() { needsUpdate = true; }
 
 	public void setParent(Base3DModel parent) { this.parent = parent; }
 

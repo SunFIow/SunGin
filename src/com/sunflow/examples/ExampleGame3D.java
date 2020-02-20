@@ -65,8 +65,8 @@ public class ExampleGame3D extends Game3D {
 		Dpoints[7] = new DPoint(this, -10f, 10f, 10f);
 		Models.addAll(Arrays.asList(Dpoints));
 
-		point = new DPoint(this, 0, 0, 0);
-		Models.add(point);
+//		point = new DPoint(this, 0, 0, 0);
+//		Models.add(point);
 	}
 
 	double showDelta, showMult;
@@ -120,7 +120,12 @@ public class ExampleGame3D extends Game3D {
 			current.render();
 		}
 
-		point.render();
+//		point.render();
+
+		stroke(255, 0, 0);
+		strokeWeight(10);
+		point(0, 0, 0);
+		line(1, 2, 2, 2, 1, 2);
 	}
 
 	@Override
