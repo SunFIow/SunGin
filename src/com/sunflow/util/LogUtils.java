@@ -32,6 +32,16 @@ public interface LogUtils {
 
 	default void fatal(String logMessage, Object... params) { Log.fatal(logMessage, params); }
 
+	default void debug(Object... params) { Log.debug(params); }
+
+	default void info(Object... params) { Log.info(params); }
+
+	default void warn(Object... params) { Log.warn(params); }
+
+	default void error(Object... params) { Log.error(params); }
+
+	default void fatal(Object... params) { Log.fatal(params); }
+
 	default void debug(String logMessage, Throwable e) { Log.debug(logMessage, e); }
 
 	default void info(String logMessage, Throwable e) { Log.info(logMessage, e); }

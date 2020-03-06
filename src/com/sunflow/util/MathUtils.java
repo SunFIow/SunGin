@@ -128,4 +128,43 @@ public interface MathUtils {
 		return value;
 	}
 
+	/**
+	 * ( begin auto-generated from degrees.xml )
+	 *
+	 * Converts a radian measurement to its corresponding value in degrees.
+	 * Radians and degrees are two ways of measuring the same thing. There are
+	 * 360 degrees in a circle and 2*PI radians in a circle. For example,
+	 * 90&deg; = PI/2 = 1.5707964. All trigonometric functions in Processing
+	 * require their parameters to be specified in radians.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref math:trigonometry
+	 * @param radians
+	 *            radian value to convert to degrees
+	 * @see PApplet#radians(float)
+	 */
+	default float degrees(float radians) {
+		return radians * Constants.RAD_TO_DEG;
+	}
+
+	/**
+	 * ( begin auto-generated from radians.xml )
+	 *
+	 * Converts a degree measurement to its corresponding value in radians.
+	 * Radians and degrees are two ways of measuring the same thing. There are
+	 * 360 degrees in a circle and 2*PI radians in a circle. For example,
+	 * 90&deg; = PI/2 = 1.5707964. All trigonometric functions in Processing
+	 * require their parameters to be specified in radians.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref math:trigonometry
+	 * @param degrees
+	 *            degree value to convert to radians
+	 * @see PApplet#degrees(float)
+	 */
+	default float radians(float degrees) {
+		return degrees * Constants.DEG_TO_RAD;
+	}
 }

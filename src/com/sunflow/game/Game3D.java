@@ -63,8 +63,8 @@ public class Game3D extends Game2D {
 		vLightDir = new Vertex3F(1, 1, 1);
 
 		zoom = 1000;
-		minZoom = 500;
-		maxZoom = 2500;
+		minZoom = 100;
+		maxZoom = 10000;
 
 		keys = new boolean[4];
 		outlines = true;
@@ -90,7 +90,7 @@ public class Game3D extends Game2D {
 		Game3DMouseListeners ml = new Game3DMouseListeners();
 		canvas.addMouseListener(ml);
 		canvas.addMouseWheelListener(ml);
-		invisibleMouse();
+		if (isCameraActivated) invisibleMouse();
 	}
 
 	@Override
@@ -162,6 +162,17 @@ public class Game3D extends Game2D {
 		if (pos2d[2] < 0) draw = false;
 
 		if (draw) line(x2d1, y2d1, x2d2, y2d2);
+	}
+
+	public final void vertex(float x, float y, float z) {
+		float x2d, y2d;
+
+		float[] pos2d = convert3Dto2D(rotated(x, y, z));
+
+		x2d = pos2d[0];
+		y2d = pos2d[1];
+
+		vertex(x2d, y2d);
 	}
 
 	public final float[] convert3Dto2D(Vertex3F pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
@@ -274,11 +285,19 @@ public class Game3D extends Game2D {
 
 //	private void centerMouse() { moveMouse((int) -difX, (int) -difY); }
 
-	private void invisibleMouse() {
+	public final void invisibleMouse() {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		BufferedImage cursorImage = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 		Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvisibleCursor");
 		canvas.setCursor(invisibleCursor);
+	}
+
+	public final void visibleMouse() {
+//		Toolkit toolkit = Toolkit.getDefaultToolkit();
+//		BufferedImage cursorImage = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
+//		Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvisibleCursor");
+//		canvas.setCursor(invisibleCursor);
+		canvas.setCursor(Cursor.getDefaultCursor());
 	}
 
 	final public void highlight(boolean highlight) {

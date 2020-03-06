@@ -31,6 +31,27 @@ public class PolygonObject extends DrawableObject {
 		P.npoints = x.length;
 	}
 
+	public PolygonObject(Game3D screen, Polygon p) {
+		super(screen);
+		P = p;
+	}
+
+	public void update(Polygon p) {
+		if (P.npoints != p.npoints) {
+			P = new Polygon();
+			for (int i = 0; i < p.npoints; i++) {
+				P.addPoint(p.xpoints[i], p.ypoints[i]);
+			}
+			P.npoints = p.npoints;
+		}
+		P.reset();
+		for (int i = 0; i < p.npoints; i++) {
+			P.xpoints[i] = p.xpoints[i];
+			P.ypoints[i] = p.ypoints[i];
+		}
+		P.npoints = p.npoints;
+	}
+
 	@Override
 	public void render() {
 		if (!draw || !visible) return;

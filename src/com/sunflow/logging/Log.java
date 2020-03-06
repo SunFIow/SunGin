@@ -96,6 +96,30 @@ public class Log {
 
 	public static void fatal(String logMessage, Object... params) { sunLogger.log(FATAL, logMessage, params); }
 
+	public static void debug(Object... params) { sunLogger.log(DEBUG, getObjectArrayLogMessage(params), params); }
+
+	public static void info(Object... params) { sunLogger.log(INFO, getObjectArrayLogMessage(params), params); }
+
+	public static void warn(Object... params) { sunLogger.log(WARN, getObjectArrayLogMessage(params), params); }
+
+	public static void error(Object... params) { sunLogger.log(ERROR, getObjectArrayLogMessage(params), params); }
+
+	public static void fatal(Object... params) { sunLogger.log(FATAL, getObjectArrayLogMessage(params), params); }
+
+	private static String getObjectArrayLogMessage(Object... params) {
+		int num = params.length;
+		StringBuilder builder = new StringBuilder();
+		String part1 = "{";
+		String part2 = "}";
+		for (int i = 0; i < num; i++) {
+			builder.append(part1);
+			builder.append(i);
+			builder.append(part2);
+			builder.append(" ");
+		}
+		return builder.toString();
+	}
+
 	public static void debug(String logMessage, Throwable e) { sunLogger.log(DEBUG, logMessage, e); }
 
 	public static void info(String logMessage, Throwable e) { sunLogger.log(INFO, logMessage, e); }

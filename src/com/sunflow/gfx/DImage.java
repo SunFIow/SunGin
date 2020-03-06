@@ -324,9 +324,33 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 // 	| | | | | | | |
 // 	V V V V V V V V
 
-	final public void smooth() { // ignore
-		smooth(1);
+	public final void beginShape() {
+		gpath = null;
 	}
+
+	public final void vertex(float x, float y) {
+		if (gpath == null) {
+			gpath = new GeneralPath();
+			gpath.moveTo(x, y);
+		} else gpath.lineTo(x, y);
+	}
+
+	public final void closeShape() { gpath.closePath(); }
+
+	public final void endShape() { drawShape(gpath); }
+
+	/**
+	 * @param mode
+	 *            OPEN or CLOSE
+	 */
+	public final void endShape(int mode) {
+		if (mode == CLOSE) gpath.closePath();
+		drawShape(gpath);
+	}
+
+// COPY PASTA
+
+	final public void smooth() { smooth(1); }
 
 	final public void smooth(int quality) { // ignore
 		if (smooth == quality) return;
