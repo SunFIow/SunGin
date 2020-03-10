@@ -41,6 +41,9 @@ public interface Constants {
 
 	// Rotation in Degree
 
+	static final byte RADIANS = 0;
+	static final byte DEGREES = 1;
+
 	static final byte R0 = 0;
 	static final byte R90 = 1;
 	static final byte R180 = 2;
@@ -110,6 +113,16 @@ public interface Constants {
 
 	static final float DEG_TO_RAD = PI / 180.0f;
 	static final float RAD_TO_DEG = 180.0f / PI;
+
+	static final double PI_D = Math.PI;
+	static final double HALF_PI_D = Math.PI / 2.0;
+	static final double THIRD_PI_D = Math.PI / 3.0;
+	static final double QUARTER_PI_D = Math.PI / 4.0;
+	static final double TWO_PI_D = 2.0 * Math.PI;
+	static final double TAU_D = 2.0 * Math.PI;
+
+	static final double DEG_TO_RAD_D = PI_D / 180.0;
+	static final double RAD_TO_DEG_D = 180.0 / PI_D;
 
 	static final String WHITESPACE = " \t\n\r\f\u00A0";
 

@@ -96,7 +96,7 @@ public class Log {
 
 	public static void fatal(String logMessage, Object... params) { sunLogger.log(FATAL, logMessage, params); }
 
-	public static void debug(Object... params) { sunLogger.log(DEBUG, getObjectArrayLogMessage(params), params); }
+	public static void debugs(Object... params) { sunLogger.log(DEBUG, getObjectArrayLogMessage(params), params); }
 
 	public static void info(Object... params) { sunLogger.log(INFO, getObjectArrayLogMessage(params), params); }
 

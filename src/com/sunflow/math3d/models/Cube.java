@@ -38,7 +38,7 @@ public class Cube extends Base3DModel {
 		polygone[4] = new DPolygon(screen, vs[1], vs[5], vs[6], vs[2]);
 		polygone[5] = new DPolygon(screen, vs[0], vs[4], vs[7], vs[3]);
 
-		Color[] cs = new Color[] { Color.red, Color.green, Color.blue, Color.orange, Color.magenta, new Color(150, 50, 0) };
+		Color[] cs = new Color[] { Color.white, Color.green, Color.yellow, Color.blue, new Color(255, 110, 10), Color.red };
 
 		for (int i = 0; i < polygone.length; i++) {
 			Color fill = c != null ? c : cs[i];

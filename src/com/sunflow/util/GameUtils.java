@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.sunflow.gfx.DImage;
+import com.sunflow.gfx.SImage;
 import com.sunflow.math.Vertex2F;
 
 public interface GameUtils {
@@ -67,8 +67,8 @@ public interface GameUtils {
 		return strBuilder.toString();
 	}
 
-	default DImage loadDImage(String fileName) {
-		return new DImage(loadImage(fileName));
+	default SImage loadDImage(String fileName) {
+		return new SImage(loadImage(fileName));
 	}
 
 	default BufferedImage loadImage(String fileName) {

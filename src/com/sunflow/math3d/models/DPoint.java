@@ -3,7 +3,6 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.Plane;
 import com.sunflow.math3d.Vertex3F;
 
@@ -30,20 +29,31 @@ public class DPoint extends BaseModel {
 		float newX;
 		float newY;
 		boolean draw = true;
-		float x = parent.pos.x + pos.x;
-		float y = parent.pos.y + pos.y;
-		float z = parent.pos.z + pos.z;
-		float[] calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
-		newX = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * screen.zoom();
-		newY = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
-		if (Calculator.t < 0) draw = false;
+
+//		float x = parent.pos.x + pos.x;
+//		float y = parent.pos.y + pos.y;
+//		float z = parent.pos.z + pos.z;
+
+		Vertex3F aPos = absolutePosition();
+		float x = aPos.x;
+		float y = aPos.y;
+		float z = aPos.z;
+
+//		float[] calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
+//		newX = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * screen.zoom();
+//		newY = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
+//		if (Calculator.t < 0) draw = false;
+		float[] pos = screen.convert3Dto2D(screen.apply(x, y, z));
+		newX = pos[0];
+		newY = pos[1];
+		if (pos[2] < 0) draw = false;
 
 		calcLighting();
 
 		drawablePoint.draw = draw;
 		drawablePoint.update(newX, newY);
 		dist = getDistToP(screen.vCameraPos.x, screen.vCameraPos.y, screen.vCameraPos.z);
-//		needsUpdate = false;
+		needsUpdate = false;
 	}
 
 	private void calcLighting() {
@@ -72,7 +82,7 @@ public class DPoint extends BaseModel {
 		v.y = newY;
 		v.z = newZ;
 
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
@@ -86,7 +96,7 @@ public class DPoint extends BaseModel {
 		v.x = newX;
 		v.z = newZ;
 
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
@@ -100,7 +110,72 @@ public class DPoint extends BaseModel {
 		v.x = newX;
 		v.y = newY;
 
-//		markDirty();
+		markDirty();
+	}
+
+	@Override
+	public void rotateX(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		Vertex3F v = pos;
+		float y = v.y - origin.y;
+		float z = v.z - origin.z;
+
+		float newY = y * cos - z * sin;
+		float newZ = z * cos + y * sin;
+
+		float y_ = origin.y - newY;
+		float z_ = origin.z - newZ;
+
+		v.y = y_;
+		v.z = z_;
+
+		markDirty();
+	}
+
+	@Override
+	public void rotateY(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		Vertex3F v = pos;
+
+		float x = v.x - origin.x;
+		float z = v.z - origin.z;
+
+		float newX = x * cos - z * sin;
+		float newZ = z * cos + x * sin;
+
+		float x_ = origin.y - newX;
+		float z_ = origin.z - newZ;
+
+		v.x = x_;
+		v.z = z_;
+
+		markDirty();
+	}
+
+	@Override
+	public void rotateZ(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		Vertex3F v = pos;
+
+		float x = v.x - origin.x;
+		float y = v.y - origin.y;
+
+		float newX = x * cos - y * sin;
+		float newY = y * cos + x * sin;
+
+		float x_ = origin.x - newX;
+		float y_ = origin.y - newY;
+
+		v.x = x_;
+		v.y = y_;
+
+		markDirty();
 	}
 
 	public float getDistToP() { return getDistToP(screen.vCameraPos); }
@@ -109,13 +184,16 @@ public class DPoint extends BaseModel {
 
 	public float getDistToP(float x, float y, float z) {
 		float total = 0;
-		Vertex3F v = pos;
-		float _x = parent.pos.x + pos.x + v.x;
-		float _y = parent.pos.y + pos.y + v.y;
-		float _z = parent.pos.z + pos.z + v.z;
-		total += Math.sqrt((x - _x) * (x - _x)
-				+ (y - _y) * (y - _y)
-				+ (z - _z) * (z - _z));
+
+//		float _x = parent.pos.x + pos.x;
+//		float _y = parent.pos.y + pos.y;
+//		float _z = parent.pos.z + pos.z;
+		Vertex3F aPos = absolutePosition();
+		Vertex3F rPos = screen.apply(aPos);
+
+		total += Math.sqrt((x - rPos.x) * (x - rPos.x)
+				+ (y - rPos.y) * (y - rPos.y)
+				+ (z - rPos.z) * (z - rPos.z));
 
 		return total;
 	}
@@ -150,6 +228,7 @@ public class DPoint extends BaseModel {
 	@Override
 	public void seeThrough(boolean seeThrough) { drawablePoint.seeThrough(seeThrough); }
 
+	@Override
 	public void lighting(boolean lighting) {
 		drawablePoint.lighting(lighting);
 	}

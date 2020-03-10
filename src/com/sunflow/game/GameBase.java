@@ -22,16 +22,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import com.sunflow.gfx.DImage;
+import com.sunflow.gfx.SImage;
 import com.sunflow.math.Vertex2F;
 
-abstract class GameBase extends DImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
+abstract class GameBase extends SImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
 //	protected int x, y;
 	public float width;
 	public float height;
 
-	protected DImage overlay;
+	protected SImage overlay;
 
 	public int width() { return (int) width; }
 
@@ -43,9 +43,9 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 
 	protected int frameWidth, frameHeight;
 
-	protected float mouseX, mouseY;
-	protected float prevMouseX, prevMouseY;
-	protected float mouseScreenX, mouseScreenY;
+	public float mouseX, mouseY;
+	public float prevMouseX, prevMouseY;
+	public float mouseScreenX, mouseScreenY;
 
 	protected float aimSize;
 	protected Color aimColor;
@@ -80,16 +80,16 @@ abstract class GameBase extends DImage implements MouseListener, MouseWheelListe
 
 	protected abstract int frameY();
 
-	public final static DImage createImage(float width, float height) {
-		return new DImage(width, height);
+	public final static SImage createImage(float width, float height) {
+		return new SImage(width, height);
 	}
 
-	public final static DImage createImage(float width, float height, int format) {
-		return new DImage(width, height, format);
+	public final static SImage createImage(float width, float height, int format) {
+		return new SImage(width, height, format);
 	}
 
-	public final static DImage createImage(BufferedImage bi) {
-		return new DImage(bi);
+	public final static SImage createImage(BufferedImage bi) {
+		return new SImage(bi);
 	}
 
 	/**

@@ -21,14 +21,16 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.Constants;
 import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.Style;
 
-public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
+public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 	public int format;
 
 	public int width;
@@ -138,7 +140,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 
 	// ........................................................
 
-	private int transformCount;
+	protected int transformCount;
 	protected static final int MATRIX_STACK_DEPTH = 32;
 	AffineTransform transformStack[] = new AffineTransform[MATRIX_STACK_DEPTH];
 
@@ -163,7 +165,8 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 	private Ellipse2D.Float ellipse = new Ellipse2D.Float();
 	private Rectangle2D.Float rect = new Rectangle2D.Float();
 	private Arc2D.Float arc = new Arc2D.Float();
-	private GeneralPath gpath;
+	protected GeneralPath gpath;
+	protected ArrayList<Vertex3F> vertices;
 
 	private Color fillColorObject;
 	private boolean fillGradient;
@@ -179,17 +182,17 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 	private Composite defaultComposite;
 	private static final String ERROR_TEXTFONT_NULL_PFONT = "A null Font was passed to textFont()";
 
-	protected DImage() {}
+	protected SImage() {}
 
-	public DImage(float width, float height) {
+	public SImage(float width, float height) {
 		init((int) width, (int) height, RGB);
 	}
 
-	public DImage(float width, float height, int format) {
+	public SImage(float width, float height, int format) {
 		init((int) width, (int) height, format);
 	}
 
-	public DImage(BufferedImage bi) {
+	public SImage(BufferedImage bi) {
 		init(bi.getWidth(), bi.getHeight(), RGB);
 		image(bi);
 	}
@@ -324,28 +327,69 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 // 	| | | | | | | |
 // 	V V V V V V V V
 
-	public final void beginShape() {
+	int shape;
+	int vNum;
+
+	// POINTS,LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
+	/**
+	 * @param mode
+	 *            POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
+	 */
+	public final void beginShape(int mode) {
+		shape = mode;
+		vNum = 0;
 		gpath = null;
+		vertices = new ArrayList<>();
 	}
 
-	public final void vertex(float x, float y) {
+	public final void beginShape() { beginShape(POLYGON); }
+
+	public void vertex(float x, float y) {
 		if (gpath == null) {
 			gpath = new GeneralPath();
 			gpath.moveTo(x, y);
 		} else gpath.lineTo(x, y);
+		vNum++;
+		testVertex();
+	}
+
+	protected void testVertex() {
+		boolean end = false;
+		if (shape == POINTS && vNum == 1) end = true;
+		if (shape == LINES && vNum == 2) end = true;
+		if (shape == TRIANGLES && vNum == 3) end = true;
+//		if (shape == TRIANGLE_FAN && vNum == ??) end = true;
+//		if (shape == TRIANGLE_STRIP && vNum == 4) end = true;
+		if (shape == QUADS && vNum == 4) end = true;
+//		if (shape == QUAD_STRIP && vNum == 4) end = true;
+
+		if (end) {
+			endShape(CLOSE);
+			beginShape(shape);
+		}
 	}
 
 	public final void closeShape() { gpath.closePath(); }
 
-	public final void endShape() { drawShape(gpath); }
+	public void endShape() {
+		if (shape == POINTS && vNum < 1) return;
+		if (shape == LINES && vNum < 2) return;
+		if (shape == TRIANGLES && vNum < 3) return;
+//		if(shape == TRIANGLE_FAN && vNum < 0)return;
+//		if(shape == TRIANGLE_STRIP && vNum < 0)return;
+		if (shape == QUADS && vNum < 4) return;
+//		if(shape == QUAD_STRIP && vNum < 0)return;
+		drawShape(gpath);
+	}
 
 	/**
 	 * @param mode
 	 *            OPEN or CLOSE
 	 */
-	public final void endShape(int mode) {
+	public void endShape(int mode) {
+		if (gpath == null) return;
 		if (mode == CLOSE) gpath.closePath();
-		drawShape(gpath);
+		endShape();
 	}
 
 // COPY PASTA
@@ -660,12 +704,13 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 			// new Exception().printStackTrace(System.out);
 			// in case people do transformations before background(),
 			// need to handle this with a push/reset/pop
-			Composite oldComposite = graphics.getComposite();
-			graphics.setComposite(defaultComposite);
 
-//			pushMatrix();
-			AffineTransform at = graphics.getTransform();
+			pushMatrix();
+//			Composite oldComposite = graphics.getComposite();
+//			graphics.setComposite(defaultComposite);
+//			AffineTransform at = graphics.getTransform();
 			resetMatrix();
+
 			graphics.setColor(bgColor); // , backgroundAlpha));
 //	      	g2.fillRect(0, 0, width, height);
 			// On a hi-res display, image may be larger than width/height
@@ -676,10 +721,10 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 				// hope for the best if image is null
 				graphics.fillRect(0, 0, width, height);
 			}
-//			popMatrix();
-			graphics.setTransform(at);
 
-			graphics.setComposite(oldComposite);
+			popMatrix();
+//			graphics.setTransform(at);
+//			graphics.setComposite(oldComposite);
 		}
 	}
 
@@ -1350,11 +1395,11 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 
 	}
 
-	public final void image(DImage img) { image(img.image); }
+	public final void image(SImage img) { image(img.image); }
 
 	public final void image(Image img) { graphics.drawImage(img, 0, 0, null); }
 
-	public final void image(DImage img, float x, float y) { image(img.image, x, y); }
+	public final void image(SImage img, float x, float y) { image(img.image, x, y); }
 
 	public final void image(Image img, float x, float y) {
 		int _x = Math.round(x);
@@ -1362,7 +1407,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		graphics.drawImage(img, _x, _y, null);
 	}
 
-	public final void image(DImage img, float x, float y, float w, float h) { image(img.image, x, y, w, h); }
+	public final void image(SImage img, float x, float y, float w, float h) { image(img.image, x, y, w, h); }
 
 	public final void image(Image img, float x, float y, float w, float h) {
 		int _x = Math.round(x);
@@ -1372,7 +1417,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		graphics.drawImage(img, _x, _y, _w, _h, null);
 	}
 
-	public final void image(DImage img,
+	public final void image(SImage img,
 			float x1, float y1, float x2, float y2,
 			float u1, float v1, float u2, float v2) { image(img.image, x1, y1, x2, y2, u1, v1, u2, v2); }
 
@@ -1494,7 +1539,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 			throw new RuntimeException("pushStyle() cannot use push more than " +
 					styleStack.length + " times");
 		}
-		styleStack[styleStackDepth] = getStyle(null);
+		styleStack[styleStackDepth] = getStyle();
 		styleStackDepth++;
 	}
 
@@ -1506,7 +1551,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		style(styleStack[styleStackDepth]);
 	}
 
-	public final void pushMatrix() {
+	public void pushMatrix() {
 		if (transformCount == transformStack.length) {
 			throw new RuntimeException("pushMatrix() cannot use push more than " +
 					transformStack.length + " times");
@@ -1515,7 +1560,7 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		transformCount++;
 	}
 
-	public final void popMatrix() {
+	public void popMatrix() {
 		if (transformCount == 0) {
 			throw new RuntimeException("missing a pushMatrix() " +
 					"to go with that popMatrix()");
@@ -1524,10 +1569,12 @@ public class DImage implements Cloneable, Constants, MathUtils, LogUtils {
 		graphics.setTransform(transformStack[transformCount]);
 	}
 
-	public final void resetMatrix() {
+	public void resetMatrix() {
 		graphics.setTransform(new AffineTransform());
 		graphics.scale(1, 1);
 	}
+
+	public final Style getStyle() { return getStyle(null); }
 
 	public final Style getStyle(Style s) { // ignore
 		if (s == null) s = new Style();

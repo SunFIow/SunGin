@@ -3,7 +3,6 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.Plane;
 import com.sunflow.math3d.Vertex3F;
 
@@ -36,13 +35,24 @@ public class DLine extends BaseModel {
 		boolean draw = true;
 		for (int i = 0; i < 2; i++) {
 			Vertex3F v = vertices[i];
-			float x = parent.pos.x + pos.x + v.x;
-			float y = parent.pos.y + pos.y + v.y;
-			float z = parent.pos.z + pos.z + v.z;
-			float[] calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
-			newX[i] = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * screen.zoom();
-			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
-			if (Calculator.t < 0) draw = false;
+
+//			float x = parent.pos.x + pos.x + v.x;
+//			float y = parent.pos.y + pos.y + v.y;
+//			float z = parent.pos.z + pos.z + v.z;
+
+			Vertex3F aPos = absolutePosition();
+			float x = aPos.x + v.x;
+			float y = aPos.y + v.y;
+			float z = aPos.z + v.z;
+
+//			float[] calcPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, x, y, z);
+//			newX[i] = (screen.width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * screen.zoom();
+//			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
+//			if (Calculator.t < 0) draw = false;
+			float[] pos = screen.convert3Dto2D(screen.apply(x, y, z));
+			newX[i] = pos[0];
+			newY[i] = pos[1];
+			if (pos[2] < 0) draw = false;
 		}
 
 		calcLighting();
@@ -50,7 +60,7 @@ public class DLine extends BaseModel {
 		drawableLine.draw = draw;
 		drawableLine.update(newX[0], newY[0], newX[1], newY[1]);
 		dist = getDistToP(screen.vCameraPos.x, screen.vCameraPos.y, screen.vCameraPos.z);
-//		needsUpdate = false;
+		needsUpdate = false;
 	}
 
 	private void calcLighting() {
@@ -78,7 +88,7 @@ public class DLine extends BaseModel {
 			v.y = newY;
 			v.z = newZ;
 		}
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
@@ -92,7 +102,7 @@ public class DLine extends BaseModel {
 			v.x = newX;
 			v.z = newZ;
 		}
-//		markDirty();
+		markDirty();
 	}
 
 	@Override
@@ -106,7 +116,70 @@ public class DLine extends BaseModel {
 			v.x = newX;
 			v.y = newY;
 		}
-//		markDirty();
+		markDirty();
+	}
+
+	@Override
+	public void rotateX(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		for (Vertex3F v : vertices) {
+			float y = v.y - origin.y;
+			float z = v.z - origin.z;
+
+			float newY = y * cos - z * sin;
+			float newZ = z * cos + y * sin;
+
+			float y_ = origin.y - newY;
+			float z_ = origin.z - newZ;
+
+			v.y = y_;
+			v.z = z_;
+		}
+		markDirty();
+	}
+
+	@Override
+	public void rotateY(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		for (Vertex3F v : vertices) {
+			float x = v.x - origin.x;
+			float z = v.z - origin.z;
+
+			float newX = x * cos - z * sin;
+			float newZ = z * cos + x * sin;
+
+			float x_ = origin.x - newX;
+			float z_ = origin.z - newZ;
+
+			v.x = x_;
+			v.z = z_;
+		}
+		markDirty();
+	}
+
+	@Override
+	public void rotateZ(float angle, Vertex3F origin) {
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		for (Vertex3F v : vertices) {
+			float x = v.x - origin.x;
+			float y = v.y - origin.y;
+
+			float newX = x * cos - y * sin;
+			float newY = y * cos + x * sin;
+
+			float x_ = origin.x - newX;
+			float y_ = origin.y - newY;
+
+			v.x = x_;
+			v.y = y_;
+		}
+		markDirty();
 	}
 
 	public float getDistToP() { return getDistToP(screen.vCameraPos); }
@@ -117,12 +190,18 @@ public class DLine extends BaseModel {
 		float total = 0;
 		for (int i = 0; i < vertices.length; i++) {
 			Vertex3F v = vertices[i];
-			float _x = parent.pos.x + pos.x + v.x;
-			float _y = parent.pos.y + pos.y + v.y;
-			float _z = parent.pos.z + pos.z + v.z;
-			total += Math.sqrt((x - _x) * (x - _x)
-					+ (y - _y) * (y - _y)
-					+ (z - _z) * (z - _z));
+
+//			float _x = parent.pos.x + pos.x + v.x;
+//			float _y = parent.pos.y + pos.y + v.y;
+//			float _z = parent.pos.z + pos.z + v.z;
+
+			Vertex3F aPos = absolutePosition();
+			aPos.add(v);
+			Vertex3F rPos = screen.apply(aPos);
+
+			total += Math.sqrt((x - rPos.x) * (x - rPos.x)
+					+ (y - rPos.y) * (y - rPos.y)
+					+ (z - rPos.z) * (z - rPos.z));
 		}
 		return total / vertices.length;
 	}
@@ -167,6 +246,7 @@ public class DLine extends BaseModel {
 		drawableLine.seeThrough(seeThrough);
 	}
 
+	@Override
 	public void lighting(boolean lighting) {
 		drawableLine.lighting(lighting);
 	}

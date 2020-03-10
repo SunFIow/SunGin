@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.math3d.Vertex3F;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.Cube;
@@ -29,13 +30,15 @@ public class ExampleGame3D extends Game3D {
 		title("ExampleGame 3D");
 //		undecorated(true);
 		noSmooth();
+		isCameraActivated = true;
 		createCanvas(1280, 720);
-		mode(ASYNC);
+		syncMode(ASYNC);
 		frameRate(144);
 		tickRate(60);
 		showInfo(true);
-		isCameraActivated = true;
 		highlight(true);
+
+		vCameraPos = new Vertex3F(0, 0, 0);
 
 		Models.add(new Pyramid(this, 0, -5, 0, 2, 2, 2, Color.green));
 
@@ -104,8 +107,13 @@ public class ExampleGame3D extends Game3D {
 		Models.get(1).rotateZ(0.1f * delta);
 	}
 
+	float sx = 0;
+
 	@Override
 	public void draw() {
+		translate(sx, 0, 0);
+		sx += 0.1;
+
 		if (frameCount % frameRate == 0) {
 			showDelta = delta;
 			showMult = multiplier;
@@ -126,6 +134,19 @@ public class ExampleGame3D extends Game3D {
 		strokeWeight(10);
 		point(0, 0, 0);
 		line(1, 2, 2, 2, 1, 2);
+//		rotateZTo(frameCount / 100f);
+
+		beginShape();
+		vertex(0, 0, 0);
+		vertex(50, 50);
+		vertex(70, 30);
+		vertex(80, 60);
+		vertex(100, 120);
+		vertex(60, 110);
+		vertex(70, 220);
+		vertex(200, 150);
+		vertex(100, 100);
+		endShape(CLOSE);
 	}
 
 	@Override

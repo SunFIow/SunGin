@@ -26,15 +26,15 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 			newPolygone[polys.length + i].setParent(this);
 		}
 		polys = newPolygone;
-//		for (DPolygon pol : polys) pol.markDirty();
-	}
-
-	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderStroke, Color stroke, boolean highlight, boolean seeThrough) {
-		for (DPolygon pol : polys) pol.render(renderFill, fill, renderStroke, stroke, highlight, seeThrough);
+		for (DPolygon pol : polys) pol.markDirty();
 	}
 
 	@Override
-	public void render() { for (DPolygon pol : polys) pol.render(); }
+	public boolean needsUpdate() {
+		if (needsUpdate) return true;
+		for (DPolygon pol : polys) if (pol.needsUpdate()) return true;
+		return false;
+	}
 
 	@Override
 	public void updateModel() {
@@ -61,25 +61,83 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	}
 
 	@Override
-	public boolean needsUpdate() {
-		if (needsUpdate) return true;
-		for (DPolygon pol : polys) if (pol.needsUpdate()) return true;
-		return false;
+	public void rotateX(float angle, Vertex3F origin) {
+		for (DPolygon pol : polys) pol.rotateX(angle);
+
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		float y = pos.y - origin.y;
+		float z = pos.z - origin.z;
+
+		float newY = y * cos - z * sin;
+		float newZ = z * cos + y * sin;
+
+		float y_ = origin.y - newY;
+		float z_ = origin.z - newZ;
+
+		pos.y = y_;
+		pos.z = z_;
+
+		markDirty();
 	}
 
 	@Override
-	protected Base3DModel clone() {
-		try {
-			return (Base3DModel) super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return null;
+	public void rotateY(float angle, Vertex3F origin) {
+		for (DPolygon pol : polys) pol.rotateY(angle);
+
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		float x = pos.x - origin.x;
+		float z = pos.z - origin.z;
+
+		float newX = x * cos - z * sin;
+		float newZ = z * cos + x * sin;
+
+		float x_ = origin.x - newX;
+		float z_ = origin.z - newZ;
+
+		pos.x = x_;
+		pos.z = z_;
+
+		markDirty();
 	}
+
+	@Override
+	public void rotateZ(float angle, Vertex3F origin) {
+		for (DPolygon pol : polys) pol.rotateZ(angle);
+
+		float cos = cos(angle);
+		float sin = sin(angle);
+
+		float x = pos.x - origin.x;
+		float y = pos.y - origin.y;
+
+		float newX = x * cos - y * sin;
+		float newY = y * cos + x * sin;
+
+		float x_ = origin.x - newX;
+		float y_ = origin.y - newY;
+
+		pos.x = x_;
+		pos.y = y_;
+
+		markDirty();
+	}
+
+	public void render(Graphics2D g, boolean renderFill, Color fill, boolean renderStroke, Color stroke, boolean highlight, boolean seeThrough) {
+		for (DPolygon pol : polys) pol.render(renderFill, fill, renderStroke, stroke, highlight, seeThrough);
+	}
+
+	@Override
+	public void render() { for (DPolygon pol : polys) pol.render(); }
 
 	public void fill(Color fill) { for (DPolygon pol : polys) pol.fill(fill); }
 
 	public void stroke(Color stroke) { for (DPolygon pol : polys) pol.stroke(stroke); }
+
+	public void strokeWeight(float strokeWeight) { for (DPolygon pol : polys) pol.strokeWeight(strokeWeight); }
 
 	public void renderFill(boolean renderFill) { for (DPolygon pol : polys) pol.renderFill(renderFill); }
 
@@ -90,6 +148,9 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 
 	@Override
 	public void seeThrough(boolean seeThrough) { for (DPolygon pol : polys) pol.seeThrough(seeThrough); }
+
+	@Override
+	public void lighting(boolean lighting) { for (DPolygon pol : polys) pol.lighting(lighting); }
 
 	@Override
 	public boolean draw() {
@@ -114,5 +175,15 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	public boolean contains(float x, float y) {
 		for (DPolygon pol : polys) if (pol.contains(x, y)) return true;
 		return false;
+	}
+
+	@Override
+	protected Base3DModel clone() {
+		try {
+			return (Base3DModel) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

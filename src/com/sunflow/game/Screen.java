@@ -40,7 +40,7 @@ public class Screen {
 			protected void paintComponent(Graphics g) {
 				game.privateDraw();
 				game.draw();
-				game.render(game.graphics);
+				game.draw(game.graphics);
 
 				if (game.showOverlay) game.drawOverlay();
 
@@ -60,7 +60,7 @@ public class Screen {
 
 		game.privateDraw();
 		game.draw();
-		game.render(game.graphics);
+		game.draw(game.graphics);
 
 		if (game.showOverlay) game.drawOverlay();
 		do {

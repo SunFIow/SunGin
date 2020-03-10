@@ -5,42 +5,58 @@ import com.sunflow.util.MathUtils;
 
 public abstract class BaseModel implements MathUtils {
 
-	public static BaseModel ZERO = new BaseModel() {
-		@Override
-		public void updateModel() {}
+	public static BaseModel DEFAULT = getDefault();
 
-		@Override
-		public void rotateX(float angle) {}
+	public static BaseModel getDefault() {
+		return new BaseModel() {
+			@Override
+			public void updateModel() {}
 
-		@Override
-		public void rotateY(float angle) {}
+			@Override
+			public void rotateX(float angle) {}
 
-		@Override
-		public void rotateZ(float angle) {}
+			@Override
+			public void rotateY(float angle) {}
 
-		@Override
-		public void render() {}
+			@Override
+			public void rotateZ(float angle) {}
 
-		@Override
-		public void highlight(boolean highlight) {}
+			@Override
+			public void rotateX(float angle, Vertex3F origin) {}
 
-		@Override
-		public void seeThrough(boolean seeThrough) {}
+			@Override
+			public void rotateY(float angle, Vertex3F origin) {}
 
-		@Override
-		public boolean draw() { return false; }
+			@Override
+			public void rotateZ(float angle, Vertex3F origin) {}
 
-		@Override
-		public boolean visible() { return false; }
+			@Override
+			public void render() {}
 
-		@Override
-		public float dist() { return 0; }
+			@Override
+			public void highlight(boolean highlight) {}
 
-		@Override
-		public boolean contains(float x, float y) { return false; }
-	};
+			@Override
+			public void lighting(boolean lighting) {}
 
-	protected BaseModel parent = ZERO;
+			@Override
+			public void seeThrough(boolean seeThrough) {}
+
+			@Override
+			public boolean draw() { return false; }
+
+			@Override
+			public boolean visible() { return false; }
+
+			@Override
+			public float dist() { return 0; }
+
+			@Override
+			public boolean contains(float x, float y) { return false; }
+		};
+	}
+
+	protected BaseModel parent;// = DEFAULT;
 	public Vertex3F pos = new Vertex3F();
 
 	protected boolean needsUpdate = true;
@@ -55,11 +71,21 @@ public abstract class BaseModel implements MathUtils {
 		markDirty();
 	}
 
+	public Vertex3F absolutePosition() {
+		Vertex3F aPos = pos.clone();
+		BaseModel p = parent;
+		while (p != null) {
+			aPos.add(p.pos);
+			p = p.parent;
+		}
+		return aPos;
+	}
+
 	public boolean needsUpdate() { return needsUpdate; }
 
 	public void markDirty() { needsUpdate = true; }
 
-	public void setParent(Base3DModel parent) { this.parent = parent; }
+	public void setParent(BaseModel parent) { this.parent = parent; }
 
 	public abstract void updateModel();
 
@@ -69,11 +95,19 @@ public abstract class BaseModel implements MathUtils {
 
 	public abstract void rotateZ(float angle);
 
+	public abstract void rotateX(float angle, Vertex3F origin);
+
+	public abstract void rotateY(float angle, Vertex3F origin);
+
+	public abstract void rotateZ(float angle, Vertex3F origin);
+
 	public abstract void render();
 
 	public abstract void highlight(boolean highlight);
 
 	public abstract void seeThrough(boolean seeThrough);
+
+	public abstract void lighting(boolean lighting);
 
 	public abstract boolean draw();
 

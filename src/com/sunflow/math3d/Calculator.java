@@ -45,10 +45,8 @@ public class Calculator {
 		xRot = dy / (dx + dy);
 		yRot = dx / (dx + dy);
 
-		if (viewFrom.y > viewTo.y)
-			xRot = -xRot;
-		if (viewFrom.x < viewTo.x)
-			yRot = -yRot;
+		if (viewFrom.x < viewTo.x) yRot = -yRot;
+		if (viewFrom.y > viewTo.y) xRot = -xRot;
 
 		Vertex3F V = new Vertex3F(xRot, yRot, 0).normalized();
 		return V;

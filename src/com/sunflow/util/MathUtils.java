@@ -3,6 +3,21 @@ package com.sunflow.util;
 import com.sunflow.math.Vertex2D;
 
 public interface MathUtils {
+	default int constrain(int val, int a, int b) { return min(max(val, b), a); }
+
+	default long constrain(long val, long a, long b) { return min(max(val, b), a); }
+
+	default float constrain(float val, float a, float b) { return min(max(val, b), a); }
+
+	default double constrain(double val, double a, double b) { return min(max(val, b), a); }
+
+	default int min(int a, int b) { return Math.min(a, b); }
+
+	default long min(long a, long b) { return Math.min(a, b); }
+
+	default float min(float a, float b) { return Math.min(a, b); }
+
+	default double min(double a, double b) { return Math.min(a, b); }
 
 	default int max(int a, int b) { return Math.max(a, b); }
 
@@ -144,6 +159,10 @@ public interface MathUtils {
 	 *            radian value to convert to degrees
 	 * @see PApplet#radians(float)
 	 */
+	default double degrees(double radians) {
+		return radians * Constants.RAD_TO_DEG_D;
+	}
+
 	default float degrees(float radians) {
 		return radians * Constants.RAD_TO_DEG;
 	}
@@ -164,6 +183,10 @@ public interface MathUtils {
 	 *            degree value to convert to radians
 	 * @see PApplet#degrees(float)
 	 */
+	default double radians(double degrees) {
+		return degrees * Constants.DEG_TO_RAD_D;
+	}
+
 	default float radians(float degrees) {
 		return degrees * Constants.DEG_TO_RAD;
 	}
