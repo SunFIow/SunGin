@@ -1,5 +1,8 @@
 package com.sunflow.math;
 
+import com.sunflow.math3d.MatrixF;
+import com.sunflow.math3d.Vertex3F;
+
 public class Vertex2F implements Cloneable {
 
 	public float x;
@@ -171,6 +174,23 @@ public class Vertex2F implements Cloneable {
 			target.set((float) Math.cos(angle), (float) Math.sin(angle));
 		}
 		return target;
+	}
+
+	public MatrixF toMatrix() {
+		float[][] m = new float[2][1];
+		m[0][0] = x;
+		m[1][0] = y;
+		return new MatrixF(2, 1).set(m);
+	}
+
+	static public MatrixF toMatrix(Vertex3F v) {
+		return v.toMatrix();
+	}
+
+	static public Vertex2F fromMatrix(MatrixF m) {
+		return new Vertex2F(
+				m.data.length > 0 ? m.data[0][0] : 0,
+				m.data.length > 1 ? m.data[1][0] : 0);
 	}
 
 	@Override

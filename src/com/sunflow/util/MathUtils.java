@@ -3,6 +3,19 @@ package com.sunflow.util;
 import com.sunflow.math.Vertex2D;
 
 public interface MathUtils {
+
+	default int abs(int a) { return Math.abs(a); }
+
+	default long abs(long a) { return Math.abs(a); }
+
+	default float abs(float a) { return Math.abs(a); }
+
+	default double abs(double a) { return Math.abs(a); }
+
+	default int round(float a) { return Math.round(a); }
+
+	default long round(double a) { return Math.round(a); }
+
 	default int constrain(int val, int a, int b) { return min(max(val, b), a); }
 
 	default long constrain(long val, long a, long b) { return min(max(val, b), a); }

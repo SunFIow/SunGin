@@ -24,7 +24,6 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.Constants;
 import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
@@ -140,12 +139,12 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 
 	// ........................................................
 
-	protected int transformCount;
-	protected static final int MATRIX_STACK_DEPTH = 32;
+	private int transformCount;
+	private static final int MATRIX_STACK_DEPTH = 32;
 	AffineTransform transformStack[] = new AffineTransform[MATRIX_STACK_DEPTH];
 
 	private int styleStackDepth;
-	protected static final int STYLE_STACK_DEPTH = 64;
+	private static final int STYLE_STACK_DEPTH = 64;
 	private Style[] styleStack = new Style[STYLE_STACK_DEPTH];
 
 	// ........................................................
@@ -157,16 +156,17 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 	private boolean calcAlpha;
 
 	/** The last RGB value converted to HSB */
-	int cacheHsbKey;
+	private int cacheHsbKey;
 	/** Result of the last conversion to HSB */
-	float[] cacheHsbValue = new float[3];
+	private float[] cacheHsbValue = new float[3];
 
 	private Line2D.Float line = new Line2D.Float();
 	private Ellipse2D.Float ellipse = new Ellipse2D.Float();
 	private Rectangle2D.Float rect = new Rectangle2D.Float();
 	private Arc2D.Float arc = new Arc2D.Float();
+
 	protected GeneralPath gpath;
-	protected ArrayList<Vertex3F> vertices;
+	protected ArrayList<Shape> shapes_tmp;
 
 	private Color fillColorObject;
 	private boolean fillGradient;
@@ -202,7 +202,6 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 		this.height = height;
 		this.format = format;
 		this.pixels = new int[width * height];
-		// TODO: Check if this calls defaultSettings of GameBase/... not on purpose
 		defaultSettings();
 	}
 
@@ -327,22 +326,22 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 // 	| | | | | | | |
 // 	V V V V V V V V
 
-	int shape;
-	int vNum;
+	protected int shape;
+	protected int vNum;
+
+	public final void beginShape() { beginShape(POLYGON); }
 
 	// POINTS,LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
 	/**
 	 * @param mode
 	 *            POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
 	 */
-	public final void beginShape(int mode) {
+	public void beginShape(int mode) {
 		shape = mode;
 		vNum = 0;
 		gpath = null;
-		vertices = new ArrayList<>();
+		SShape.beginShape(this);
 	}
-
-	public final void beginShape() { beginShape(POLYGON); }
 
 	public void vertex(float x, float y) {
 		if (gpath == null) {
@@ -353,7 +352,7 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 		testVertex();
 	}
 
-	protected void testVertex() {
+	private void testVertex() {
 		boolean end = false;
 		if (shape == POINTS && vNum == 1) end = true;
 		if (shape == LINES && vNum == 2) end = true;
@@ -364,32 +363,37 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 //		if (shape == QUAD_STRIP && vNum == 4) end = true;
 
 		if (end) {
+			SShape.tempShape = true;
 			endShape(CLOSE);
 			beginShape(shape);
+			SShape.tempShape = false;
 		}
 	}
 
 	public final void closeShape() { gpath.closePath(); }
-
-	public void endShape() {
-		if (shape == POINTS && vNum < 1) return;
-		if (shape == LINES && vNum < 2) return;
-		if (shape == TRIANGLES && vNum < 3) return;
-//		if(shape == TRIANGLE_FAN && vNum < 0)return;
-//		if(shape == TRIANGLE_STRIP && vNum < 0)return;
-		if (shape == QUADS && vNum < 4) return;
-//		if(shape == QUAD_STRIP && vNum < 0)return;
-		drawShape(gpath);
-	}
 
 	/**
 	 * @param mode
 	 *            OPEN or CLOSE
 	 */
 	public void endShape(int mode) {
-		if (gpath == null) return;
-		if (mode == CLOSE) gpath.closePath();
+		if (mode == CLOSE) if (gpath != null) gpath.closePath();
 		endShape();
+	}
+
+	public void endShape() {
+		boolean bla = false;
+		if (shape == POINTS && vNum < 1) bla = true;
+		if (shape == LINES && vNum < 2) bla = true;
+		if (shape == TRIANGLES && vNum < 3) bla = true;
+//		if(shape == TRIANGLE_FAN && vNum < 0) bla = true;
+//		if(shape == TRIANGLE_STRIP && vNum < 0)bla = true;
+		if (shape == QUADS && vNum < 4) bla = true;
+//		if(shape == QUAD_STRIP && vNum < 0) bla = true;
+
+//		drawShape(gpath);
+		if (!bla) SShape.addShape(this);
+		if (!SShape.tempShape) SShape.endShape(this);
 	}
 
 // COPY PASTA
@@ -1517,6 +1521,8 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 	public final void rotate(double theta) { graphics.rotate(theta); }
 
 	public final void rotate(double theta, double x, double y) { graphics.rotate(theta, x, y); }
+
+	public final void scale(double xy) { graphics.scale(xy, xy); };
 
 	public final void scale(double x, double y) { graphics.scale(x, y); };
 

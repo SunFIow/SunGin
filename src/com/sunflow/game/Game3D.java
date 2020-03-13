@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sunflow.gfx.GraphicsMatrix;
-import com.sunflow.gfx.Shape;
 import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.MatrixF;
 import com.sunflow.math3d.Vertex3F;
@@ -55,9 +54,9 @@ public class Game3D extends Game2D {
 
 	protected float movementSpeed;
 
-	private GraphicsMatrix gMatrix;
+	public GraphicsMatrix gMatrix;
 
-	private ArrayList<Shape> shapes;
+	public ArrayList<Vertex3F> vertices;
 
 	@Override
 	final void privatePreSetup() {
@@ -92,7 +91,7 @@ public class Game3D extends Game2D {
 
 		gMatrix = new GraphicsMatrix();
 
-		shapes = new ArrayList<>();
+//		shapes = new ArrayList<>();
 		updateView();
 	}
 
@@ -129,22 +128,6 @@ public class Game3D extends Game2D {
 		setModelOver();
 
 //		drawCrosshair();
-	}
-
-	@Override
-	final void postDraw() {
-		super.postDraw();
-
-		int[] order = getOrder();
-		for (int i = 0; i < order.length; i++) {
-			Shape shape = shapes.get(order[i]);
-			style(shape.style);
-			graphics.setTransform(shape.transform);
-			gMatrix.rotation(shape.rotation);
-			drawShape(shape.path);
-		}
-
-		shapes.clear();
 	}
 
 	protected final void render() {
@@ -185,6 +168,8 @@ public class Game3D extends Game2D {
 
 		if (draw) line(x2d1, y2d1, x2d2, y2d2);
 	}
+
+	public final void box(float l) { box(0, 0, 0, l); }
 
 	public final void box(float x, float y, float z, float l) {
 		beginShape(QUADS);
@@ -242,47 +227,9 @@ public class Game3D extends Game2D {
 	public final void vertex(float x, float y) { vertex(x, y, 0); }
 
 	@Override
-	public final void endShape() { shapes.add(getShape()); }
-
-	public final Shape getShape() { return getShape(null); }
-
-	public final Shape getShape(Shape s) {
-		if (s == null) s = new Shape();
-		s.vertices = vertices;
-		s.path = gpath;
-		s.style = getStyle(null);
-		s.transform = graphics.getTransform();
-		s.rotation = getRotation();
-		return s;
-	}
-
-	private final int[] getOrder() {
-		int size = shapes.size();
-		float[] dists = new float[size];
-		int[] order = new int[size];
-
-		for (int i = 0; i < size; i++) {
-			dists[i] = shapes.get(i).dist(vCameraPos);
-			order[i] = i;
-		}
-
-		float ftemp;
-		int itemp;
-		for (int a = 0; a < size - 1; a++) {
-			for (int b = 0; b < size - 1; b++) {
-				if (dists[b] < dists[b + 1]) {
-					ftemp = dists[b];
-					itemp = order[b];
-					order[b] = order[b + 1];
-					dists[b] = dists[b + 1];
-
-					order[b + 1] = itemp;
-					dists[b + 1] = ftemp;
-				}
-			}
-		}
-
-		return order;
+	public void beginShape(int mode) {
+		super.beginShape(mode);
+		vertices = new ArrayList<>();
 	}
 
 	public final float[] convert3Dto2D(Vertex3F pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
@@ -428,6 +375,8 @@ public class Game3D extends Game2D {
 	public final float zoom() { return zoom; }
 
 	public final void translate(float x, float y, float z) { gMatrix.translate(x, y, z); }
+
+	public final void translateTo(float x, float y, float z) { gMatrix.translateTo(x, y, z); }
 
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };
 

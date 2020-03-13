@@ -29,6 +29,7 @@ import java.util.Random;
 import javax.swing.JFrame;
 
 import com.sunflow.gfx.SImage;
+import com.sunflow.gfx.SShape;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
 import com.sunflow.math.OpenSimplexNoise;
@@ -484,7 +485,9 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	protected void draw(Graphics2D g) {}
 
-	void postDraw() {}
+	void postDraw() {
+		SShape.drawAll(this);
+	}
 
 	final public void background(Graphics2D g, Color c) {
 		Color cSave = g.getColor();

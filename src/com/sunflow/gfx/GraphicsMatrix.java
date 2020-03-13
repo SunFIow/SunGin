@@ -3,6 +3,7 @@ package com.sunflow.gfx;
 import com.sunflow.math3d.MatrixF;
 import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.StaticUtils;
+import com.sunflow.util.Transform;
 
 public class GraphicsMatrix {
 
@@ -10,9 +11,9 @@ public class GraphicsMatrix {
 
 	private float sx, sy, sz;
 
-	private int rotationCount;
+	private int transformCount;
 	private static final int MATRIX_STACK_DEPTH = 32;
-	private float[][] rotationStack;
+	private Transform[] transformStack;
 
 	private MatrixF rotX, rotY, rotZ;
 	private float angleX, angleY, angleZ;
@@ -22,7 +23,7 @@ public class GraphicsMatrix {
 
 		sx = sy = sz = 1;
 
-		rotationStack = new float[MATRIX_STACK_DEPTH][3];
+		transformStack = new Transform[MATRIX_STACK_DEPTH];
 
 		angleX = angleY = angleZ = 0;
 
@@ -32,23 +33,68 @@ public class GraphicsMatrix {
 	}
 
 	public final void pushMatrix() {
-		rotationStack[rotationCount] = getRotation();
-		rotationCount++;
+		if (transformCount == transformStack.length) {
+			throw new RuntimeException("pushMatrix() cannot use push more than " +
+					transformStack.length + " times");
+		}
+		transformStack[transformCount] = getTransform();
+		transformCount++;
 	}
 
 	public final void popMatrix() {
-		rotationCount--;
-		float[] angles = rotationStack[rotationCount];
-		rotation(angles);
+		if (transformCount == 0) {
+			throw new RuntimeException("missing a pushMatrix() " +
+					"to go with that popMatrix()");
+		}
+		transformCount--;
+		transform(transformStack[transformCount]);
 	}
 
 	public final void resetMatrix() {
+		translateTo(0, 0, 0);
+		scale(1, 1, 1);
 		rotateXTo(0);
 		rotateYTo(0);
 		rotateZTo(0);
 	}
 
-	public final void translate(float x, float y, float z) { tx = x; ty = y; tz = z; }
+	public final Transform getTransform() { return getTransform(null); }
+
+	public final Transform getTransform(Transform t) { // ignore
+		if (t == null) t = new Transform();
+		t.tx = tx;
+		t.ty = ty;
+		t.tz = tz;
+		t.sx = sx;
+		t.sy = sy;
+		t.sz = sz;
+		t.rotX = rotX;
+		t.rotY = rotY;
+		t.rotZ = rotZ;
+		t.angleX = angleX;
+		t.angleY = angleY;
+		t.angleZ = angleZ;
+		return t;
+	}
+
+	public final void transform(Transform t) {
+		tx = t.tx;
+		ty = t.ty;
+		tz = t.tz;
+		sx = t.sx;
+		sy = t.sy;
+		sz = t.sz;
+		rotX = t.rotX;
+		rotY = t.rotY;
+		rotZ = t.rotZ;
+		angleX = t.angleX;
+		angleY = t.angleY;
+		angleZ = t.angleZ;
+	}
+
+	public final void translate(float x, float y, float z) { tx += x; ty += y; tz += z; }
+
+	public final void translateTo(float x, float y, float z) { tx = x; ty = y; tz = z; }
 
 	public final void scale(float x, float y, float z) { sx = x; sy = y; sz = z; };
 
