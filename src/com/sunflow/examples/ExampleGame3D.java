@@ -29,7 +29,6 @@ public class ExampleGame3D extends Game3D {
 	public void setup() {
 		title("ExampleGame 3D");
 //		undecorated(true);
-		noSmooth();
 		isCameraActivated = true;
 		createCanvas(1280, 720);
 		syncMode(ASYNC);
@@ -37,6 +36,7 @@ public class ExampleGame3D extends Game3D {
 		tickRate(60);
 		showInfo(true);
 		highlight(true);
+		noSmooth();
 
 		vCameraPos = new Vertex3F(0, 0, 0);
 

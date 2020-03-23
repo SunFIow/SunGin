@@ -10,14 +10,20 @@ import java.util.List;
 import com.sunflow.math.Vertex2D;
 
 public interface GeometryUtils {
+	public static final GeometryUtils instance = new GeometryUtils() {};
+
+	default boolean hitLineLine(double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2) {
+		return Line2D.linesIntersect(l1x1, l1y1, l1x2, l1y2, l2x1, l2y1, l2x2, l2y2);
+	}
 
 	default boolean hitLineBox(double lx1, double ly1, double lx2, double ly2, double bx, double by, double bw, double bh) {
 		return new Rectangle2D.Double(bx, by, bw, bh).intersectsLine(lx1, ly1, lx2, ly2);
 	}
 
 	default boolean hitLineCircle(double lx1, double ly1, double lx2, double ly2, double cx, double cy, double cr) {
-		List<Vertex2D> ps = getLineCircleIntersectionPoints(lx1, ly1, lx2, ly2, cx, cy, cr);
-		return !ps.isEmpty();
+//		List<Vertex2D> ps = getLineCircleIntersectionPoints(lx1, ly1, lx2, ly2, cx, cy, cr);
+//		return !ps.isEmpty();
+		return Line2D.ptLineDist(lx1, ly1, lx2, ly2, cx, cy) <= cr;
 	}
 
 	default List<Vertex2D> getLineCircleIntersectionPoints(double lx1, double ly1, double lx2, double ly2, double cx, double cy, double cr) {
@@ -79,7 +85,7 @@ public interface GeometryUtils {
 	}
 
 	default boolean hitCircleCircle(double x1, double y1, double r1, double x2, double y2, double r2) {
-		return (StaticUtils.instance.dist(x1, y1, x2, y2) <= r1 + r2);
+		return (MathUtils.instance.dist(x1, y1, x2, y2) <= r1 + r2);
 	}
 
 	default boolean hitBoxPoint(float bx, float by, float w, float h, float px, float py) {

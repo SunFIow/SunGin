@@ -152,9 +152,13 @@ public class Vertex2I implements Cloneable {
 		return this;
 	}
 
+	public static Vertex2I random2D() { return random2D(null); }
+
 	public static Vertex2I random2D(Vertex2I target) {
 		return fromAngle(Math.random() * Math.PI * 2.0D, target);
 	}
+
+	public static Vertex2I fromAngle(double angle) { return fromAngle(angle, null); }
 
 	public static Vertex2I fromAngle(double angle, Vertex2I target) {
 		if (target == null) {

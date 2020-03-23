@@ -2,6 +2,7 @@ package com.sunflow.math;
 
 import com.sunflow.math3d.MatrixF;
 import com.sunflow.math3d.Vertex3F;
+import com.sunflow.util.MathUtils;
 
 public class Vertex2F implements Cloneable {
 
@@ -163,17 +164,46 @@ public class Vertex2F implements Cloneable {
 		return this;
 	}
 
+	public static Vertex2F random2D() { return random2D(null); }
+
 	public static Vertex2F random2D(Vertex2F target) {
-		return fromAngle(Math.random() * Math.PI * 2.0D, target);
+		return fromAngle((float) (Math.random() * Math.PI * 2), target);
 	}
 
-	public static Vertex2F fromAngle(double angle, Vertex2F target) {
+	public static Vertex2F fromAngle(float angle) { return fromAngle(angle, null); }
+
+	public static Vertex2F fromAngle(float angle, Vertex2F target) {
 		if (target == null) {
 			target = new Vertex2F((float) Math.cos(angle), (float) Math.sin(angle));
 		} else {
 			target.set((float) Math.cos(angle), (float) Math.sin(angle));
 		}
 		return target;
+	}
+
+	/**
+	 * Rotate the vector by an angle (2D only)
+	 * 
+	 * @param theta
+	 *            the angle of rotation
+	 */
+	public Vertex2F rotate(float theta) {
+		float temp = x;
+		// Might need to check for rounding errors like with angleBetween function?
+		x = x * MathUtils.instance.cos(theta) - y * MathUtils.instance.sin(theta);
+		y = temp * MathUtils.instance.sin(theta) + y * MathUtils.instance.cos(theta);
+		return this;
+	}
+
+	/**
+	 * Calculate the angle of rotation for this vector *
+	 * 
+	 * @return the angle of rotation
+	 */
+
+	public float heading() {
+		float angle = (float) Math.atan2(y, x);
+		return angle;
 	}
 
 	public MatrixF toMatrix() {
@@ -191,6 +221,21 @@ public class Vertex2F implements Cloneable {
 		return new Vertex2F(
 				m.data.length > 0 ? m.data[0][0] : 0,
 				m.data.length > 1 ? m.data[1][0] : 0);
+	}
+
+	public float[] array() {
+		float[] array = new float[3];
+		array[0] = x;
+		array[1] = y;
+//		array[2] = z;
+		return array;
+	}
+
+	static public Vertex2F fromArray(float[] array) {
+		return new Vertex2F(
+				array.length > 0 ? array[0] : 0,
+				array.length > 1 ? array[1] : 0);
+//				array.length > 2 ? array[2] : 0);
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package com.sunflow.math;
 
 import com.sunflow.math3d.MatrixF;
-import com.sunflow.util.StaticUtils;
+import com.sunflow.util.MathUtils;
 
 public class SMatrix2D {
 
@@ -22,8 +22,8 @@ public class SMatrix2D {
 	public final void rotate(float angle) {
 		this.angle += angle;
 		float[][] rotArr = {
-				{ StaticUtils.instance.cos(this.angle), -StaticUtils.instance.sin(this.angle) },
-				{ StaticUtils.instance.sin(this.angle), StaticUtils.instance.cos(this.angle) }
+				{ MathUtils.instance.cos(this.angle), -MathUtils.instance.sin(this.angle) },
+				{ MathUtils.instance.sin(this.angle), MathUtils.instance.cos(this.angle) }
 		};
 		rot = new MatrixF(2, 2);
 		rot.set(rotArr);

@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import com.sunflow.logging.Log;
 
 public interface LogUtils {
+	public static final LogUtils instance = new LogUtils() {};
 
 	default void log(Level level, Object logMessage) { Log.log(level, logMessage); }
 

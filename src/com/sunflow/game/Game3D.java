@@ -21,7 +21,7 @@ import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.DPolygon;
 import com.sunflow.math3d.models.GenerateTerrain;
-import com.sunflow.util.StaticUtils;
+import com.sunflow.util.MathUtils;
 
 public class Game3D extends Game2D {
 
@@ -244,8 +244,8 @@ public class Game3D extends Game2D {
 	private final void controlSunAndLight() {
 		sunPos += 0.005f;
 		float mapSize = GenerateTerrain.mapSize * GenerateTerrain.Size;
-		vLightDir.x = mapSize / 2 - (mapSize / 2 + StaticUtils.instance.cos(sunPos) * mapSize * 10);
-		vLightDir.y = mapSize / 2 - (mapSize / 2 + StaticUtils.instance.sin(sunPos) * mapSize * 10);
+		vLightDir.x = mapSize / 2 - (mapSize / 2 + MathUtils.instance.cos(sunPos) * mapSize * 10);
+		vLightDir.y = mapSize / 2 - (mapSize / 2 + MathUtils.instance.sin(sunPos) * mapSize * 10);
 		vLightDir.z = -200.0f;
 	}
 

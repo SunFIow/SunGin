@@ -1,8 +1,5 @@
 package com.sunflow.game;
 
-import java.awt.AWTException;
-import java.awt.Color;
-import java.awt.Robot;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
@@ -21,56 +18,45 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Random;
 
 import com.sunflow.gfx.SImage;
+import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.math.Vertex2F;
 
 abstract class GameBase extends SImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
-//	protected int x, y;
-	public float width;
-	public float height;
+	// RADIANDS or DEGREES
+	protected byte mode;
 
-	protected SImage overlay;
+	protected Random random;
+//	private ImprovedNoise perlinnoise;
+	private OpenSimplexNoise noise;
 
-	public int width() { return (int) width; }
-
-	public int height() { return (int) height; }
-
-	public int mouseX() { return (int) mouseX; }
-
-	public int mouseY() { return (int) mouseY; }
-
-	protected int frameWidth, frameHeight;
-
-	public float mouseX, mouseY;
-	public float prevMouseX, prevMouseY;
-	public float mouseScreenX, mouseScreenY;
-
-	protected float aimSize;
-	protected Color aimColor;
-
-	protected Robot robot;
+	protected GameBase game;
 
 	public GameBase() { init(); }
 
 	protected void init() {
-		try {
-			robot = new Robot();
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
-		aimSize = 8;
-		aimColor = Color.black;
+		game = this;
+		privatePreSetup();
+		preSetup();
+
+		setup();
 	}
 
-	@Override
-	protected void defaultSettings() {
-		super.width = width();
-		super.height = height();
-		super.format = RGB;
-		super.defaultSettings();
+	void privatePreSetup() {
+		random = new Random();
+		noise = new OpenSimplexNoise(random.nextLong());
+		mode(RADIANS);
 	}
+
+	protected void preSetup() {}
+
+	protected void setup() {}
+
+	@Override
+	protected void defaultSettings() { super.defaultSettings(); }
 
 	protected abstract int x();
 
@@ -80,17 +66,61 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 
 	protected abstract int frameY();
 
-	public final static SImage createImage(float width, float height) {
+	final public static Vertex2F createVector() {
+		return createVector(0, 0);
+	}
+
+	final public static Vertex2F createVector(float x, float y) {
+		return new Vertex2F(x, y);
+	}
+
+	final public static SImage createImage(float width, float height) {
 		return new SImage(width, height);
 	}
 
-	public final static SImage createImage(float width, float height, int format) {
+	final public static SImage createImage(float width, float height, int format) {
 		return new SImage(width, height, format);
 	}
 
-	public final static SImage createImage(BufferedImage bi) {
+	final public static SImage createImage(BufferedImage bi) {
 		return new SImage(bi);
 	}
+
+	/**
+	 * @param mode
+	 *            either RADIANDS or DEGREES
+	 */
+	final public void mode(byte mode) {
+		this.mode = mode;
+	}
+
+	@Override
+	public double sin(double angle) {
+		return super.sin(mode == RADIANS ? angle : radians(angle));
+	}
+
+	@Override
+	public float sin(float angle) {
+		return super.sin(mode == RADIANS ? angle : radians(angle));
+	}
+
+	@Override
+	public double cos(double angle) {
+		return super.cos(mode == RADIANS ? angle : radians(angle));
+	}
+
+	@Override
+	public float cos(float angle) {
+		return super.cos(mode == RADIANS ? angle : radians(angle));
+	}
+
+	final public double noise(double xoff) { return noise.eval(xoff, 0); }
+
+	final public double noise(double xoff, double yoff) { return noise.eval(xoff, yoff); }
+
+	final public double noise(double xoff, double yoff, double zoff) { return noise.eval(xoff, yoff, zoff); }
+
+	final public double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
 
 	/**
 	 * Simple utility function to
@@ -98,7 +128,7 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	 * adds "rec/" to the fileName
 	 * if it contains no "/".
 	 */
-	public final static void serialize(String fileName, Serializable obj) {
+	final public static void serialize(String fileName, Serializable obj) {
 		serialize(getFile(fileName), obj);
 	}
 
@@ -106,7 +136,7 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	 * Simple utility function to
 	 * save an Serializable obj to a file
 	 */
-	public final static void serialize(File file, Serializable obj) {
+	final public static void serialize(File file, Serializable obj) {
 		try {
 			FileOutputStream fos = new FileOutputStream(file);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -125,7 +155,7 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	 * adds "rec/" to the fileName
 	 * if it contains no "/".
 	 */
-	public final static Serializable deserialize(String fileName) {
+	final public static Serializable deserialize(String fileName) {
 		return deserialize(getFile(fileName));
 	}
 
@@ -133,7 +163,7 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	 * Simple utility function to
 	 * load an Serializable obj from file
 	 */
-	public final static Serializable deserialize(File file) {
+	final public static Serializable deserialize(File file) {
 		Serializable obj = null;
 		try {
 			FileInputStream fis = new FileInputStream(file);
@@ -163,47 +193,6 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	private final static File getFile(String name) {
 		if (!name.contains("/")) name = "rec/".concat(name);
 		return new File(name);
-	}
-
-	public final void drawCrosshair() {
-		int aimStrokeWidth = (Math.round(aimSize / 8));
-		int aimStroke = aimStrokeWidth * 2;
-		overlay.noStroke();
-		overlay.fill(aimColor.getRGB());
-		overlay.rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
-	}
-
-	public final void moveMouse(Vertex2F v) {
-		moveMouse(v.x(), v.y());
-	}
-
-	public final void moveMouse(float x, float y) {
-		moveMouseTo(mouseX + x, mouseY + y);
-	}
-
-	public final void moveMouseTo(Vertex2F v) {
-		moveMouseTo(v.x, v.y);
-	}
-
-	public void moveMouseTo(float x, float y) {
-		robot.mouseMove((int) (x() + x), (int) (y() + y));
-	}
-
-	public final void moveMouseOnScreen(Vertex2F v) {
-		moveMouseOnScreen(v.x, v.y);
-	}
-
-	public final void moveMouseOnScreen(float x, float y) {
-		moveMouseOnScreenTo(mouseScreenX + x, mouseScreenY + y);
-	}
-
-	public final void moveMouseOnScreenTo(Vertex2F v) {
-		moveMouseOnScreenTo(v.x, v.y);
-	}
-
-	public final void moveMouseOnScreenTo(float x, float y) {
-		robot.mouseMove((int) x, (int) y);
 	}
 
 	@Override

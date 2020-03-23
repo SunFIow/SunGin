@@ -392,7 +392,7 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 //		if(shape == QUAD_STRIP && vNum < 0) bla = true;
 
 //		drawShape(gpath);
-		if (!bla) SShape.addShape(this);
+		if (!bla && gpath != null) SShape.addShape(this);
 		if (!SShape.tempShape) SShape.endShape(this);
 	}
 

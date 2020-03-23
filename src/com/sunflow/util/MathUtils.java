@@ -3,6 +3,7 @@ package com.sunflow.util;
 import com.sunflow.math.Vertex2D;
 
 public interface MathUtils {
+	public static final MathUtils instance = new MathUtils() {};
 
 	default int abs(int a) { return Math.abs(a); }
 

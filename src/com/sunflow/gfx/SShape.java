@@ -50,12 +50,14 @@ public abstract class SShape {
 			for (int i = 0; i < order.length; i++) {
 				Shape3D shape = shapes.get(order[i]);
 
+//				if (shape.path != null) {
 				screen.push();
 				screen.style(shape.style);
 				screen.graphics.setTransform(shape.transform);
 				screen.gMatrix.transform(shape.m_transform);
 				screen.drawShape(shape.path);
 				screen.pop();
+//				}
 			}
 			shapes.clear();
 		}

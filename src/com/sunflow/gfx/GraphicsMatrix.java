@@ -2,7 +2,7 @@ package com.sunflow.gfx;
 
 import com.sunflow.math3d.MatrixF;
 import com.sunflow.math3d.Vertex3F;
-import com.sunflow.util.StaticUtils;
+import com.sunflow.util.MathUtils;
 import com.sunflow.util.Transform;
 
 public class GraphicsMatrix {
@@ -114,8 +114,8 @@ public class GraphicsMatrix {
 		angleX += angle;
 		float[][] rotArrX = {
 				{ 1, 0, 0 },
-				{ 0, StaticUtils.instance.cos(angleX), -StaticUtils.instance.sin(angleX) },
-				{ 0, StaticUtils.instance.sin(angleX), StaticUtils.instance.cos(angleX) }
+				{ 0, MathUtils.instance.cos(angleX), -MathUtils.instance.sin(angleX) },
+				{ 0, MathUtils.instance.sin(angleX), MathUtils.instance.cos(angleX) }
 		};
 		rotX = new MatrixF(3, 3);
 		rotX.set(rotArrX);
@@ -124,9 +124,9 @@ public class GraphicsMatrix {
 	public final void rotateY(float angle) {
 		angleY += angle;
 		float[][] rotArrY = {
-				{ StaticUtils.instance.cos(angleY), 0, StaticUtils.instance.sin(angleY) },
+				{ MathUtils.instance.cos(angleY), 0, MathUtils.instance.sin(angleY) },
 				{ 0, 1, 0 },
-				{ -StaticUtils.instance.sin(angleY), 0, StaticUtils.instance.cos(angleY) }
+				{ -MathUtils.instance.sin(angleY), 0, MathUtils.instance.cos(angleY) }
 		};
 		rotY = new MatrixF(3, 3);
 		rotY.set(rotArrY);
@@ -135,8 +135,8 @@ public class GraphicsMatrix {
 	public final void rotateZ(float angle) {
 		angleZ += angle;
 		float[][] rotArrZ = {
-				{ StaticUtils.instance.cos(angleZ), -StaticUtils.instance.sin(angleZ), 0 },
-				{ StaticUtils.instance.sin(angleZ), StaticUtils.instance.cos(angleZ), 0 },
+				{ MathUtils.instance.cos(angleZ), -MathUtils.instance.sin(angleZ), 0 },
+				{ MathUtils.instance.sin(angleZ), MathUtils.instance.cos(angleZ), 0 },
 				{ 0, 0, 1 }
 		};
 		rotZ = new MatrixF(3, 3);

@@ -12,6 +12,8 @@ import com.sunflow.gfx.SImage;
 import com.sunflow.math.Vertex2F;
 
 public interface GameUtils {
+	public static final GameUtils instance = new GameUtils() {};
+
 	default public int index(int x, int y, int width) { return x + y * width; }
 
 	default public int indexRotated(int x, int y, int width, int height, byte rotation) {

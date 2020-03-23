@@ -1,5 +1,6 @@
 package com.sunflow.game;
 
+import java.awt.AWTException;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -7,7 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.Shape;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -18,13 +19,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
-import java.awt.font.TextLayout;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import java.util.Random;
 
 import javax.swing.JFrame;
 
@@ -32,13 +30,29 @@ import com.sunflow.gfx.SImage;
 import com.sunflow.gfx.SShape;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
-import com.sunflow.math.OpenSimplexNoise;
+import com.sunflow.math.Vertex2F;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
 import com.sunflow.util.MathUtils;
 
 public abstract class Game2D extends GameBase implements Constants, MathUtils, GameUtils, GeometryUtils { // , Runnable {
+
+	public float width, height;
+
+	private float scaleWidth, scaleHeight;
+	private int scaledWidth, scaledHeight;
+
+	protected int frameWidth, frameHeight;
+
+	public float mouseX, mouseY;
+	public float prevMouseX, prevMouseY;
+	public float mouseScreenX, mouseScreenY;
+
+	protected float aimSize;
+	protected Color aimColor;
+
+	protected Robot robot;
 
 //	private Thread thread;
 	private Thread threadTick;
@@ -59,17 +73,10 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	protected boolean showInfo;
 	protected boolean showCrosshair;
 
-	protected Random random;
-//	private ImprovedNoise perlinnoise;
-	private OpenSimplexNoise noise;
-
 	protected boolean running;
 	protected boolean paused;
 
 	protected boolean noLoop;
-
-	// RADIANDS or DEGREES
-	protected byte mode;
 
 	// SYNC or ASYNC
 	protected byte syncMode;
@@ -92,9 +99,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	private Dimension savedSize;
 	private Point savedPos;
 
-	private float scaleWidth, scaleHeight;
-	private int scaledWidth, scaledHeight;
-
 	private String title;
 	private boolean undecorated;
 	private ArrayList<GameLoopListener> gameLoopListeners;
@@ -102,6 +106,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	private long startTime;
 	protected boolean mousePressed;
+
+	protected SImage overlay;
 
 	public Game2D() {
 		super();
@@ -112,10 +118,10 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	@Override
 	protected final void init() {
 		super.init();
-		privatePreSetup();
-		preSetup();
-
-		setup();
+//		privatePreSetup();
+//		preSetup();
+//
+//		setup();
 		start();
 	}
 
@@ -129,6 +135,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	protected void refresh() {}
 
 	void privateRefresh() {
+		frame.dispose();
 		frame = null;
 		canvas = null;
 
@@ -159,9 +166,20 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		deltaMin = 0;
 	}
 
+	@Override
 	void privatePreSetup() {
-		random = new Random();
-		noise = new OpenSimplexNoise(random.nextLong());
+		super.privatePreSetup();
+
+		try {
+			robot = new Robot();
+		} catch (AWTException e) {
+			e.printStackTrace();
+		}
+		aimSize = 8;
+		aimColor = Color.black;
+
+//		random = new Random();
+//		noise = new OpenSimplexNoise(random.nextLong());
 //		perlinnoise = new ImprovedNoise();
 		frameRate(60);
 		syncMode(SYNC);
@@ -176,10 +194,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		frameLoopListeners = new ArrayList<>();
 		startTime = System.currentTimeMillis();
 	}
-
-	protected void preSetup() {}
-
-	protected void setup() {}
 
 	void createFrame() {
 		if (frame != null) frame.dispose();
@@ -218,6 +232,10 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		canvas.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
+				key = e.getKeyChar();
+				keyCode = e.getKeyCode();
+				keys[keyCode] = true;
+				if (((Game2D) game).keyPressed()) return;
 				switch (e.getKeyCode()) {
 					case KeyEvent.VK_F5:
 						reset();
@@ -229,6 +247,21 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 						toggleFullscreen();
 						break;
 				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				key = e.getKeyChar();
+				keyCode = e.getKeyCode();
+				keys[keyCode] = false;
+				if (((Game2D) game).keyReleased()) return;
+			}
+
+			@Override
+			public void keyTyped(KeyEvent e) {
+				key = e.getKeyChar();
+				keyCode = e.getKeyCode();
+				if (((Game2D) game).keyTyped()) return;
 			}
 		});
 
@@ -265,7 +298,14 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		canvas.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
+//				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
+				int w = e.getComponent().getWidth();
+				int h = e.getComponent().getHeight();
+				scaledWidth = w;
+				scaledHeight = h;
+				width = scaledWidth / scaleWidth;
+				height = scaledHeight / scaleHeight;
+				resize(width, height);
 			}
 		});
 
@@ -278,19 +318,46 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		});
 	}
 
+	protected char key;
+	protected int keyCode;
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	protected boolean keyPressed() { return false; }
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	protected boolean keyReleased() { return false; }
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	protected boolean keyTyped() { return false; }
+
+	private static boolean[] keys = new boolean[65536];
+
+	protected boolean keyIsDown(char key) {
+		return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key));
+	}
+
+	protected boolean keyIsDown(int key) { return keys[key]; }
+
 	void updateMousePosition(int x, int y) {
 		prevMouseX = mouseX;
 		prevMouseY = mouseY;
 		mouseX = x / scaleWidth;
 		mouseY = y / scaleHeight;
-	}
-
-	final private void cResized(int w, int h) {
-		scaledWidth = w;
-		scaledHeight = h;
-		width = scaledWidth / scaleWidth;
-		height = scaledHeight / scaleHeight;
-		resize(width, height);
 	}
 
 	final public void createCanvas(float width, float height) { createCanvas(width, height, 1, 1); }
@@ -300,8 +367,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	final public void createCanvas(float width, float height, float scaleW, float scaleH) {
 		if (!createdCanvas) {
 			createdCanvas = true;
-			super.width = width;
-			super.height = height;
+			this.width = width;
+			this.height = height;
 			this.scaleWidth = scaleW;
 			this.scaleHeight = scaleH;
 
@@ -332,6 +399,12 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		this.undecorated = undecorated;
 	}
 
+	final public void noLoop() {
+		noLoop = true;
+		running = false;
+		timePerFrameNano = MAX_FLOAT;
+	}
+
 	@Override
 	final public void defaultSettings() {
 		showOverlay(false);
@@ -339,6 +412,9 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		infoUpdateIntervall = NANOSECOND;
 		paused = false;
 
+		super.width = width();
+		super.height = height();
+		super.format = RGB;
 		super.defaultSettings();
 
 //		noSmooth();
@@ -361,12 +437,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	}
 
 	final public void stop() { running = false; }
-
-	final public void noLoop() {
-		noLoop = true;
-		running = false;
-		timePerFrameNano = MAX_FLOAT;
-	}
 
 	final public void toggleFullscreen() {
 		synchronized (bs) {
@@ -421,34 +491,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		this.syncMode = mode;
 	}
 
-	/**
-	 * @param mode
-	 *            either RADIANDS or DEGREES
-	 */
-	final public void mode(byte mode) {
-		this.mode = mode;
-	}
-
-	@Override
-	public double sin(double angle) {
-		return super.sin(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public float sin(float angle) {
-		return super.sin(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public double cos(double angle) {
-		return super.cos(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public float cos(float angle) {
-		return super.cos(mode == RADIANS ? angle : radians(angle));
-	}
-
 	final public void addListener(EventListener l) {
 		if (l instanceof GameLoopListener) gameLoopListeners.add((GameLoopListener) l);
 		if (l instanceof FrameLoopListener) frameLoopListeners.add((FrameLoopListener) l);
@@ -496,29 +538,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		g.setColor(cSave);
 	}
 
-//
-	final public void textO(String text, float x, float y) {
-		if (textFont == null) {
-			textFont = createDefaultFont();
-		}
-		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), canvas.getFontMetrics(textFont).getFontRenderContext());
-//		TextLayout tl = new TextLayout(text, textFont.deriveFont(textSize), screen.getFontMetrics(textFont).getFontRenderContext());
-		AffineTransform transform = new AffineTransform();
-		transform.translate(x, y);
-		Shape shape = tl.getOutline(transform);
-		strokeShape(shape);
-		fillShape(shape);
-	}
-
 	final public void saveFrame(String fileName) { saveImage(image, fileName); }
-
-	final public double noise(double xoff) { return noise.eval(xoff, 0); }
-
-	final public double noise(double xoff, double yoff) { return noise.eval(xoff, yoff); }
-
-	final public double noise(double xoff, double yoff, double zoff) { return noise.eval(xoff, yoff, zoff); }
-
-	final public double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
 
 	@Override
 	protected int x() { return canvas.getLocationOnScreen().x; }
@@ -532,7 +552,15 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	@Override
 	protected int frameY() { return frame.getLocationOnScreen().y; }
 
-	public final long millis() {
+	public int width() { return (int) width; }
+
+	public int height() { return (int) height; }
+
+	public int mouseX() { return (int) mouseX; }
+
+	public int mouseY() { return (int) mouseY; }
+
+	final public long millis() {
 		return System.currentTimeMillis() - startTime;
 	}
 
@@ -625,6 +653,47 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		return info;
 	}
 
+	final public void drawCrosshair() {
+		int aimStrokeWidth = (Math.round(aimSize / 8));
+		int aimStroke = aimStrokeWidth * 2;
+		overlay.noStroke();
+		overlay.fill(aimColor.getRGB());
+		overlay.rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
+	}
+
+	final public void moveMouse(Vertex2F v) {
+		moveMouse(v.x(), v.y());
+	}
+
+	final public void moveMouse(float x, float y) {
+		moveMouseTo(mouseX + x, mouseY + y);
+	}
+
+	final public void moveMouseTo(Vertex2F v) {
+		moveMouseTo(v.x, v.y);
+	}
+
+	public void moveMouseTo(float x, float y) {
+		robot.mouseMove((int) (x() + x), (int) (y() + y));
+	}
+
+	final public void moveMouseOnScreen(Vertex2F v) {
+		moveMouseOnScreen(v.x, v.y);
+	}
+
+	final public void moveMouseOnScreen(float x, float y) {
+		moveMouseOnScreenTo(mouseScreenX + x, mouseScreenY + y);
+	}
+
+	final public void moveMouseOnScreenTo(Vertex2F v) {
+		moveMouseOnScreenTo(v.x, v.y);
+	}
+
+	final public void moveMouseOnScreenTo(float x, float y) {
+		robot.mouseMove((int) x, (int) y);
+	}
+
 	private class TickThread extends Thread {
 		@Override
 		public void run() {
@@ -668,7 +737,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 			double timeSinceLastInfoUpdate = 0;
 
 			if (noLoop) {
-				tick();
+				if (!paused) tick();
 				render();
 				return;
 			}
@@ -692,7 +761,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 					timeSinceLastFrame -= timePerFrameNano;
 					if (syncMode == ASYNC) render();
 					else {
-						tick();
+						if (!paused) tick();
 						render();
 					}
 				}
