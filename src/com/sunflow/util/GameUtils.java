@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -67,6 +68,21 @@ public interface GameUtils {
 			e.printStackTrace();
 		}
 		return strBuilder.toString();
+	}
+
+	default String[] loadFileAsStringArray(String fileName) {
+		ArrayList<String> strs = new ArrayList<>();
+		BufferedReader br;
+		try {
+			br = new BufferedReader(new FileReader(new File(fileName)));
+			String line = "";
+			while ((line = br.readLine()) != null) {
+				strs.add(line);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return strs.toArray(new String[0]);
 	}
 
 	default SImage loadDImage(String fileName) {

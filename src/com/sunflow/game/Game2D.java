@@ -30,6 +30,7 @@ import com.sunflow.gfx.SImage;
 import com.sunflow.gfx.SShape;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
+import com.sunflow.logging.Log;
 import com.sunflow.math.Vertex2F;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
@@ -109,14 +110,16 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	protected SImage overlay;
 
-	public Game2D() {
-		super();
-		if (this instanceof Game3D) info("starting 3D Game");
-		else info("starting 2D Game");
-	}
+//	public Game2D() {
+//		super();
+//	}
 
 	@Override
 	protected final void init() {
+		if (this instanceof Game3D) info("starting 3D Game");
+		else if (this instanceof Game2D) info("starting 2D Game");
+		else info("starting Custom Game");
+
 		super.init();
 //		privatePreSetup();
 //		preSetup();
@@ -767,5 +770,10 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				}
 			}
 		}
+	}
+
+	public static void UncaughtException(Throwable e) {
+		Log.log(Log.FATAL, "Uncaught Exception", e);
+		System.exit(1);
 	}
 }

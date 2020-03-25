@@ -382,18 +382,18 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 	}
 
 	public void endShape() {
-		boolean bla = false;
-		if (shape == POINTS && vNum < 1) bla = true;
-		if (shape == LINES && vNum < 2) bla = true;
-		if (shape == TRIANGLES && vNum < 3) bla = true;
-//		if(shape == TRIANGLE_FAN && vNum < 0) bla = true;
-//		if(shape == TRIANGLE_STRIP && vNum < 0)bla = true;
-		if (shape == QUADS && vNum < 4) bla = true;
-//		if(shape == QUAD_STRIP && vNum < 0) bla = true;
+		boolean completeShape = true;
+		if (shape == POINTS && vNum < 1) completeShape = false;
+		if (shape == LINES && vNum < 2) completeShape = false;
+		if (shape == TRIANGLES && vNum < 3) completeShape = false;
+//		if(shape == TRIANGLE_FAN && vNum < 0) bla = false;
+//		if(shape == TRIANGLE_STRIP && vNum < 0)bla = false;
+		if (shape == QUADS && vNum < 4) completeShape = false;
+//		if(shape == QUAD_STRIP && vNum < 0) bla = false;
 
 //		drawShape(gpath);
-		if (!bla && gpath != null) SShape.addShape(this);
-		if (!SShape.tempShape) SShape.endShape(this);
+		if (completeShape && gpath != null) SShape.addShape(this);
+		SShape.endShape(this);
 	}
 
 // COPY PASTA

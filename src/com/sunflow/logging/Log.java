@@ -10,6 +10,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sunflow.game.Game2D;
+
 public class Log {
 	public static final Level ALL = Level.ALL;
 	public static final Level DEBUG = SunLevel.DEBUG;
@@ -57,7 +59,8 @@ public class Log {
 			logger.log(ERROR, "Latest file logger not working.", e);
 		}
 
-		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(ERROR, "Uncaught Exception", e));
+//		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(ERROR, "Uncaught Exception", e));
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> Game2D.UncaughtException(e));
 
 		return new SunLogger(logger);
 	}

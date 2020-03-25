@@ -7,9 +7,12 @@ import com.sunflow.util.MathUtils;
 
 public class SVector implements Cloneable {
 
-	public float x;
-	public float y;
-	public float z;
+	public float x = 0.0f;
+	public float y = 0.0f;
+	public float z = 0.0f;
+
+	// for 4x4 matrix multiplication
+	public float w = 1.0f;
 
 	public SVector() {}
 
@@ -233,6 +236,8 @@ public class SVector implements Cloneable {
 
 	public SVector mult(SVector v) { return mult(v.x, v.y, v.z); }
 
+	public SVector mult(float x, float y) { return mult(x, y, 1); }
+
 	public SVector mult(float x, float y, float z) {
 		this.x *= x;
 		this.y *= y;
@@ -243,6 +248,8 @@ public class SVector implements Cloneable {
 	public SVector div(float n) { return div(n, n, n); }
 
 	public SVector div(SVector v) { return div(v.x, v.y, v.z); }
+
+	public SVector div(float x, float y) { return div(x, y, 1); }
 
 	public SVector div(float x, float y, float z) {
 		this.x /= x;
@@ -280,7 +287,7 @@ public class SVector implements Cloneable {
 
 	public SVector normalize() {
 		float m = mag();
-		if (m != 0 && m != 1) div(m);
+		if (m != 0.0f && m != 1.0f) div(m);
 		return this;
 	}
 

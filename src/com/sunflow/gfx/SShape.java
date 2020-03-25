@@ -28,11 +28,13 @@ public abstract class SShape {
 	}
 
 	public static void endShape(SImage screen) {
+		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
 		else if (screen instanceof SImage) Shape2D.endShape(screen);
 	}
 
 	public static void beginShape(SImage screen) {
+		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.beginShape((Game3D) screen);
 		else if (screen instanceof SImage) Shape2D.beginShape(screen);
 	}

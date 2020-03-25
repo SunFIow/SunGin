@@ -378,6 +378,8 @@ public class Game3D extends Game2D {
 
 	public final void translateTo(float x, float y, float z) { gMatrix.translateTo(x, y, z); }
 
+	public final void scale(float n) { scale(n, n, n); };
+
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };
 
 	public final void rotateX(float angle) { gMatrix.rotateX(angle); }

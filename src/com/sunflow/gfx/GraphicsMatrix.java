@@ -146,6 +146,7 @@ public class GraphicsMatrix {
 	public final Vertex3F apply(Vertex3F pos) { return apply(pos.x, pos.y, pos.z); }
 
 	public final Vertex3F apply(float x, float y, float z) { return rotated(scaled(translated(x, y, z))); }
+//	public final Vertex3F apply(float x, float y, float z) { return scaled(translated(rotated(x, y, z))); }
 
 	public final Vertex3F translated(Vertex3F pos) { return translated(pos.x, pos.y, pos.z); }
 
