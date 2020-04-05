@@ -4,8 +4,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 
+import com.sunflow.game.Game2D;
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 import com.sunflow.util.Style;
 import com.sunflow.util.Transform;
 
@@ -17,33 +18,33 @@ public abstract class SShape {
 	public Style style;
 	public AffineTransform transform;
 
-	public static void drawAll(SImage screen) {
+	public static void drawAll(SGraphics screen) {
 		if (screen instanceof Game3D) Shape3D.drawAll((Game3D) screen);
-		else if (screen instanceof SImage) Shape2D.drawAll(screen);
+		else if (screen instanceof Game2D) Shape2D.drawAll(screen);
 	}
 
-	public static void addShape(SImage screen) {
+	public static void addShape(SGraphics screen) {
 		if (screen instanceof Game3D) Shape3D.addShape((Game3D) screen);
-		else if (screen instanceof SImage) Shape2D.addShape(screen);
+		else if (screen instanceof Game2D) Shape2D.addShape(screen);
 	}
 
-	public static void endShape(SImage screen) {
+	public static void endShape(SGraphics screen) {
 		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
-		else if (screen instanceof SImage) Shape2D.endShape(screen);
+		else if (screen instanceof Game2D) Shape2D.endShape(screen);
 	}
 
-	public static void beginShape(SImage screen) {
+	public static void beginShape(SGraphics screen) {
 		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.beginShape((Game3D) screen);
-		else if (screen instanceof SImage) Shape2D.beginShape(screen);
+		else if (screen instanceof SGraphics) Shape2D.beginShape(screen);
 	}
 
 	public static class Shape3D extends SShape {
 		public static ArrayList<Shape3D> shapes = new ArrayList<>();
 		public static ArrayList<Shape3D> temp_shapes = new ArrayList<>();
 
-		public ArrayList<Vertex3F> vertices;
+		public ArrayList<SVector> vertices;
 		public Transform m_transform;
 
 		public static void drawAll(Game3D screen) {
@@ -93,12 +94,12 @@ public abstract class SShape {
 			return order;
 		}
 
-		public float dist(Vertex3F cam) { return dist(cam.x, cam.y, cam.z); }
+		public float dist(SVector cam) { return dist(cam.x, cam.y, cam.z); }
 
 		public float dist(float x, float y, float z) {
 			float total = 0;
 			for (int i = 0; i < vertices.size(); i++) {
-				Vertex3F v = vertices.get(i);
+				SVector v = vertices.get(i);
 
 				total += Math.sqrt((x - v.x) * (x - v.x)
 						+ (y - v.y) * (y - v.y)
@@ -137,7 +138,7 @@ public abstract class SShape {
 		public static ArrayList<Shape2D> shapes = new ArrayList<>();
 		public static ArrayList<Shape2D> temp_shapes = new ArrayList<>();
 
-		public static void drawAll(SImage screen) {
+		public static void drawAll(SGraphics screen) {
 			for (Shape2D shape : shapes) {
 				screen.push();
 				screen.style(shape.style);
@@ -148,22 +149,22 @@ public abstract class SShape {
 			shapes.clear();
 		}
 
-		public static void beginShape(SImage screen) {
+		public static void beginShape(SGraphics screen) {
 			temp_shapes.clear();
 		}
 
-		public static void addShape(SImage screen) {
+		public static void addShape(SGraphics screen) {
 			temp_shapes.add(getShape(screen));
 		}
 
-		public static void endShape(SImage screen) {
+		public static void endShape(SGraphics screen) {
 			shapes.addAll(temp_shapes);
 			temp_shapes.clear();
 		}
 
-		public static Shape2D getShape(SImage screen) { return getShape(screen, null); }
+		public static Shape2D getShape(SGraphics screen) { return getShape(screen, null); }
 
-		public static Shape2D getShape(SImage screen, Shape2D s) {
+		public static Shape2D getShape(SGraphics screen, Shape2D s) {
 			if (s == null) s = new Shape2D();
 			s.path = screen.gpath;
 			s.style = screen.getStyle();

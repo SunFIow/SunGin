@@ -1,24 +1,25 @@
 package com.sunflow.math3d;
 
+import com.sunflow.math.SVector;
 import com.sunflow.util.MathUtils;
 
 public class SMatrix3D {
 
-	public Vertex3F pos;
+	public SVector pos;
 	private MatrixF rotX, rotY, rotZ;
 	private float angleX, angleY, angleZ;
 
 	public SMatrix3D() {
-		pos = new Vertex3F();
+		pos = new SVector();
 		angleX = angleY = angleZ = 0;
 		rotateX(0);
 		rotateY(0);
 		rotateZ(0);
 	}
 
-	public final void translate(float x, float y, float z) { pos.add(rotated(new Vertex3F(x, y, z))); }
+	public final void translate(float x, float y, float z) { pos.add(rotated(new SVector(x, y, z))); }
 
-	public final void translateTo(float x, float y, float z) { pos.set(rotated(new Vertex3F(x, y, z))); }
+	public final void translateTo(float x, float y, float z) { pos.set(rotated(new SVector(x, y, z))); }
 
 	public final void rotateXTo(float angle) { rotateX(angle - angleX); }
 
@@ -59,17 +60,17 @@ public class SMatrix3D {
 		rotZ.set(rotArrZ);
 	}
 
-	public final Vertex3F rotated(Vertex3F pos) {
-		Vertex3F rotated = matmul(getRotationMatrixX(), pos);
+	public final SVector rotated(SVector pos) {
+		SVector rotated = matmul(getRotationMatrixX(), pos);
 		rotated = matmul(getRotationMatrixY(), rotated);
 		rotated = matmul(getRotationMatrixZ(), rotated);
 		return rotated;
 	}
 
-	private final Vertex3F matmul(MatrixF a, Vertex3F b) {
-		MatrixF m = b.toMatrix();
+	private final SVector matmul(MatrixF a, SVector b) {
+		MatrixF m = b.get((MatrixF) null);
 		MatrixF matmul = a.dot(m);
-		return Vertex3F.fromMatrix(matmul);
+		return SVector.fromMatrix(matmul);
 	}
 
 	public final float getRotationX() { return angleX; }

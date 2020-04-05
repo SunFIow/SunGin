@@ -2,7 +2,7 @@ package com.sunflow.tutorial;
 
 import java.awt.Color;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public class Pyramid extends IModel {
 //	private float width, length, height, rotation = (float) (Math.PI * 0.75);
@@ -11,12 +11,12 @@ public class Pyramid extends IModel {
 		super(x, y, z);
 		DPolygon[] polygone = new DPolygon[5];
 
-		Vertex3F[] vs = new Vertex3F[8];
-		vs[0] = new Vertex3F(-width / 2, -height / 2, -depth / 2);
-		vs[1] = new Vertex3F(-width / 2, -height / 2, depth / 2);
-		vs[2] = new Vertex3F(width / 2, -height / 2, depth / 2);
-		vs[3] = new Vertex3F(width / 2, -height / 2, -depth / 2);
-		vs[4] = new Vertex3F(0, height / 2, 0);
+		SVector[] vs = new SVector[8];
+		vs[0] = new SVector(-width / 2, -height / 2, -depth / 2);
+		vs[1] = new SVector(-width / 2, -height / 2, depth / 2);
+		vs[2] = new SVector(width / 2, -height / 2, depth / 2);
+		vs[3] = new SVector(width / 2, -height / 2, -depth / 2);
+		vs[4] = new SVector(0, height / 2, 0);
 
 		polygone[0] = new DPolygon(screen, vs[0], vs[1], vs[2], vs[3]);
 		polygone[1] = new DPolygon(screen, vs[0], vs[4], vs[3]);

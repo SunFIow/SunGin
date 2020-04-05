@@ -1,6 +1,6 @@
 package com.sunflow.math3d.models;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 import com.sunflow.util.MathUtils;
 
 public abstract class BaseModel implements MathUtils {
@@ -22,13 +22,13 @@ public abstract class BaseModel implements MathUtils {
 			public void rotateZ(float angle) {}
 
 			@Override
-			public void rotateX(float angle, Vertex3F origin) {}
+			public void rotateX(float angle, SVector origin) {}
 
 			@Override
-			public void rotateY(float angle, Vertex3F origin) {}
+			public void rotateY(float angle, SVector origin) {}
 
 			@Override
-			public void rotateZ(float angle, Vertex3F origin) {}
+			public void rotateZ(float angle, SVector origin) {}
 
 			@Override
 			public void render() {}
@@ -57,11 +57,11 @@ public abstract class BaseModel implements MathUtils {
 	}
 
 	protected BaseModel parent;// = DEFAULT;
-	public Vertex3F pos = new Vertex3F();
+	public SVector pos = new SVector();
 
 	protected boolean needsUpdate = true;
 
-	public void translateModel(Vertex3F pos) {
+	public void translateModel(SVector pos) {
 		this.pos.add(pos);
 		markDirty();
 	}
@@ -71,8 +71,8 @@ public abstract class BaseModel implements MathUtils {
 		markDirty();
 	}
 
-	public Vertex3F absolutePosition() {
-		Vertex3F aPos = pos.clone();
+	public SVector absolutePosition() {
+		SVector aPos = pos.clone();
 		BaseModel p = parent;
 		while (p != null) {
 			aPos.add(p.pos);
@@ -95,11 +95,11 @@ public abstract class BaseModel implements MathUtils {
 
 	public abstract void rotateZ(float angle);
 
-	public abstract void rotateX(float angle, Vertex3F origin);
+	public abstract void rotateX(float angle, SVector origin);
 
-	public abstract void rotateY(float angle, Vertex3F origin);
+	public abstract void rotateY(float angle, SVector origin);
 
-	public abstract void rotateZ(float angle, Vertex3F origin);
+	public abstract void rotateZ(float angle, SVector origin);
 
 	public abstract void render();
 

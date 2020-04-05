@@ -5,7 +5,7 @@ import com.sunflow.math3d.MatrixF;
 import com.sunflow.util.Constants;
 import com.sunflow.util.MathUtils;
 
-public class SVector implements Cloneable {
+public class SVector implements Cloneable, MathUtils {
 
 	public float x = 0.0f;
 	public float y = 0.0f;
@@ -16,13 +16,16 @@ public class SVector implements Cloneable {
 
 	public SVector() {}
 
-	public SVector(SVector v) {
-		this(v.x, v.y, v.z);
-	}
+	public SVector(SVector v) { this(v.x, v.y, v.z, v.w); }
+
+	public SVector(double x, double y) { this((float) x, (float) y); }
 
 	public SVector(float x, float y) {
-		this(x, y, 0);
+		this.x = x;
+		this.y = y;
 	}
+
+	public SVector(double x, double y, double z) { this((float) x, (float) y, (float) z); }
 
 	public SVector(float x, float y, float z) {
 		this.x = x;
@@ -30,8 +33,19 @@ public class SVector implements Cloneable {
 		this.z = z;
 	}
 
+	public SVector(double x, double y, double z, double w) { this((float) x, (float) y, (float) z, (float) w); }
+
+	public SVector(float x, float y, float z, float w) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+	}
+
 	public SVector set(float x, float y) {
-		return set(x, y, 0);
+		this.x = x;
+		this.y = y;
+		return this;
 	}
 
 	public SVector set(float x, float y, float z) {
@@ -41,12 +55,20 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
+	public SVector set(float x, float y, float z, float w) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+		return this;
+	}
+
 	/**
 	 * Set the x, y (and maybe z) coordinates using a SVector as the source.
 	 * 
 	 */
 	public SVector set(SVector source) {
-		return set(source.x, source.y, source.z);
+		return set(source.x, source.y, source.z, source.w);
 	}
 
 	/**
@@ -54,9 +76,10 @@ public class SVector implements Cloneable {
 	 * 
 	 */
 	public SVector set(float[] source) {
-		x = source.length > 0 ? source[0] : 0;
-		y = source.length > 1 ? source[1] : 0;
-		z = source.length > 2 ? source[2] : 0;
+		if (source.length > 0) x = source[0];
+		if (source.length > 1) y = source[1];
+		if (source.length > 2) z = source[2];
+		if (source.length > 3) w = source[3];
 		return this;
 	}
 
@@ -65,9 +88,10 @@ public class SVector implements Cloneable {
 	 * 
 	 */
 	public SVector set(MatrixF source) {
-		x = source.data.length > 0 ? source.data[0][0] : 0;
-		y = source.data.length > 1 ? source.data[1][0] : 0;
-		z = source.data.length > 2 ? source.data[2][0] : 0;
+		if (source.data.length > 0) x = source.data[0][0];
+		if (source.data.length > 1) y = source.data[1][0];
+		if (source.data.length > 2) z = source.data[2][0];
+		if (source.data.length > 3) w = source.data[3][0];
 		return this;
 	}
 
@@ -83,7 +107,7 @@ public class SVector implements Cloneable {
 
 	static public SVector random2D(SVector target, Game2D parent) {
 		return (parent == null)
-				? fromAngle((float) (Math.random() * Math.PI * 2), target)
+				? fromAngle(MathUtils.instance.random() * Constants.TWO_PI, target)
 				: fromAngle(parent.random(Constants.TAU), target);
 	}
 
@@ -103,14 +127,14 @@ public class SVector implements Cloneable {
 		float angle;
 		float vz;
 		if (parent == null) {
-			angle = (float) (Math.random() * Math.PI * 2);
-			vz = (float) (Math.random() * 2 - 1);
+			angle = MathUtils.instance.random() * Constants.TWO_PI * 2;
+			vz = MathUtils.instance.random() * 2 - 1;
 		} else {
 			angle = parent.random(Constants.TWO_PI);
 			vz = parent.random(-1, 1);
 		}
-		float vx = (float) (Math.sqrt(1 - vz * vz) * Math.cos(angle));
-		float vy = (float) (Math.sqrt(1 - vz * vz) * Math.sin(angle));
+		float vx = MathUtils.instance.sqrt(1 - vz * vz) * MathUtils.instance.cos(angle);
+		float vy = MathUtils.instance.sqrt(1 - vz * vz) * MathUtils.instance.sin(angle);
 		if (target == null) {
 			target = new SVector(vx, vy, vz);
 			// target.normalize(); // Should be unnecessary
@@ -120,13 +144,17 @@ public class SVector implements Cloneable {
 		return target;
 	}
 
+	static public SVector fromAngle(double angle) { return fromAngle((float) angle, null); }
+
+	static public SVector fromAngle(double angle, SVector target) { return fromAngle((float) angle, target); }
+
 	static public SVector fromAngle(float angle) { return fromAngle(angle, null); }
 
 	static public SVector fromAngle(float angle, SVector target) {
 		if (target == null) {
-			target = new SVector((float) Math.cos(angle), (float) Math.sin(angle));
+			target = new SVector(MathUtils.instance.cos(angle), MathUtils.instance.sin(angle));
 		} else {
-			target.set((float) Math.cos(angle), (float) Math.sin(angle));
+			target.set(MathUtils.instance.cos(angle), MathUtils.instance.sin(angle));
 		}
 		return target;
 	}
@@ -136,23 +164,15 @@ public class SVector implements Cloneable {
 	@Override
 	public SVector clone() { return new SVector(this); }
 
-	static public SVector of() {
-		return of(0, 0, 0);
-	}
-
-	static public SVector of(SVector v) {
-		return of(v.x, v.y, v.z);
-	}
-
-	static public SVector of(float x, float y, float z) {
-		return new SVector(x, y, z);
-	}
-
 	public int x() { return (int) x; }
 
 	public int y() { return (int) y; }
 
 	public int z() { return (int) z; }
+
+	public int w() { return (int) w; }
+
+	public float[] array() { return get((float[]) null); };
 
 	public float[] get(float[] target) {
 		if (target == null) {
@@ -161,10 +181,13 @@ public class SVector implements Cloneable {
 		if (target.length > 0) target[0] = x;
 		if (target.length > 1) target[1] = y;
 		if (target.length > 2) target[2] = z;
+		if (target.length > 3) target[3] = w;
 		return target;
 	}
 
-	public float[] array() { return get((float[]) null); };
+	static public MatrixF matrix(SVector v) { return v.matrix(); }
+
+	public MatrixF matrix() { return get((MatrixF) null); };
 
 	public MatrixF get(MatrixF target) {
 		if (target == null) {
@@ -177,20 +200,23 @@ public class SVector implements Cloneable {
 		if (target.data.length > 0) target.data[0][0] = x;
 		if (target.data.length > 1) target.data[1][0] = y;
 		if (target.data.length > 2) target.data[2][0] = z;
+		if (target.data.length > 3) target.data[3][0] = w;
 		return target;
 	}
 
-	public MatrixF matrix() { return get((MatrixF) null); };
-
-	static public MatrixF matrix(SVector v) { return v.matrix(); }
-
-	public float mag() { return (float) Math.sqrt(dot(this, this)); }
+	public float mag() { return sqrt(dot(this, this)); }
 
 	public float magSq() { return dot(this, this); }
 
+	static public SVector add(SVector a, SVector b) { return a.clone().add(b); }
+
 	public SVector add(SVector v) { return add(v.x, v.y, v.z); }
 
-	public SVector add(float x, float y) { return add(x, y, 0); }
+	public SVector add(float x, float y) {
+		this.x += x;
+		this.y += y;
+		return this;
+	}
 
 	public SVector add(float x, float y, float z) {
 		this.x += x;
@@ -199,20 +225,15 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
-	static public SVector add(SVector a, SVector b) {
-		return add(a.x, a.y, a.z, b.x, b.y, b.z);
-	}
-
-	static public SVector add(float x1, float y1, float z1, float x2, float y2, float z2) {
-		return new SVector(
-				x1 + x2,
-				y1 + y2,
-				z1 + z2);
-	}
+	static public SVector sub(SVector a, SVector b) { return a.clone().sub(b); }
 
 	public SVector sub(SVector b) { return sub(b.x, b.y, b.z); }
 
-	public SVector sub(float x, float y) { return sub(x, y, 0); }
+	public SVector sub(float x, float y) {
+		this.x -= x;
+		this.y -= y;
+		return this;
+	}
 
 	public SVector sub(float x, float y, float z) {
 		this.x -= x;
@@ -221,22 +242,19 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
-	static public SVector sub(SVector a, SVector b) {
-		return sub(a.x, a.y, a.z, b.x, b.y, b.z);
-	}
-
-	static public SVector sub(float x1, float y1, float z1, float x2, float y2, float z2) {
-		return new SVector(
-				x1 - x2,
-				y1 - y2,
-				z1 - z2);
-	}
+	static public SVector mult(SVector v, float n) { return v.clone().mult(n); }
 
 	public SVector mult(float n) { return mult(n, n, n); }
 
+	static public SVector mult(SVector a, SVector b) { return a.clone().mult(b); }
+
 	public SVector mult(SVector v) { return mult(v.x, v.y, v.z); }
 
-	public SVector mult(float x, float y) { return mult(x, y, 1); }
+	public SVector mult(float x, float y) {
+		this.x *= x;
+		this.y *= y;
+		return this;
+	}
 
 	public SVector mult(float x, float y, float z) {
 		this.x *= x;
@@ -245,11 +263,19 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
+	static public SVector div(SVector v, float n) { return v.clone().div(n); }
+
 	public SVector div(float n) { return div(n, n, n); }
+
+	static public SVector div(SVector a, SVector b) { return a.clone().div(b); }
 
 	public SVector div(SVector v) { return div(v.x, v.y, v.z); }
 
-	public SVector div(float x, float y) { return div(x, y, 1); }
+	public SVector div(float x, float y) {
+		this.x /= x;
+		this.y /= y;
+		return this;
+	}
 
 	public SVector div(float x, float y, float z) {
 		this.x /= x;
@@ -326,8 +352,8 @@ public class SVector implements Cloneable {
 	public SVector rotate(float theta) {
 		float temp = x;
 		// Might need to check for rounding errors like with angleBetween function?
-		x = x * MathUtils.instance.cos(theta) - y * MathUtils.instance.sin(theta);
-		y = temp * MathUtils.instance.sin(theta) + y * MathUtils.instance.cos(theta);
+		x = x * cos(theta) - y * sin(theta);
+		y = temp * sin(theta) + y * cos(theta);
 		return this;
 	}
 
@@ -340,9 +366,9 @@ public class SVector implements Cloneable {
 	 *            The amount of interpolation; some value between 0.0 (old vector) and 1.0 (new vector). 0.1 is very near the old vector; 0.5 is halfway in between.
 	 */
 	public SVector lerp(SVector v, float amt) {
-		x = MathUtils.instance.lerp(x, v.x, amt);
-		y = MathUtils.instance.lerp(y, v.y, amt);
-		z = MathUtils.instance.lerp(z, v.z, amt);
+		x = lerp(x, v.x, amt);
+		y = lerp(y, v.y, amt);
+		z = lerp(z, v.z, amt);
 		return this;
 	}
 
@@ -371,9 +397,9 @@ public class SVector implements Cloneable {
 	 *            the z component to lerp to
 	 */
 	public SVector lerp(float x, float y, float z, float amt) {
-		this.x = MathUtils.instance.lerp(this.x, x, amt);
-		this.y = MathUtils.instance.lerp(this.y, y, amt);
-		this.z = MathUtils.instance.lerp(this.z, z, amt);
+		this.x = lerp(this.x, x, amt);
+		this.y = lerp(this.y, y, amt);
+		this.z = lerp(this.z, z, amt);
 		return this;
 	}
 
@@ -392,8 +418,8 @@ public class SVector implements Cloneable {
 		if (v2.x == 0 && v2.y == 0 && v2.z == 0) return 0.0f;
 
 		double dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-		double v1mag = Math.sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
-		double v2mag = Math.sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
+		double v1mag = MathUtils.instance.sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
+		double v2mag = MathUtils.instance.sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
 		// This should be a number between -1 and 1, since it's "normalized"
 		double amt = dot / (v1mag * v2mag);
 		// But if it's not due to rounding error, then we need to fix it
@@ -427,11 +453,15 @@ public class SVector implements Cloneable {
 	}
 
 	static public SVector normal(SVector a, SVector b, SVector c) {
-		return cross(SVector.sub(b, a), SVector.sub(c, a)).normalized();
+		return SVector.cross(SVector.sub(b, a), SVector.sub(c, a)).normalize();
 	}
 
 	public SVector neg() {
-		return clone().mult(-1);
+		return mult(-1);
+	}
+
+	static public SVector neg(SVector v) {
+		return v.clone().mult(-1);
 	}
 
 	static public SVector avg(SVector... ins) {

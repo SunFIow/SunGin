@@ -1,7 +1,7 @@
 package com.sunflow.gfx;
 
+import com.sunflow.math.SVector;
 import com.sunflow.math3d.MatrixF;
-import com.sunflow.math3d.Vertex3F;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.Transform;
 
@@ -143,32 +143,32 @@ public class GraphicsMatrix {
 		rotZ.set(rotArrZ);
 	}
 
-	public final Vertex3F apply(Vertex3F pos) { return apply(pos.x, pos.y, pos.z); }
+	public final SVector apply(SVector pos) { return apply(pos.x, pos.y, pos.z); }
 
-	public final Vertex3F apply(float x, float y, float z) { return rotated(scaled(translated(x, y, z))); }
-//	public final Vertex3F apply(float x, float y, float z) { return scaled(translated(rotated(x, y, z))); }
+	public final SVector apply(float x, float y, float z) { return rotated(scaled(translated(x, y, z))); }
+//	public final SVector apply(float x, float y, float z) { return scaled(translated(rotated(x, y, z))); }
 
-	public final Vertex3F translated(Vertex3F pos) { return translated(pos.x, pos.y, pos.z); }
+	public final SVector translated(SVector pos) { return translated(pos.x, pos.y, pos.z); }
 
-	public final Vertex3F translated(float x, float y, float z) { return new Vertex3F(x + tx, y + ty, z + tz); }
+	public final SVector translated(float x, float y, float z) { return new SVector(x + tx, y + ty, z + tz); }
 
-	public final Vertex3F scaled(Vertex3F pos) { return scaled(pos.x, pos.y, pos.z); }
+	public final SVector scaled(SVector pos) { return scaled(pos.x, pos.y, pos.z); }
 
-	public final Vertex3F scaled(float x, float y, float z) { return new Vertex3F(x * sx, y * sy, z * sz); }
+	public final SVector scaled(float x, float y, float z) { return new SVector(x * sx, y * sy, z * sz); }
 
-	public final Vertex3F rotated(float x, float y, float z) { return rotated(new Vertex3F(x, y, z)); }
+	public final SVector rotated(float x, float y, float z) { return rotated(new SVector(x, y, z)); }
 
-	public final Vertex3F rotated(Vertex3F pos) {
-		Vertex3F rotated = matmul(getRotationMatrixX(), pos);
+	public final SVector rotated(SVector pos) {
+		SVector rotated = matmul(getRotationMatrixX(), pos);
 		rotated = matmul(getRotationMatrixY(), rotated);
 		rotated = matmul(getRotationMatrixZ(), rotated);
 		return rotated;
 	}
 
-	private final Vertex3F matmul(MatrixF a, Vertex3F b) {
-		MatrixF m = b.toMatrix();
+	private final SVector matmul(MatrixF a, SVector b) {
+		MatrixF m = b.get((MatrixF) null);
 		MatrixF matmul = a.dot(m);
-		return Vertex3F.fromMatrix(matmul);
+		return SVector.fromMatrix(matmul);
 	}
 
 	public final float getRotationX() { return angleX; }

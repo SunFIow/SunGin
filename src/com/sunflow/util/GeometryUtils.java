@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.sunflow.math.Vertex2D;
+import com.sunflow.math.SVector;
 
 public interface GeometryUtils {
 	public static final GeometryUtils instance = new GeometryUtils() {};
@@ -21,12 +21,12 @@ public interface GeometryUtils {
 	}
 
 	default boolean hitLineCircle(double lx1, double ly1, double lx2, double ly2, double cx, double cy, double cr) {
-//		List<Vertex2D> ps = getLineCircleIntersectionPoints(lx1, ly1, lx2, ly2, cx, cy, cr);
+//		List<SVector> ps = getLineCircleIntersectionPoints(lx1, ly1, lx2, ly2, cx, cy, cr);
 //		return !ps.isEmpty();
 		return Line2D.ptLineDist(lx1, ly1, lx2, ly2, cx, cy) <= cr;
 	}
 
-	default List<Vertex2D> getLineCircleIntersectionPoints(double lx1, double ly1, double lx2, double ly2, double cx, double cy, double cr) {
+	default List<SVector> getLineCircleIntersectionPoints(double lx1, double ly1, double lx2, double ly2, double cx, double cy, double cr) {
 		double baX = lx2 - lx1;
 		double baY = ly2 - ly1;
 		double caX = cx - lx1;
@@ -48,12 +48,12 @@ public interface GeometryUtils {
 		double abScalingFactor1 = -pBy2 + tmpSqrt;
 		double abScalingFactor2 = -pBy2 - tmpSqrt;
 
-		Vertex2D p1 = new Vertex2D(lx1 - baX * abScalingFactor1, ly1
+		SVector p1 = new SVector(lx1 - baX * abScalingFactor1, ly1
 				- baY * abScalingFactor1);
 		if (disc == 0) { // abScalingFactor1 == abScalingFactor2
 			return Collections.singletonList(p1);
 		}
-		Vertex2D p2 = new Vertex2D(lx1 - baX * abScalingFactor2, ly1
+		SVector p2 = new SVector(lx1 - baX * abScalingFactor2, ly1
 				- baY * abScalingFactor2);
 		return Arrays.asList(p1, p2);
 	}

@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.Cube;
@@ -38,7 +38,7 @@ public class ExampleGame3D extends Game3D {
 		highlight(true);
 		noSmooth();
 
-		vCameraPos = new Vertex3F(0, 0, 0);
+		vCameraPos = new SVector(0, 0, 0);
 
 		Models.add(new Pyramid(this, 0, -5, 0, 2, 2, 2, Color.green));
 
@@ -72,13 +72,13 @@ public class ExampleGame3D extends Game3D {
 //		Models.add(point);
 	}
 
-	double showDelta, showMult;
+	double showElaspedTime, showMult;
 
 	@Override
 	public List<String> getInfo() {
 		List<String> info = super.getInfo();
 
-		info.add(showDelta + " ∆");
+		info.add(showElaspedTime + " ∆");
 		info.add(showMult + " x");
 
 		float x = vCameraPos.x;
@@ -115,7 +115,7 @@ public class ExampleGame3D extends Game3D {
 		sx += 0.1;
 
 		if (frameCount % frameRate == 0) {
-			showDelta = delta;
+			showElaspedTime = delta;
 			showMult = multiplier;
 		}
 

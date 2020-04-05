@@ -26,12 +26,12 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import com.sunflow.gfx.SImage;
+import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SShape;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
 import com.sunflow.logging.Log;
-import com.sunflow.math.Vertex2F;
+import com.sunflow.math.SVector;
 import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
@@ -84,7 +84,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	private float timePerTickNano, timePerTickMilli;
 	private float timePerFrameNano, timePerFrameMilli;
-	private float infoUpdateIntervall;
 
 	protected int fps, tps;
 
@@ -94,6 +93,8 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	protected float delta, deltaMin;
 	protected float multiplier, multiplierMin;
+
+	protected float fElapsedTime, fElapsedTimeMin;
 
 	protected boolean fullscreen;
 
@@ -108,14 +109,14 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	private long startTime;
 	protected boolean mousePressed;
 
-	protected SImage overlay;
+	protected SGraphics overlay;
 
 //	public Game2D() {
 //		super();
 //	}
 
 	@Override
-	protected final void init() {
+	final void init() {
 		if (this instanceof Game3D) info("starting 3D Game");
 		else if (this instanceof Game2D) info("starting 2D Game");
 		else info("starting Custom Game");
@@ -188,10 +189,13 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		syncMode(SYNC);
 
 		multiplierMin = 5;
-		deltaMin = timePerFrameNano / NANOSECOND * multiplierMin;
+		deltaMin = timePerTickNano / NANOSECOND * multiplierMin;
+		fElapsedTimeMin = timePerFrameNano / NANOSECOND * multiplierMin;
 
 		savedSize = new Dimension();
 		savedPos = new Point(0, 0);
+
+		title = "";
 
 		gameLoopListeners = new ArrayList<>();
 		frameLoopListeners = new ArrayList<>();
@@ -269,15 +273,20 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		});
 
 		canvas.addMouseListener(new MouseListener() {
-
 			@Override
-			public void mouseReleased(MouseEvent e) {
-				mousePressed = false;
+			public void mousePressed(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON1)
+					mousePressed = true;
+				mouse[e.getButton()] = true;
+				debug(e.getButton());
 			}
 
 			@Override
-			public void mousePressed(MouseEvent e) {
-				mousePressed = true;
+			public void mouseReleased(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON1)
+					mousePressed = false;
+				mouse[e.getButton()] = false;
+
 			}
 
 			@Override
@@ -349,12 +358,15 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	protected boolean keyTyped() { return false; }
 
 	private static boolean[] keys = new boolean[65536];
+	private static boolean[] mouse = new boolean[MouseInfo.getNumberOfButtons()];
 
 	protected boolean keyIsDown(char key) {
 		return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key));
 	}
 
-	protected boolean keyIsDown(int key) { return keys[key]; }
+	protected boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keys[key]; }
+
+	protected boolean mouseIsDown(int button) { if (button < 0 || button > mouse.length) return false; return mouse[button]; }
 
 	void updateMousePosition(int x, int y) {
 		prevMouseX = mouseX;
@@ -412,7 +424,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	final public void defaultSettings() {
 		showOverlay(false);
 		showInfo(false);
-		infoUpdateIntervall = NANOSECOND;
 		paused = false;
 
 		super.width = width();
@@ -423,7 +434,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 //		noSmooth();
 		smooth();
 
-		overlay = new SImage(scaledWidth, scaledHeight, ARGB);
+		overlay = new SGraphics(scaledWidth, scaledHeight, ARGB);
 		overlay.smooth();
 	}
 
@@ -530,9 +541,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 
 	protected void draw(Graphics2D g) {}
 
-	void postDraw() {
-		SShape.drawAll(this);
-	}
+	void postDraw() { SShape.drawAll(this); }
 
 	final public void background(Graphics2D g, Color c) {
 		Color cSave = g.getColor();
@@ -629,8 +638,9 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		// if(show???) draw???();
 	}
 
+	List<String> infos = getInfo();
+
 	final public void drawInfo() {
-		List<String> infos = getInfo();
 		if (infos == null || infos.isEmpty()) return;
 
 //		overlay.colorMode(RGB);
@@ -665,7 +675,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
-	final public void moveMouse(Vertex2F v) {
+	final public void moveMouse(SVector v) {
 		moveMouse(v.x(), v.y());
 	}
 
@@ -673,7 +683,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		moveMouseTo(mouseX + x, mouseY + y);
 	}
 
-	final public void moveMouseTo(Vertex2F v) {
+	final public void moveMouseTo(SVector v) {
 		moveMouseTo(v.x, v.y);
 	}
 
@@ -681,7 +691,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		robot.mouseMove((int) (x() + x), (int) (y() + y));
 	}
 
-	final public void moveMouseOnScreen(Vertex2F v) {
+	final public void moveMouseOnScreen(SVector v) {
 		moveMouseOnScreen(v.x, v.y);
 	}
 
@@ -689,7 +699,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 		moveMouseOnScreenTo(mouseScreenX + x, mouseScreenY + y);
 	}
 
-	final public void moveMouseOnScreenTo(Vertex2F v) {
+	final public void moveMouseOnScreenTo(SVector v) {
 		moveMouseOnScreenTo(v.x, v.y);
 	}
 
@@ -722,6 +732,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 					multiplier = (currentTime - lastTick) / timePerTickNano;
 					multiplier = Math.min(multiplier, multiplierMin);
 					lastTick = currentTime;
+
 					if (!paused) if (syncMode == ASYNC) tick();
 
 				}
@@ -735,6 +746,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 			long currentTime = 0;
 			long passedTime = 0;
 			long previousTime = System.nanoTime();
+			long lastTick = System.nanoTime();
 
 			double timeSinceLastFrame = 0;
 			double timeSinceLastInfoUpdate = 0;
@@ -752,16 +764,22 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				timeSinceLastFrame += passedTime;
 				timeSinceLastInfoUpdate += passedTime;
 
-				if (timeSinceLastInfoUpdate >= infoUpdateIntervall) {
-					timeSinceLastInfoUpdate -= infoUpdateIntervall;
+				if (timeSinceLastInfoUpdate >= NANOSECOND) {
+					timeSinceLastInfoUpdate -= NANOSECOND;
 					tps = ticks;
 					ticks = 0;
 					fps = frames;
 					frames = 0;
+					infos = getInfo();
+					frame.setTitle(title + " - FPS : " + fps);
 				}
 
 				if (timeSinceLastFrame >= timePerFrameNano) {
 					timeSinceLastFrame -= timePerFrameNano;
+					fElapsedTime = (currentTime - lastTick) / (float) NANOSECOND;
+					fElapsedTime = Math.min(fElapsedTime, fElapsedTimeMin);
+					lastTick = currentTime;
+
 					if (syncMode == ASYNC) render();
 					else {
 						if (!paused) tick();

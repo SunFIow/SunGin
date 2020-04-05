@@ -1,25 +1,26 @@
 package com.sunflow.math3d;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.math.SVector;
 
 public class Calculator {
 	public static float t = 0;
-	private static Vertex3F w1, w2, viewVector, rotVector, dirVector, planeVector1, planeVector2;
+	private static SVector w1, w2, viewVector, rotVector, dirVector, planeVector1, planeVector2;
 	private static Plane plane;
 	public static float[] calcFocusPos = new float[2];
 
-	public static float[] CalculatePositionP(Vertex3F viewFrom, Vertex3F viewTo, Vertex3F pos) {
+	public static float[] CalculatePositionP(SVector viewFrom, SVector viewTo, SVector pos) {
 		return CalculatePositionP(viewFrom, viewTo, pos.x, pos.y, pos.z);
 	}
 
-	public static float[] CalculatePositionP(Vertex3F viewFrom, Vertex3F viewTo, float x, float y, float z) {
+	public static float[] CalculatePositionP(SVector viewFrom, SVector viewTo, float x, float y, float z) {
 		float[] projP = getProj(viewFrom, viewTo, x, y, z, plane);
 		float[] drawP = getDrawP(projP[0], projP[1], projP[2]);
 		return drawP;
 	}
 
-	private static float[] getProj(Vertex3F viewFrom, Vertex3F viewTo, float x, float y, float z, Plane p) {
-		Vertex3F ViewToPoint = new Vertex3F(x - viewFrom.x, y - viewFrom.y, z - viewFrom.z).normalized();
+	private static float[] getProj(SVector viewFrom, SVector viewTo, float x, float y, float z, Plane p) {
+		SVector ViewToPoint = new SVector(x - viewFrom.x, y - viewFrom.y, z - viewFrom.z).normalized();
 
 		t = (p.NV.x * p.P.x + p.NV.y * p.P.y + p.NV.z * p.P.z
 				- (p.NV.x * viewFrom.x + p.NV.y * viewFrom.y + p.NV.z * viewFrom.z))
@@ -38,7 +39,7 @@ public class Calculator {
 		return new float[] { DrawX, DrawY };
 	}
 
-	private static Vertex3F getRotationVector(Vertex3F viewFrom, Vertex3F viewTo) {
+	private static SVector getRotationVector(SVector viewFrom, SVector viewTo) {
 		float dx = Math.abs(viewFrom.x - viewTo.x);
 		float dy = Math.abs(viewFrom.y - viewTo.y);
 		float xRot, yRot;
@@ -48,20 +49,20 @@ public class Calculator {
 		if (viewFrom.x < viewTo.x) yRot = -yRot;
 		if (viewFrom.y > viewTo.y) xRot = -xRot;
 
-		Vertex3F V = new Vertex3F(xRot, yRot, 0).normalized();
+		SVector V = new SVector(xRot, yRot, 0).normalized();
 		return V;
 	}
 
 	public static void SetPrederterminedInfo(Game3D screen) {
-		viewVector = new Vertex3F(screen.vCameraDir.x - screen.vCameraPos.x, screen.vCameraDir.y - screen.vCameraPos.y, screen.vCameraDir.z - screen.vCameraPos.z).normalized();
-		dirVector = new Vertex3F(1, 1, 1).normalized();
-		planeVector1 = Vertex3F.cross(viewVector, dirVector).normalized();
-		planeVector2 = Vertex3F.cross(viewVector, planeVector1).normalized();
+		viewVector = new SVector(screen.vCameraDir.x - screen.vCameraPos.x, screen.vCameraDir.y - screen.vCameraPos.y, screen.vCameraDir.z - screen.vCameraPos.z).normalized();
+		dirVector = new SVector(1, 1, 1).normalized();
+		planeVector1 = SVector.cross(viewVector, dirVector).normalized();
+		planeVector2 = SVector.cross(viewVector, planeVector1).normalized();
 		plane = new Plane(planeVector1, planeVector2, screen.vCameraDir);
 
 		rotVector = Calculator.getRotationVector(screen.vCameraPos, screen.vCameraDir);
-		w1 = Vertex3F.cross(viewVector, rotVector).normalized();
-		w2 = Vertex3F.cross(viewVector, w1).normalized();
+		w1 = SVector.cross(viewVector, rotVector).normalized();
+		w2 = SVector.cross(viewVector, w1).normalized();
 
 		calcFocusPos = Calculator.CalculatePositionP(screen.vCameraPos, screen.vCameraDir, screen.vCameraDir.x, screen.vCameraDir.y, screen.vCameraDir.z);
 		calcFocusPos[0] = screen.zoom() * calcFocusPos[0];

@@ -3,8 +3,8 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.math.SVector;
 import com.sunflow.math3d.Plane;
-import com.sunflow.math3d.Vertex3F;
 
 public class DPoint extends BaseModel {
 
@@ -15,10 +15,10 @@ public class DPoint extends BaseModel {
 	protected PointObject drawablePoint;
 
 	public DPoint(Game3D screen, float x, float y, float z) {
-		this(screen, new Vertex3F(x, y, z));
+		this(screen, new SVector(x, y, z));
 	}
 
-	public DPoint(Game3D screen, Vertex3F pos) {
+	public DPoint(Game3D screen, SVector pos) {
 		this.screen = screen;
 		this.pos = pos;
 		this.drawablePoint = new PointObject(screen, 0, 0);
@@ -34,7 +34,7 @@ public class DPoint extends BaseModel {
 //		float y = parent.pos.y + pos.y;
 //		float z = parent.pos.z + pos.z;
 
-		Vertex3F aPos = absolutePosition();
+		SVector aPos = absolutePosition();
 		float x = aPos.x;
 		float y = aPos.y;
 		float z = aPos.z;
@@ -58,10 +58,10 @@ public class DPoint extends BaseModel {
 
 	private void calcLighting() {
 		Plane lightingPlane = new Plane(pos, pos);
-//		Vertex3F NV = pos;
-		Vertex3F NV = lightingPlane.NV;
+//		SVector NV = pos;
+		SVector NV = lightingPlane.NV;
 		float angle = (float) Math.acos(((NV.x * screen.vLightDir.x) + (NV.y * screen.vLightDir.y) + (NV.z * screen.vLightDir.z)) / (screen.vLightDir.mag()));
-//		float angle = Math.acos(Vertex3F.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
+//		float angle = Math.acos(SVector.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
 
 		float lighting = (float) (0.2 + 1 - Math.sqrt(Math.toDegrees(angle) / 180));
 
@@ -76,7 +76,7 @@ public class DPoint extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 		float newY = v.y * cos - v.z * sin;
 		float newZ = v.z * cos + v.y * sin;
 		v.y = newY;
@@ -90,7 +90,7 @@ public class DPoint extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 		float newX = v.x * cos - v.z * sin;
 		float newZ = v.z * cos + v.x * sin;
 		v.x = newX;
@@ -104,7 +104,7 @@ public class DPoint extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 		float newX = v.x * cos - v.y * sin;
 		float newY = v.y * cos + v.x * sin;
 		v.x = newX;
@@ -114,11 +114,11 @@ public class DPoint extends BaseModel {
 	}
 
 	@Override
-	public void rotateX(float angle, Vertex3F origin) {
+	public void rotateX(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 		float y = v.y - origin.y;
 		float z = v.z - origin.z;
 
@@ -135,11 +135,11 @@ public class DPoint extends BaseModel {
 	}
 
 	@Override
-	public void rotateY(float angle, Vertex3F origin) {
+	public void rotateY(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 
 		float x = v.x - origin.x;
 		float z = v.z - origin.z;
@@ -157,11 +157,11 @@ public class DPoint extends BaseModel {
 	}
 
 	@Override
-	public void rotateZ(float angle, Vertex3F origin) {
+	public void rotateZ(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		Vertex3F v = pos;
+		SVector v = pos;
 
 		float x = v.x - origin.x;
 		float y = v.y - origin.y;
@@ -180,7 +180,7 @@ public class DPoint extends BaseModel {
 
 	public float getDistToP() { return getDistToP(screen.vCameraPos); }
 
-	public float getDistToP(Vertex3F p) { return getDistToP(p.x, p.y, p.z); }
+	public float getDistToP(SVector p) { return getDistToP(p.x, p.y, p.z); }
 
 	public float getDistToP(float x, float y, float z) {
 		float total = 0;
@@ -188,8 +188,8 @@ public class DPoint extends BaseModel {
 //		float _x = parent.pos.x + pos.x;
 //		float _y = parent.pos.y + pos.y;
 //		float _z = parent.pos.z + pos.z;
-		Vertex3F aPos = absolutePosition();
-		Vertex3F rPos = screen.apply(aPos);
+		SVector aPos = absolutePosition();
+		SVector rPos = screen.apply(aPos);
 
 		total += Math.sqrt((x - rPos.x) * (x - rPos.x)
 				+ (y - rPos.y) * (y - rPos.y)

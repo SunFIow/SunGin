@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sunflow.gfx.GraphicsMatrix;
+import com.sunflow.math.SVector;
 import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.MatrixF;
-import com.sunflow.math3d.Vertex3F;
 import com.sunflow.math3d.models.Base3DModel;
 import com.sunflow.math3d.models.BaseModel;
 import com.sunflow.math3d.models.DPolygon;
@@ -32,11 +32,11 @@ public class Game3D extends Game2D {
 	// The polygon that the mouse is currently over
 	private BaseModel PolygonOver = null;
 
-	public Vertex3F vCameraPos;
-	public Vertex3F vCameraDir;
+	public SVector vCameraPos;
+	public SVector vCameraDir;
 	protected float vertLook, horLook, horRotSpeed, vertRotSpeed;
 
-	public Vertex3F vLightDir;
+	public SVector vLightDir;
 	protected float sunPos;
 
 	public boolean isCameraActivated;
@@ -56,7 +56,7 @@ public class Game3D extends Game2D {
 
 	public GraphicsMatrix gMatrix;
 
-	public ArrayList<Vertex3F> vertices;
+	public ArrayList<SVector> vertices;
 
 	@Override
 	final void privatePreSetup() {
@@ -65,10 +65,10 @@ public class Game3D extends Game2D {
 		Models = new ArrayList<>();
 		DModels = new ArrayList<>();
 
-//		vCameraPos = new Vertex3F(197, 198, -980f);
-		vCameraPos = new Vertex3F(197, 198, 980f);
-		vCameraDir = new Vertex3F(0, 0, 0);
-		vLightDir = new Vertex3F(1, 1, 1);
+//		vCameraPos = new SVector(197, 198, -980f);
+		vCameraPos = new SVector(197, 198, 980f);
+		vCameraDir = new SVector(0, 0, 0);
+		vLightDir = new SVector(1, 1, 1);
 
 		zoom = 1000;
 		minZoom = 100;
@@ -142,7 +142,7 @@ public class Game3D extends Game2D {
 	public final void point(float x, float y, float z) {
 		boolean draw = true;
 
-		Vertex3F applied = apply(x, y, z);
+		SVector applied = apply(x, y, z);
 		float[] pos2d = convert3Dto2D(applied);
 		float x2d = pos2d[0];
 		float y2d = pos2d[1];
@@ -154,7 +154,7 @@ public class Game3D extends Game2D {
 	public final void line(float x1, float y1, float z1, float x2, float y2, float z2) {
 		boolean draw = true;
 
-		Vertex3F applied = apply(x1, y1, z1);
+		SVector applied = apply(x1, y1, z1);
 		float[] pos2d = convert3Dto2D(applied);
 		float x2d1 = pos2d[0];
 		float y2d1 = pos2d[1];
@@ -214,7 +214,7 @@ public class Game3D extends Game2D {
 	}
 
 	public final void vertex(float x, float y, float z) {
-		Vertex3F applied = apply(x, y, z);
+		SVector applied = apply(x, y, z);
 		float[] pos2d = convert3Dto2D(applied);
 		float x2d = pos2d[0];
 		float y2d = pos2d[1];
@@ -232,7 +232,7 @@ public class Game3D extends Game2D {
 		vertices = new ArrayList<>();
 	}
 
-	public final float[] convert3Dto2D(Vertex3F pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
+	public final float[] convert3Dto2D(SVector pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
 
 	public final float[] convert3Dto2D(float x, float y, float z) {
 		float[] calcPos = Calculator.CalculatePositionP(vCameraPos, vCameraDir, x, y, z);
@@ -251,11 +251,11 @@ public class Game3D extends Game2D {
 
 	private final void cameraMovement() {
 		if (!isCameraActivated) return;
-		Vertex3F viewVector = new Vertex3F(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
-		Vertex3F verticalVector = new Vertex3F(0, 0, 1);
-		Vertex3F sideViewVector = Vertex3F.cross(viewVector, verticalVector).normalized();
+		SVector viewVector = new SVector(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
+		SVector verticalVector = new SVector(0, 0, 1);
+		SVector sideViewVector = SVector.cross(viewVector, verticalVector).normalized();
 
-		Vertex3F moveVector = new Vertex3F();
+		SVector moveVector = new SVector();
 		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
@@ -394,21 +394,21 @@ public class Game3D extends Game2D {
 
 	public final void rotateZTo(float angle) { gMatrix.rotateZTo(angle); }
 
-	public final Vertex3F apply(float x, float y, float z) { return gMatrix.apply(x, y, z); }
+	public final SVector apply(float x, float y, float z) { return gMatrix.apply(x, y, z); }
 
-	public final Vertex3F apply(Vertex3F pos) { return gMatrix.apply(pos); }
+	public final SVector apply(SVector pos) { return gMatrix.apply(pos); }
 
-	public final Vertex3F translated(float x, float y, float z) { return gMatrix.translated(x, y, z); }
+	public final SVector translated(float x, float y, float z) { return gMatrix.translated(x, y, z); }
 
-	public final Vertex3F translated(Vertex3F pos) { return gMatrix.translated(pos); }
+	public final SVector translated(SVector pos) { return gMatrix.translated(pos); }
 
-	public final Vertex3F scaled(float x, float y, float z) { return gMatrix.scaled(x, y, z); }
+	public final SVector scaled(float x, float y, float z) { return gMatrix.scaled(x, y, z); }
 
-	public final Vertex3F scaled(Vertex3F pos) { return gMatrix.scaled(pos); }
+	public final SVector scaled(SVector pos) { return gMatrix.scaled(pos); }
 
-	public final Vertex3F rotated(float x, float y, float z) { return gMatrix.rotated(x, y, z); }
+	public final SVector rotated(float x, float y, float z) { return gMatrix.rotated(x, y, z); }
 
-	public final Vertex3F rotated(Vertex3F pos) { return gMatrix.rotated(pos); }
+	public final SVector rotated(SVector pos) { return gMatrix.rotated(pos); }
 
 	public final MatrixF getRotationMatrixX() { return gMatrix.getRotationMatrixX(); }
 

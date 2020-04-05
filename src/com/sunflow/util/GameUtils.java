@@ -9,15 +9,34 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
+import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SImage;
-import com.sunflow.math.Vertex2F;
+import com.sunflow.math.SVector;
 
 public interface GameUtils {
 	public static final GameUtils instance = new GameUtils() {};
 
-	default public int index(int x, int y, int width) { return x + y * width; }
+	default SVector createVector() { return new SVector(); }
 
-	default public int indexRotated(int x, int y, int width, int height, byte rotation) {
+	default SVector createVector(float x, float y) { return new SVector(x, y); }
+
+	default SVector createVector(float x, float y, float z) { return new SVector(x, y, z); }
+
+	default SImage createImage(float width, float height) { return new SImage(width, height); }
+
+	default SImage createImage(float width, float height, int format) { return new SImage(width, height, format); }
+
+	default SImage createImage(BufferedImage bi) { return new SImage(bi); }
+
+	default SGraphics createGraphics(float width, float height) { return new SGraphics(width, height); }
+
+	default SGraphics createGraphics(float width, float height, int format) { return new SGraphics(width, height, format); }
+
+	default SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
+
+	default int index(int x, int y, int width) { return x + y * width; }
+
+	default int indexRotated(int x, int y, int width, int height, byte rotation) {
 		switch (rotation) {
 			case Constants.R0:
 				return x + y * width;
@@ -32,11 +51,11 @@ public interface GameUtils {
 		}
 	}
 
-	default public String nf(int num, int digits) { return String.format("%0" + digits + "d", num); }
+	default String nf(int num, int digits) { return String.format("%0" + digits + "d", num); }
 
-	default public String nf(float num, int digits) { return String.format("%0" + digits + "f", num); }
+	default String nf(float num, int digits) { return String.format("%0" + digits + "f", num); }
 
-	default public String nf(double num, int digits) { return String.format("%0" + digits + "d", num); }
+	default String nf(double num, int digits) { return String.format("%0" + digits + "d", num); }
 
 	default float[] convertArray(double[] arr) {
 		float[] newArr = new float[arr.length];
@@ -85,7 +104,7 @@ public interface GameUtils {
 		return strs.toArray(new String[0]);
 	}
 
-	default SImage loadDImage(String fileName) {
+	default SImage loadSImage(String fileName) {
 		return new SImage(loadImage(fileName));
 	}
 
@@ -111,20 +130,20 @@ public interface GameUtils {
 		}
 	}
 
-	default Pair<Vertex2F, Float> getClosest(Vertex2F pos, Vertex2F[] list) {
-		Vertex2F closest = null;
+	default Pair<SVector, Float> getClosest(SVector pos, SVector[] list) {
+		SVector closest = null;
 		float closestDist = Float.MAX_VALUE;
 
 		int size = list.length;
 		for (int i = 0; i < size; i++) {
-			Vertex2F f = list[i];
-			float dist = Vertex2F.dist(f, pos);
+			SVector f = list[i];
+			float dist = SVector.dist(f, pos);
 			if (dist < closestDist) {
 				closestDist = dist;
 				closest = f;
 			}
 		}
-		return new Pair<Vertex2F, Float>(closest, closestDist);
+		return new Pair<SVector, Float>(closest, closestDist);
 	}
 
 	class Pair<A, B> {

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public class TutorialGame3D extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
 
@@ -40,10 +40,10 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	// The polygon that the mouse is currently over
 	private PolygonObject PolygonOver = null;
 
-	public Vertex3F vCameraPos = new Vertex3F(0, 0, 20);
-	public Vertex3F vCameraDir = new Vertex3F(0, 0, 0);
+	public SVector vCameraPos = new SVector(0, 0, 20);
+	public SVector vCameraDir = new SVector(0, 0, 0);
 
-	public Vertex3F vLightDir = new Vertex3F(1, 1, 1);
+	public SVector vLightDir = new SVector(1, 1, 1);
 
 	// The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
 	private float zoom = 1000;
@@ -257,11 +257,11 @@ public class TutorialGame3D extends JPanel implements KeyListener, MouseListener
 	}
 
 	private void cameraMovement() {
-		Vertex3F viewVector = new Vertex3F(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
-		Vertex3F verticalVector = new Vertex3F(0, 0, 1);
-		Vertex3F sideViewVector = Vertex3F.cross(viewVector, verticalVector).normalized();
+		SVector viewVector = new SVector(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
+		SVector verticalVector = new SVector(0, 0, 1);
+		SVector sideViewVector = SVector.cross(viewVector, verticalVector).normalized();
 
-		Vertex3F moveVector = new Vertex3F();
+		SVector moveVector = new SVector();
 		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);

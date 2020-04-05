@@ -3,12 +3,12 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.math.SVector;
 import com.sunflow.math3d.Plane;
-import com.sunflow.math3d.Vertex3F;
 
 public class DPolygon extends BaseModel {
 
-	public Vertex3F[] vertices = new Vertex3F[0];
+	public SVector[] vertices = new SVector[0];
 
 	protected float dist;
 
@@ -16,15 +16,15 @@ public class DPolygon extends BaseModel {
 
 	protected PolygonObject drawablePolygon;
 
-	public DPolygon(Game3D screen, Vertex3F... vs) {
+	public DPolygon(Game3D screen, SVector... vs) {
 		this(screen, 0, 0, 0, vs);
 	}
 
-	public DPolygon(Game3D screen, float x, float y, float z, Vertex3F... vs) {
-		this(new Vertex3F(x, y, z), screen, vs);
+	public DPolygon(Game3D screen, float x, float y, float z, SVector... vs) {
+		this(new SVector(x, y, z), screen, vs);
 	}
 
-	public DPolygon(Vertex3F pos, Game3D screen, Vertex3F... vs) {
+	public DPolygon(SVector pos, Game3D screen, SVector... vs) {
 		this.screen = screen;
 		this.pos = pos;
 		this.drawablePolygon = new PolygonObject(screen, new float[vs.length], new float[vs.length]);
@@ -32,8 +32,8 @@ public class DPolygon extends BaseModel {
 		addVertices(vs);
 	}
 
-	protected void addVertices(Vertex3F... vs) {
-		Vertex3F[] newVertices = new Vertex3F[vertices.length + vs.length];
+	protected void addVertices(SVector... vs) {
+		SVector[] newVertices = new SVector[vertices.length + vs.length];
 		for (int i = 0; i < vertices.length; i++) {
 			newVertices[i] = vertices[i];
 		}
@@ -49,13 +49,13 @@ public class DPolygon extends BaseModel {
 		float[] newY = new float[vertices.length];
 		boolean draw = true;
 		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
+			SVector v = vertices[i];
 
 //			float x = parent.pos.x + pos.x + v.x;
 //			float y = parent.pos.y + pos.y + v.y;
 //			float z = parent.pos.z + pos.z + v.z;
 
-			Vertex3F aPos = absolutePosition();
+			SVector aPos = absolutePosition();
 			float x = aPos.x + v.x;
 			float y = aPos.y + v.y;
 			float z = aPos.z + v.z;
@@ -83,9 +83,9 @@ public class DPolygon extends BaseModel {
 
 	private void calcLighting() {
 		Plane lightingPlane = new Plane(this);
-		Vertex3F NV = lightingPlane.NV;
+		SVector NV = lightingPlane.NV;
 		float angle = (float) Math.acos(((NV.x * screen.vLightDir.x) + (NV.y * screen.vLightDir.y) + (NV.z * screen.vLightDir.z)) / (screen.vLightDir.mag()));
-//		float angle = Math.acos(Vertex3F.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
+//		float angle = Math.acos(SVector.dot(lightingPlane.NV, screen.vLightDir)/ (screen.vLightDir.mag()));
 
 		float lighting = (float) (0.2 + 1 - Math.sqrt(Math.toDegrees(angle) / 180));
 
@@ -100,7 +100,7 @@ public class DPolygon extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newY = v.y * cos - v.z * sin;
 			float newZ = v.z * cos + v.y * sin;
 			v.y = newY;
@@ -114,7 +114,7 @@ public class DPolygon extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newX = v.x * cos - v.z * sin;
 			float newZ = v.z * cos + v.x * sin;
 			v.x = newX;
@@ -128,7 +128,7 @@ public class DPolygon extends BaseModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newX = v.x * cos - v.y * sin;
 			float newY = v.y * cos + v.x * sin;
 			v.x = newX;
@@ -138,11 +138,11 @@ public class DPolygon extends BaseModel {
 	}
 
 	@Override
-	public void rotateX(float angle, Vertex3F origin) {
+	public void rotateX(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float y = v.y - origin.y;
 			float z = v.z - origin.z;
 
@@ -159,11 +159,11 @@ public class DPolygon extends BaseModel {
 	}
 
 	@Override
-	public void rotateY(float angle, Vertex3F origin) {
+	public void rotateY(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float x = v.x - origin.x;
 			float z = v.z - origin.z;
 
@@ -180,11 +180,11 @@ public class DPolygon extends BaseModel {
 	}
 
 	@Override
-	public void rotateZ(float angle, Vertex3F origin) {
+	public void rotateZ(float angle, SVector origin) {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float x = v.x - origin.x;
 			float y = v.y - origin.y;
 
@@ -202,20 +202,20 @@ public class DPolygon extends BaseModel {
 
 	public float getDistToP() { return getDistToP(screen.vCameraPos); }
 
-	public float getDistToP(Vertex3F p) { return getDistToP(p.x, p.y, p.z); }
+	public float getDistToP(SVector p) { return getDistToP(p.x, p.y, p.z); }
 
 	public float getDistToP(float x, float y, float z) {
 		float total = 0;
 		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
+			SVector v = vertices[i];
 
 //			float _x = parent.pos.x + pos.x + v.x;
 //			float _y = parent.pos.y + pos.y + v.y;
 //			float _z = parent.pos.z + pos.z + v.z;
 
-			Vertex3F aPos = absolutePosition();
+			SVector aPos = absolutePosition();
 			aPos.add(v);
-			Vertex3F rPos = screen.apply(aPos);
+			SVector rPos = screen.apply(aPos);
 
 			total += Math.sqrt((x - rPos.x) * (x - rPos.x)
 					+ (y - rPos.y) * (y - rPos.y)

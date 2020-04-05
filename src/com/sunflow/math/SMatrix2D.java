@@ -5,17 +5,17 @@ import com.sunflow.util.MathUtils;
 
 public class SMatrix2D {
 
-	public Vertex2F pos;
+	public SVector pos;
 	public MatrixF rot;
 	public float angle;
 
 	public SMatrix2D() {
-		pos = new Vertex2F();
+		pos = new SVector();
 		angle = 0;
 //		rotate(0);
 	}
 
-	public final void translate(float x, float y) { pos.add(rotated(new Vertex2F(x, y))); }
+	public final void translate(float x, float y) { pos.add(rotated(new SVector(x, y))); }
 
 	public final void rotateTo(float angle) { rotate(angle - this.angle); }
 
@@ -32,14 +32,14 @@ public class SMatrix2D {
 
 	public final MatrixF getRotationMatrix() { return rot; }
 
-	public final Vertex2F rotated(Vertex2F pos) {
-		Vertex2F rotated = matmul(getRotationMatrix(), pos);
+	public final SVector rotated(SVector pos) {
+		SVector rotated = matmul(getRotationMatrix(), pos);
 		return rotated;
 	}
 
-	private final Vertex2F matmul(MatrixF a, Vertex2F b) {
-		MatrixF m = b.toMatrix();
+	private final SVector matmul(MatrixF a, SVector b) {
+		MatrixF m = b.get((MatrixF) null);
 		MatrixF matmul = a.dot(m);
-		return Vertex2F.fromMatrix(matmul);
+		return SVector.fromMatrix(matmul);
 	}
 }

@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sunflow.gfx.SImage;
+import com.sunflow.gfx.SGraphics;
 
 public class MNISTDecoder {
 	private static final int SIZE = 28;
@@ -46,7 +46,7 @@ public class MNISTDecoder {
 		return new ArrayList<>();
 	}
 
-	public static class Digit extends SImage {
+	public static class Digit extends SGraphics {
 		public int label;
 		public byte[][] data;
 

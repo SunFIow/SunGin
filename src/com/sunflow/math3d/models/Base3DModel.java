@@ -3,7 +3,7 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public abstract class Base3DModel extends BaseModel implements Cloneable {
 
@@ -12,7 +12,7 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	public Base3DModel(DPolygon... vs) { this(0, 0, 0, vs); }
 
 	public Base3DModel(float x, float y, float z, DPolygon... vs) {
-		pos = new Vertex3F(x, y, z);
+		pos = new SVector(x, y, z);
 		addPolygone(vs);
 	}
 
@@ -61,7 +61,7 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	}
 
 	@Override
-	public void rotateX(float angle, Vertex3F origin) {
+	public void rotateX(float angle, SVector origin) {
 		for (DPolygon pol : polys) pol.rotateX(angle);
 
 		float cos = cos(angle);
@@ -83,7 +83,7 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	}
 
 	@Override
-	public void rotateY(float angle, Vertex3F origin) {
+	public void rotateY(float angle, SVector origin) {
 		for (DPolygon pol : polys) pol.rotateY(angle);
 
 		float cos = cos(angle);
@@ -105,7 +105,7 @@ public abstract class Base3DModel extends BaseModel implements Cloneable {
 	}
 
 	@Override
-	public void rotateZ(float angle, Vertex3F origin) {
+	public void rotateZ(float angle, SVector origin) {
 		for (DPolygon pol : polys) pol.rotateZ(angle);
 
 		float cos = cos(angle);

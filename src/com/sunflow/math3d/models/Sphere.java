@@ -1,7 +1,7 @@
 package com.sunflow.math3d.models;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 import com.sunflow.util.Constants;
 
 public class Sphere extends Base3DModel {
@@ -13,7 +13,7 @@ public class Sphere extends Base3DModel {
 	public Sphere(Game3D game, float x, float y, float z, float radius, int detail) {
 		super(x, y, z);
 		int add = 1;
-		Vertex3F[][] globe = new Vertex3F[detail + add][detail + add];
+		SVector[][] globe = new SVector[detail + add][detail + add];
 
 		for (int i = 0; i < detail + add; i++) {
 			float lat = map(i, 0, detail, 0, Constants.PI);
@@ -22,7 +22,7 @@ public class Sphere extends Base3DModel {
 				float vx = radius * sin(lat) * cos(lon);
 				float vy = radius * sin(lat) * sin(lon);
 				float vz = radius * cos(lat);
-				globe[i][j] = new Vertex3F(vx, vy, vz);
+				globe[i][j] = new SVector(vx, vy, vz);
 			}
 		}
 
@@ -32,10 +32,10 @@ public class Sphere extends Base3DModel {
 				DPolygon pol1 = new DPolygon(game);
 				DPolygon pol2 = new DPolygon(game);
 
-				Vertex3F v1 = globe[i][j];
-				Vertex3F v2 = globe[i + 1][j];
-				Vertex3F v3 = globe[i][j + 1];
-				Vertex3F v4 = globe[i + 1][j + 1];
+				SVector v1 = globe[i][j];
+				SVector v2 = globe[i + 1][j];
+				SVector v3 = globe[i][j + 1];
+				SVector v4 = globe[i + 1][j + 1];
 
 				pol1.addVertices(v1, v2, v3);
 				pol2.addVertices(v4, v3, v2);

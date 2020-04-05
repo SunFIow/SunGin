@@ -1,9 +1,13 @@
 package com.sunflow.util;
 
-import com.sunflow.math.Vertex2D;
+import com.sunflow.math.SVector;
 
 public interface MathUtils {
 	public static final MathUtils instance = new MathUtils() {};
+
+	default float sqrt(float a) { return (float) Math.sqrt(a); }
+
+	default double sqrt(double a) { return Math.sqrt(a); }
 
 	default int abs(int a) { return Math.abs(a); }
 
@@ -41,13 +45,17 @@ public interface MathUtils {
 
 	default double max(double a, double b) { return Math.max(a, b); }
 
+	default float sin(float angle) { return (float) Math.sin(angle); }
+
+	default double sin(double angle) { return Math.sin(angle); }
+
 	default float cos(float angle) { return (float) Math.cos(angle); }
 
 	default double cos(double angle) { return Math.cos(angle); }
 
-	default float sin(float angle) { return (float) Math.sin(angle); }
+	default float tan(float angle) { return (float) Math.tan(angle); }
 
-	default double sin(double angle) { return Math.sin(angle); }
+	default double tan(double angle) { return Math.tan(angle); }
 
 	default float norm(float value, float min, float max) {
 		return (float) norm((double) value, min, max);
@@ -82,12 +90,14 @@ public interface MathUtils {
 	}
 
 	default double dist(double x1, double y1, double x2, double y2) {
-		return Vertex2D.dist(new Vertex2D(x1, y1), new Vertex2D(x2, y2));
+		return SVector.dist(new SVector(x1, y1), new SVector(x2, y2));
 	}
 
 	default int random(int high) { return (int) random((float) high); }
 
 	default int random(int low, int high) { return (int) random((float) low, (float) high); }
+
+	default float random() { return random(1.0f); }
 
 	default float random(float high) { return (float) random((double) high); }
 

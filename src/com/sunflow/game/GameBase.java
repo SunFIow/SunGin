@@ -9,7 +9,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,14 +19,10 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Random;
 
-import com.sunflow.gfx.SImage;
+import com.sunflow.gfx.SGraphics;
 import com.sunflow.math.OpenSimplexNoise;
-import com.sunflow.math.Vertex2F;
 
-abstract class GameBase extends SImage implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
-
-	// RADIANDS or DEGREES
-	protected byte mode;
+abstract class GameBase extends SGraphics implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
 
 	protected Random random;
 //	private ImprovedNoise perlinnoise;
@@ -37,7 +32,7 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 
 	public GameBase() { init(); }
 
-	protected void init() {
+	void init() {
 		game = this;
 		privatePreSetup();
 		preSetup();
@@ -48,7 +43,6 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	void privatePreSetup() {
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
-		mode(RADIANS);
 	}
 
 	protected void preSetup() {}
@@ -65,54 +59,6 @@ abstract class GameBase extends SImage implements MouseListener, MouseWheelListe
 	protected abstract int frameX();
 
 	protected abstract int frameY();
-
-	final public static Vertex2F createVector() {
-		return createVector(0, 0);
-	}
-
-	final public static Vertex2F createVector(float x, float y) {
-		return new Vertex2F(x, y);
-	}
-
-	final public static SImage createImage(float width, float height) {
-		return new SImage(width, height);
-	}
-
-	final public static SImage createImage(float width, float height, int format) {
-		return new SImage(width, height, format);
-	}
-
-	final public static SImage createImage(BufferedImage bi) {
-		return new SImage(bi);
-	}
-
-	/**
-	 * @param mode
-	 *            either RADIANDS or DEGREES
-	 */
-	final public void mode(byte mode) {
-		this.mode = mode;
-	}
-
-	@Override
-	public double sin(double angle) {
-		return super.sin(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public float sin(float angle) {
-		return super.sin(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public double cos(double angle) {
-		return super.cos(mode == RADIANS ? angle : radians(angle));
-	}
-
-	@Override
-	public float cos(float angle) {
-		return super.cos(mode == RADIANS ? angle : radians(angle));
-	}
 
 	final public double noise(double xoff) { return noise.eval(xoff, 0); }
 

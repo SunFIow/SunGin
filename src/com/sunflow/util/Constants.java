@@ -22,6 +22,7 @@ package com.sunflow.util;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * Numbers shared throughout processing.core.
@@ -33,6 +34,25 @@ import java.awt.event.KeyEvent;
  * @usage Web &amp; Application
  */
 public interface Constants {
+
+	// Rendering flags
+	static final int RENDER_WIRE = 0x01,
+			RENDER_FLAT = 0x02,
+			RENDER_TEXTURED = 0x04,
+			RENDER_CULL_CW = 0x08,
+			RENDER_CULL_CCW = 0x10,
+			RENDER_DEPTH = 0x20,
+			RENDER_DEPTH_LOCAL = 0x40;
+
+	// Colors
+	static final int WHITE = 0xFFffffff, BLACK = 0xFF000000, BLANK = 0x00000000,
+			GREY = 0xFFc0c0c0, DARK_GREY = 0xFF808080, VERY_DARK_GREY = 0xFF404040,
+			RED = 0xFFff0000, DARK_RED = 0xFF800000, VERY_DARK_RED = 0xFF400000,
+			YELLOW = 0xFFffff00, DARK_YELLOW = 0xFF808000, VERY_DARK_YELLOW = 0xFF404000,
+			GREEN = 0xFF00ff00, DARK_GREEN = 0xFF008000, VERY_DARK_GREEN = 0xFF004000,
+			CYAN = 0xFF00ffff, DARK_CYAN = 0xFF008080, VERY_DARK_CYAN = 0xFF004040,
+			BLUE = 0xFF0000ff, DARK_BLUE = 0xFF000080, VERY_DARK_BLUE = 0xFF000040,
+			MAGENTA = 0xFFff00ff, DARK_MAGENTA = 0xFF800080, VERY_DARK_MAGENTA = 0xFF400040;
 
 	// Threading mode
 
@@ -128,8 +148,8 @@ public interface Constants {
 
 	// for colors and/or images
 
-	static final int RGB = 1; // image & color
-	static final int ARGB = 2; // image
+	static final int RGB = BufferedImage.TYPE_INT_RGB; // image & color
+	static final int ARGB = BufferedImage.TYPE_INT_ARGB; // image
 	static final int HSB = 3; // color
 	static final int ALPHA = 4; // image
 //  static final int CMYK  = 5;  // image & color (someday)

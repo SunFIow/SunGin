@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Random;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public class GenerateTerrain {
 
@@ -37,13 +37,13 @@ public class GenerateTerrain {
 //							new float[] { (Size * y), Size + (Size * y), (Size * y) },
 //							new float[] { values1[x], values2[x + 1], values1[x + 1] }, G, false));
 
-					Vertex3F v0 = new Vertex3F(Size * x, Size * y, values1[x]);
-					Vertex3F v1 = new Vertex3F(Size * x, Size + Size * y, values2[x]);
-					Vertex3F v2 = new Vertex3F(Size + Size * x, Size + Size * y, values2[x + 1]);
+					SVector v0 = new SVector(Size * x, Size * y, values1[x]);
+					SVector v1 = new SVector(Size * x, Size + Size * y, values2[x]);
+					SVector v2 = new SVector(Size + Size * x, Size + Size * y, values2[x + 1]);
 
-					Vertex3F v3 = new Vertex3F(Size * x, Size * y, values1[x]);
-					Vertex3F v4 = new Vertex3F(Size + Size * x, Size + Size * y, values2[x + 1]);
-					Vertex3F v5 = new Vertex3F(Size + Size * x, Size * y, values1[x + 1]);
+					SVector v3 = new SVector(Size * x, Size * y, values1[x]);
+					SVector v4 = new SVector(Size + Size * x, Size + Size * y, values2[x + 1]);
+					SVector v5 = new SVector(Size + Size * x, Size * y, values1[x + 1]);
 
 					DPolygon pol0 = new DPolygon(screen, v0, v1, v2);
 					pol0.drawablePolygon.fill = G;
@@ -72,13 +72,13 @@ public class GenerateTerrain {
 //							new float[] { (Size * (y + 1)), Size + (Size * (y + 1)), (Size * (y + 1)) }, 
 //							new float[] { values1[x], values2[x + 1], values1[x + 1] }, G, false));
 
-					Vertex3F v0 = new Vertex3F(Size * x, Size * (y + 1), values1[x]);
-					Vertex3F v1 = new Vertex3F(Size * x, Size + Size * (y + 1), values2[x]);
-					Vertex3F v2 = new Vertex3F(Size + Size * x, Size + Size * (y + 1), values2[x + 1]);
+					SVector v0 = new SVector(Size * x, Size * (y + 1), values1[x]);
+					SVector v1 = new SVector(Size * x, Size + Size * (y + 1), values2[x]);
+					SVector v2 = new SVector(Size + Size * x, Size + Size * (y + 1), values2[x + 1]);
 
-					Vertex3F v3 = new Vertex3F(Size * x, Size * (y + 1), values1[x]);
-					Vertex3F v4 = new Vertex3F(Size + Size * x, Size + Size * (y + 1), values2[x + 1]);
-					Vertex3F v5 = new Vertex3F(Size + Size * x, Size * (y + 1), values1[x + 1]);
+					SVector v3 = new SVector(Size * x, Size * (y + 1), values1[x]);
+					SVector v4 = new SVector(Size + Size * x, Size + Size * (y + 1), values2[x + 1]);
+					SVector v5 = new SVector(Size + Size * x, Size * (y + 1), values1[x + 1]);
 
 					DPolygon pol0 = new DPolygon(screen, v0, v1, v2);
 					pol0.drawablePolygon.fill = G;

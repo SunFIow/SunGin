@@ -1,6 +1,6 @@
 package com.sunflow.tutorial;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public class DPolygon extends IModel {
 
@@ -14,19 +14,19 @@ public class DPolygon extends IModel {
 	public PolygonObject drawablePolygon;
 	public float avgDist;
 
-	public Vertex3F[] vertices = new Vertex3F[0];
+	public SVector[] vertices = new SVector[0];
 
 	private TutorialGame3D screen;
 
-	public DPolygon(TutorialGame3D screen, Vertex3F... vs) {
+	public DPolygon(TutorialGame3D screen, SVector... vs) {
 		this(screen, 0, 0, 0, vs);
 	}
 
-	public DPolygon(TutorialGame3D screen, float x, float y, float z, Vertex3F... vs) {
-		this(new Vertex3F(x, y, z), screen, vs);
+	public DPolygon(TutorialGame3D screen, float x, float y, float z, SVector... vs) {
+		this(new SVector(x, y, z), screen, vs);
 	}
 
-	public DPolygon(Vertex3F pos, TutorialGame3D screen, Vertex3F... vs) {
+	public DPolygon(SVector pos, TutorialGame3D screen, SVector... vs) {
 		addVertices(vs);
 
 		this.screen = screen;
@@ -34,8 +34,8 @@ public class DPolygon extends IModel {
 		this.drawablePolygon = new PolygonObject(screen, new float[vertices.length], new float[vertices.length]);
 	}
 
-	protected void addVertices(Vertex3F... vs) {
-		Vertex3F[] newVertices = new Vertex3F[vertices.length + vs.length];
+	protected void addVertices(SVector... vs) {
+		SVector[] newVertices = new SVector[vertices.length + vs.length];
 		for (int i = 0; i < vertices.length; i++) newVertices[i] = vertices[i];
 		for (int i = vertices.length; i < vertices.length + vs.length; i++) newVertices[i] = vs[i].clone();
 		vertices = newVertices;
@@ -47,7 +47,7 @@ public class DPolygon extends IModel {
 		float[] newY = new float[vertices.length];
 		boolean draw = true;
 		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
+			SVector v = vertices[i];
 			float x = parent.pos.x + pos.x + v.x;
 			float y = parent.pos.y + pos.y + v.y;
 			float z = parent.pos.z + pos.z + v.z;
@@ -78,7 +78,7 @@ public class DPolygon extends IModel {
 	private float GetDist(float x, float y, float z) {
 		float total = 0;
 		for (int i = 0; i < vertices.length; i++) {
-			Vertex3F v = vertices[i];
+			SVector v = vertices[i];
 			float _x = parent.pos.x + pos.x + v.x;
 			float _y = parent.pos.y + pos.y + v.y;
 			float _z = parent.pos.z + pos.z + v.z;
@@ -94,7 +94,7 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newY = v.y * cos - v.z * sin;
 			float newZ = v.z * cos + v.y * sin;
 			v.y = newY;
@@ -108,7 +108,7 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newX = v.x * cos - v.z * sin;
 			float newZ = v.z * cos + v.x * sin;
 			v.x = newX;
@@ -122,7 +122,7 @@ public class DPolygon extends IModel {
 		float cos = cos(angle);
 		float sin = sin(angle);
 
-		for (Vertex3F v : vertices) {
+		for (SVector v : vertices) {
 			float newX = v.x * cos - v.y * sin;
 			float newY = v.y * cos + v.x * sin;
 			v.x = newX;

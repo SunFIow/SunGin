@@ -3,7 +3,7 @@ package com.sunflow.math3d.models;
 import java.awt.Color;
 
 import com.sunflow.game.Game3D;
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 
 public class Cube extends Base3DModel {
 
@@ -19,15 +19,15 @@ public class Cube extends Base3DModel {
 //		this.height = height;
 //		this.depth = depth;
 
-		Vertex3F[] vs = new Vertex3F[8];
-		vs[0] = new Vertex3F(-width / 2, -height / 2, -depth / 2);
-		vs[1] = new Vertex3F(-width / 2, height / 2, -depth / 2);
-		vs[2] = new Vertex3F(width / 2, height / 2, -depth / 2);
-		vs[3] = new Vertex3F(width / 2, -height / 2, -depth / 2);
-		vs[4] = new Vertex3F(-width / 2, -height / 2, depth / 2);
-		vs[5] = new Vertex3F(-width / 2, height / 2, depth / 2);
-		vs[6] = new Vertex3F(width / 2, height / 2, depth / 2);
-		vs[7] = new Vertex3F(width / 2, -height / 2, depth / 2);
+		SVector[] vs = new SVector[8];
+		vs[0] = new SVector(-width / 2, -height / 2, -depth / 2);
+		vs[1] = new SVector(-width / 2, height / 2, -depth / 2);
+		vs[2] = new SVector(width / 2, height / 2, -depth / 2);
+		vs[3] = new SVector(width / 2, -height / 2, -depth / 2);
+		vs[4] = new SVector(-width / 2, -height / 2, depth / 2);
+		vs[5] = new SVector(-width / 2, height / 2, depth / 2);
+		vs[6] = new SVector(width / 2, height / 2, depth / 2);
+		vs[7] = new SVector(width / 2, -height / 2, depth / 2);
 
 		DPolygon[] polygone = new DPolygon[6];
 

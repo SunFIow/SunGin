@@ -1,6 +1,6 @@
 package com.sunflow.tutorial;
 
-import com.sunflow.math3d.Vertex3F;
+import com.sunflow.math.SVector;
 import com.sunflow.util.MathUtils;
 
 public abstract class IModel implements MathUtils {
@@ -12,14 +12,14 @@ public abstract class IModel implements MathUtils {
 
 	protected IModel parent = ZERO;
 
-	protected Vertex3F pos;
+	protected SVector pos;
 
 	protected DPolygon[] polys = new DPolygon[0];
 
 	public IModel(DPolygon... vs) { this(0, 0, 0, vs); }
 
 	public IModel(float x, float y, float z, DPolygon... vs) {
-		pos = new Vertex3F(x, y, z);
+		pos = new SVector(x, y, z);
 		addPolygone(vs);
 	}
 
@@ -30,7 +30,7 @@ public abstract class IModel implements MathUtils {
 //		needsUpdate = true;
 	}
 
-	public void translateModel(Vertex3F pos) {
+	public void translateModel(SVector pos) {
 		this.pos.add(pos);
 //		needsUpdate = true;
 	}
