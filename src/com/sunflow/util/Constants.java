@@ -42,7 +42,8 @@ public interface Constants {
 			RENDER_CULL_CW = 0x08,
 			RENDER_CULL_CCW = 0x10,
 			RENDER_DEPTH = 0x20,
-			RENDER_DEPTH_LOCAL = 0x40;
+			RENDER_DEPTH_LOCAL = 0x40,
+			RENDER_SHADING = 0x80;
 
 	// Colors
 	static final int WHITE = 0xFFffffff, BLACK = 0xFF000000, BLANK = 0x00000000,

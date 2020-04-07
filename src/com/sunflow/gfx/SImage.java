@@ -133,15 +133,24 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 	}
 
 	public final void pixel(float x, float y, int color) {
-		pixels[index(x, y)] = color;
+		int i = index(x, y);
+		if (i < 0 || i > pixels.length - 1) {
+//			Log.warn("Tried to set a pixel out of bounds. " + i + "/" + (pixels.length - 1));
+			return;
+		}
+		pixels[i] = color;
 //		image.setRGB(Math.round(x), Math.round(y), color);
 	}
 
 	public final void setRGB(float x, float y, int color) {
 		image.setRGB(Math.round(x), Math.round(y), color);
+//		image.setRGB((int) x, (int) y, color);
 	}
 
-	public final int index(float x, float y) { return index(Math.round(x), Math.round(y)); }
+	public final int index(float x, float y) {
+		return index(Math.round(x), Math.round(y));
+//		return index((int) x, (int) y);
+	}
 
 	public final int index(int x, int y) { return x + y * width; }
 

@@ -278,7 +278,6 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				if (e.getButton() == MouseEvent.BUTTON1)
 					mousePressed = true;
 				mouse[e.getButton()] = true;
-				debug(e.getButton());
 			}
 
 			@Override

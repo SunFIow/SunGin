@@ -5,6 +5,13 @@ import java.awt.Color;
 public interface ColorUtils {
 	public static final ColorUtils instance = new ColorUtils() {};
 
+	default int colorShade(int rgb, float lum) {
+		float calcR = ColorUtils.instance.red(rgb);
+		float calcG = ColorUtils.instance.green(rgb);
+		float calcB = ColorUtils.instance.blue(rgb);
+		return ColorUtils.instance.color(calcR * lum, calcG * lum, calcB * lum);
+	}
+
 	default float alpha(int rgb) { return (rgb >> 24) & 0xff; }
 
 	default float red(int rgb) { return (rgb >> 16) & 0xff; }
@@ -130,7 +137,7 @@ public interface ColorUtils {
 
 		int calcRi = (int) x;
 		int calcGi = (int) y;
-		int calcBi = (int) y;
+		int calcBi = (int) z;
 		int calcAi = (int) z;
 		int calcColor = (calcAi << 24) | (calcRi << 16) | (calcGi << 8) | calcBi;
 		return calcColor;
