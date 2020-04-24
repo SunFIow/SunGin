@@ -2,6 +2,8 @@ package com.sunflow.util;
 
 import java.awt.Color;
 
+import com.sunflow.math.SVector;
+
 public interface ColorUtils {
 	public static final ColorUtils instance = new ColorUtils() {};
 
@@ -19,6 +21,15 @@ public interface ColorUtils {
 	default float green(int rgb) { return (rgb >> 8) & 0xff; }
 
 	default float blue(int rgb) { return (rgb) & 0xff; }
+
+	default SVector vColor(int rgb) { return new SVector(red(rgb), green(rgb), blue(rgb), alpha(rgb)); }
+
+	default int color(int rgb, SVector vLight, SVector vFog) {
+		SVector vColor = ColorUtils.instance.vColor(rgb);
+		SVector vShaded = vColor.mult(vLight);
+		vShaded.add(vFog);
+		return ColorUtils.instance.color(vShaded.x, vShaded.y, vShaded.z, vShaded.w);
+	}
 
 	default float hue(int rgb) {
 		float[] cacheHsbValue = new float[3];
@@ -154,4 +165,5 @@ public interface ColorUtils {
 		}
 		return calcColor;
 	}
+
 }

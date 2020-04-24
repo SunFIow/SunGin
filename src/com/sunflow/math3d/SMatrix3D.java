@@ -6,7 +6,7 @@ import com.sunflow.util.MathUtils;
 public class SMatrix3D {
 
 	public SVector pos;
-	private MatrixF rotX, rotY, rotZ;
+	private SMatrix rotX, rotY, rotZ;
 	private float angleX, angleY, angleZ;
 
 	public SMatrix3D() {
@@ -34,7 +34,7 @@ public class SMatrix3D {
 				{ 0, MathUtils.instance.cos(angleX), -MathUtils.instance.sin(angleX) },
 				{ 0, MathUtils.instance.sin(angleX), MathUtils.instance.cos(angleX) }
 		};
-		rotX = new MatrixF(3, 3);
+		rotX = new SMatrix(3, 3);
 		rotX.set(rotArrX);
 	}
 
@@ -45,7 +45,7 @@ public class SMatrix3D {
 				{ 0, 1, 0 },
 				{ -MathUtils.instance.sin(angleY), 0, MathUtils.instance.cos(angleY) }
 		};
-		rotY = new MatrixF(3, 3);
+		rotY = new SMatrix(3, 3);
 		rotY.set(rotArrY);
 	}
 
@@ -56,7 +56,7 @@ public class SMatrix3D {
 				{ MathUtils.instance.sin(angleZ), MathUtils.instance.cos(angleZ), 0 },
 				{ 0, 0, 1 }
 		};
-		rotZ = new MatrixF(3, 3);
+		rotZ = new SMatrix(3, 3);
 		rotZ.set(rotArrZ);
 	}
 
@@ -67,9 +67,9 @@ public class SMatrix3D {
 		return rotated;
 	}
 
-	private final SVector matmul(MatrixF a, SVector b) {
-		MatrixF m = b.get((MatrixF) null);
-		MatrixF matmul = a.dot(m);
+	private final SVector matmul(SMatrix a, SVector b) {
+		SMatrix m = b.get((SMatrix) null);
+		SMatrix matmul = a.dot(m);
 		return SVector.fromMatrix(matmul);
 	}
 
@@ -81,11 +81,11 @@ public class SMatrix3D {
 
 	public final float[] getRotation() { return new float[] { angleX, angleY, angleZ }; }
 
-	public final MatrixF getRotationMatrixX() { return rotX; }
+	public final SMatrix getRotationMatrixX() { return rotX; }
 
-	public final MatrixF getRotationMatrixY() { return rotY; }
+	public final SMatrix getRotationMatrixY() { return rotY; }
 
-	public final MatrixF getRotationMatrixZ() { return rotZ; }
+	public final SMatrix getRotationMatrixZ() { return rotZ; }
 
-	public final MatrixF[] getRotationMatrix() { return new MatrixF[] { rotX, rotY, rotZ }; }
+	public final SMatrix[] getRotationMatrix() { return new SMatrix[] { rotX, rotY, rotZ }; }
 }

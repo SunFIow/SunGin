@@ -1,7 +1,7 @@
 package com.sunflow.math;
 
 import com.sunflow.game.Game2D;
-import com.sunflow.math3d.MatrixF;
+import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.Constants;
 import com.sunflow.util.MathUtils;
 
@@ -87,7 +87,7 @@ public class SVector implements Cloneable, MathUtils {
 	 * Set the x, y (and maybe z) coordinates using a MatrixF as the source.
 	 * 
 	 */
-	public SVector set(MatrixF source) {
+	public SVector set(SMatrix source) {
 		if (source.data.length > 0) x = source.data[0][0];
 		if (source.data.length > 1) y = source.data[1][0];
 		if (source.data.length > 2) z = source.data[2][0];
@@ -127,7 +127,7 @@ public class SVector implements Cloneable, MathUtils {
 		float angle;
 		float vz;
 		if (parent == null) {
-			angle = MathUtils.instance.random() * Constants.TWO_PI * 2;
+			angle = MathUtils.instance.random() * Constants.TWO_PI;
 			vz = MathUtils.instance.random() * 2 - 1;
 		} else {
 			angle = parent.random(Constants.TWO_PI);
@@ -185,13 +185,13 @@ public class SVector implements Cloneable, MathUtils {
 		return target;
 	}
 
-	static public MatrixF matrix(SVector v) { return v.matrix(); }
+	static public SMatrix matrix(SVector v) { return v.matrix(); }
 
-	public MatrixF matrix() { return get((MatrixF) null); };
+	public SMatrix matrix() { return get((SMatrix) null); };
 
-	public MatrixF get(MatrixF target) {
+	public SMatrix get(SMatrix target) {
 		if (target == null) {
-			target = new MatrixF(3, 1);
+			target = new SMatrix(3, 1);
 			target.data[0][0] = x;
 			target.data[1][0] = y;
 			target.data[2][0] = z;
@@ -204,13 +204,15 @@ public class SVector implements Cloneable, MathUtils {
 		return target;
 	}
 
+	public float length() { return mag(); }
+
 	public float mag() { return sqrt(dot(this, this)); }
 
 	public float magSq() { return dot(this, this); }
 
 	static public SVector add(SVector a, SVector b) { return a.clone().add(b); }
 
-	public SVector add(SVector v) { return add(v.x, v.y, v.z); }
+	public SVector add(SVector v) { return add(v.x, v.y, v.z, v.w); }
 
 	public SVector add(float x, float y) {
 		this.x += x;
@@ -225,9 +227,17 @@ public class SVector implements Cloneable, MathUtils {
 		return this;
 	}
 
+	public SVector add(float x, float y, float z, float w) {
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		this.w += w;
+		return this;
+	}
+
 	static public SVector sub(SVector a, SVector b) { return a.clone().sub(b); }
 
-	public SVector sub(SVector b) { return sub(b.x, b.y, b.z); }
+	public SVector sub(SVector v) { return sub(v.x, v.y, v.z, v.w); }
 
 	public SVector sub(float x, float y) {
 		this.x -= x;
@@ -242,13 +252,21 @@ public class SVector implements Cloneable, MathUtils {
 		return this;
 	}
 
-	static public SVector mult(SVector v, float n) { return v.clone().mult(n); }
+	public SVector sub(float x, float y, float z, float w) {
+		this.x -= x;
+		this.y -= y;
+		this.z -= z;
+		this.w -= w;
+		return this;
+	}
 
-	public SVector mult(float n) { return mult(n, n, n); }
+	static public SVector mult(SVector v, float n) { return v.clone().mult(n); }
 
 	static public SVector mult(SVector a, SVector b) { return a.clone().mult(b); }
 
-	public SVector mult(SVector v) { return mult(v.x, v.y, v.z); }
+	public SVector mult(SVector v) { return mult(v.x, v.y, v.z, v.w); }
+
+	public SVector mult(float n) { return mult(n, n, n, n); }
 
 	public SVector mult(float x, float y) {
 		this.x *= x;
@@ -263,13 +281,21 @@ public class SVector implements Cloneable, MathUtils {
 		return this;
 	}
 
-	static public SVector div(SVector v, float n) { return v.clone().div(n); }
+	public SVector mult(float x, float y, float z, float w) {
+		this.x *= x;
+		this.y *= y;
+		this.z *= z;
+		this.w *= w;
+		return this;
+	}
 
-	public SVector div(float n) { return div(n, n, n); }
+	static public SVector div(SVector v, float n) { return v.clone().mult(1.0f / n); }
+
+	public SVector div(float n) { return mult(1.0f / n); }
 
 	static public SVector div(SVector a, SVector b) { return a.clone().div(b); }
 
-	public SVector div(SVector v) { return div(v.x, v.y, v.z); }
+	public SVector div(SVector v) { return div(v.x, v.y, v.z, v.w); }
 
 	public SVector div(float x, float y) {
 		this.x /= x;
@@ -281,6 +307,14 @@ public class SVector implements Cloneable, MathUtils {
 		this.x /= x;
 		this.y /= y;
 		this.z /= z;
+		return this;
+	}
+
+	public SVector div(float x, float y, float z, float w) {
+		this.x /= x;
+		this.y /= y;
+		this.z /= z;
+		this.w /= w;
 		return this;
 	}
 
@@ -473,7 +507,7 @@ public class SVector implements Cloneable, MathUtils {
 		return avg;
 	}
 
-	static public SVector fromMatrix(MatrixF m) {
+	static public SVector fromMatrix(SMatrix m) {
 		return new SVector(
 				m.data.length > 0 ? m.data[0][0] : 0,
 				m.data.length > 1 ? m.data[1][0] : 0,

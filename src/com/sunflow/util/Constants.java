@@ -36,14 +36,16 @@ import java.awt.image.BufferedImage;
 public interface Constants {
 
 	// Rendering flags
-	static final int RENDER_WIRE = 0x01,
-			RENDER_FLAT = 0x02,
-			RENDER_TEXTURED = 0x04,
-			RENDER_CULL_CW = 0x08,
-			RENDER_CULL_CCW = 0x10,
-			RENDER_DEPTH = 0x20,
-			RENDER_DEPTH_LOCAL = 0x40,
-			RENDER_SHADING = 0x80;
+	static final int RENDER_WIRE = 0x001,
+			RENDER_FLAT = 0x002,
+			RENDER_TEXTURED = 0x004,
+			RENDER_CULL_CW = 0x008,
+			RENDER_CULL_CCW = 0x010,
+			RENDER_DEPTH = 0x020,
+			RENDER_DEPTH_LOCAL = 0x040,
+			RENDER_LIGHTING_SUNLIGHT = 0x080,
+			RENDER_LIGHTING_RIM = 0x400,
+			RENDER_FOG = 0x200;
 
 	// Colors
 	static final int WHITE = 0xFFffffff, BLACK = 0xFF000000, BLANK = 0x00000000,

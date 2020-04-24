@@ -420,7 +420,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 	}
 
 	@Override
-	final public void defaultSettings() {
+	public void defaultSettings() {
 		showOverlay(false);
 		showInfo(false);
 		paused = false;
@@ -602,7 +602,7 @@ public abstract class Game2D extends GameBase implements Constants, MathUtils, G
 				Graphics g = bs.getDrawGraphics();
 //				g.drawImage(image, 0, 0, null);
 				g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
-				g.drawImage(overlay.image, 0, 0, null);
+				if (showOverlay) g.drawImage(overlay.image, 0, 0, null);
 				g.dispose();
 			} while (bs.contentsRestored());
 			bs.show();

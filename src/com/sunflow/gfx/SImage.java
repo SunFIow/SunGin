@@ -2,10 +2,13 @@ package com.sunflow.gfx;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
+import com.sunflow.logging.Log;
 import com.sunflow.util.Constants;
 import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
@@ -37,6 +40,7 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 		Graphics2D g = image.createGraphics();
 		g.drawImage(bi, 0, 0, null);
 		g.dispose();
+//		image = bi.getSubimage(0, 0, width, height);
 	}
 
 	private void init(int width, int height, int format) {
@@ -47,29 +51,35 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 		defaultSettings();
 	}
 
-	protected void defaultSettings() { // ignore
-		image = new BufferedImage(width, height, format);
-//		graphics = image.createGraphics();
-//		background(0xffCCCCCC);
-	}
+	protected void defaultSettings() { image = new BufferedImage(width, height, format); }
 
 	final public void resize(float width, float height) { resize((int) width, (int) height); }
 
 	final public void resize(int width, int height) {
 		BufferedImage oldImage = image.getSubimage(0, 0, this.width, this.height);
+
 		this.width = width;
 		this.height = height;
-		image = new BufferedImage(width, height, format);
-//		graphics = image.createGraphics();
-//		defaultComposite = graphics.getComposite();
+		this.pixels = new int[width * height];
 
+		image = new BufferedImage(width, height, format);
 		Graphics2D g = image.createGraphics();
 		g.drawImage(oldImage, 0, 0, null);
 		g.dispose();
+//		image = image.getSubimage(0, 0, width, height);
 	}
 
 	final public int[] loadPixels() {
-		pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		DataBuffer buffer = image.getRaster().getDataBuffer();
+		if (buffer instanceof DataBufferInt) {
+			pixels = ((DataBufferInt) buffer).getData();
+		} else if (buffer instanceof DataBufferByte) {
+			byte[] bytes = ((DataBufferByte) buffer).getData();
+			bytes = (byte[]) image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+			this.pixels = new int[bytes.length];
+			for (int i = 0; i < bytes.length; i++) this.pixels[i] = bytes[i];
+		} else Log.error(buffer + " isn't of type Int / Byte");
+
 		return pixels;
 	}
 
@@ -134,12 +144,11 @@ public class SImage implements Cloneable, Constants, MathUtils, LogUtils {
 
 	public final void pixel(float x, float y, int color) {
 		int i = index(x, y);
-		if (i < 0 || i > pixels.length - 1) {
-//			Log.warn("Tried to set a pixel out of bounds. " + i + "/" + (pixels.length - 1));
+		if (i < 0 || i >= pixels.length) {
+			Log.warn("Tried to set a pixel out of bounds. " + i + "/" + (pixels.length - 1));
 			return;
 		}
 		pixels[i] = color;
-//		image.setRGB(Math.round(x), Math.round(y), color);
 	}
 
 	public final void setRGB(float x, float y, int color) {

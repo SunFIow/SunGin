@@ -75,14 +75,14 @@ public interface GameUtils {
 
 	default String loadFileAsString(String fileName) {
 		StringBuilder strBuilder = new StringBuilder();
-		BufferedReader br;
 		try {
-			br = new BufferedReader(new FileReader(new File(fileName)));
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line = "";
 			while ((line = br.readLine()) != null) {
 				strBuilder.append(line);
 				strBuilder.append(System.lineSeparator());
 			}
+			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -91,13 +91,13 @@ public interface GameUtils {
 
 	default String[] loadFileAsStringArray(String fileName) {
 		ArrayList<String> strs = new ArrayList<>();
-		BufferedReader br;
 		try {
-			br = new BufferedReader(new FileReader(new File(fileName)));
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line = "";
 			while ((line = br.readLine()) != null) {
 				strs.add(line);
 			}
+			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

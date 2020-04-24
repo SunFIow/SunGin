@@ -10,43 +10,37 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 
+import com.sunflow.game.olc.Mesh;
+import com.sunflow.game.olc.PipeLineRenderer;
 import com.sunflow.gfx.GraphicsMatrix;
 import com.sunflow.math.SVector;
-import com.sunflow.math3d.Calculator;
 import com.sunflow.math3d.SMatrix;
-import com.sunflow.math3d.models.Base3DModel;
-import com.sunflow.math3d.models.BaseModel;
-import com.sunflow.math3d.models.DPolygon;
-import com.sunflow.math3d.models.GenerateTerrain;
 import com.sunflow.util.MathUtils;
 
-public class Game3D extends Game2D {
+public class Game3DOLC extends Game2D {
 
-	// ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
-	public ArrayList<BaseModel> Models;
-	public ArrayList<BaseModel> DModels;
+	protected static float fFov = 90f;
+	protected static float fNear = 0.1f;
+	protected static float fFar = 1000.0f;
 
-	// The polygon that the mouse is currently over
-	private BaseModel PolygonOver = null;
+	protected SVector vCameraPos;
+	protected SVector vCameraDir;
+	protected SVector vUp;
 
-	public SVector vCameraPos;
-	public SVector vCameraDir;
-	protected float vertLook, horLook, horRotSpeed, vertRotSpeed;
+	protected SVector light_pos;
+	protected SVector light_dir;
 
-	public SVector vLightDir;
+	protected float fYaw, fPitch, fYawSpeed, fPitchSpeed;
+
+//	protected SVector vLightDir;
 	protected float sunPos;
 
-	public boolean isCameraActivated;
+	protected boolean isCameraActivated;
 
 	// The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
 	protected float zoom, minZoom, maxZoom;
-
-	protected int[] drawOrder;
-	public boolean outlines;
-	public boolean highlight;
 
 	protected boolean[] keys;
 
@@ -54,38 +48,34 @@ public class Game3D extends Game2D {
 
 	protected float movementSpeed;
 
-	public GraphicsMatrix gMatrix;
+	protected GraphicsMatrix gMatrix;
 
-	public ArrayList<SVector> vertices;
+	protected PipeLineRenderer renderer;
 
 	@Override
 	final void privatePreSetup() {
 		super.privatePreSetup();
 
-		Models = new ArrayList<>();
-		DModels = new ArrayList<>();
+		isCameraActivated = true;
+//		vCameraPos = new SVector(197.0f, 198.0f, -980f);
+		vCameraPos = new SVector(0.0f, 0.0f, -4.0f);
+		vCameraDir = new SVector(0.0f, 0.0f, 1.0f);
+		vUp = new SVector(0.0f, 1.0f, 0.0f);
 
-//		vCameraPos = new SVector(197, 198, -980f);
-		vCameraPos = new SVector(197, 198, 980f);
-		vCameraDir = new SVector(0, 0, 0);
-		vLightDir = new SVector(1, 1, 1);
+		light_dir = new SVector(1.0f, 1.0f, 1.0f);
 
 		zoom = 1000;
 		minZoom = 100;
 		maxZoom = 10000;
 
-		keys = new boolean[4];
-		outlines = true;
+		keys = new boolean[6];
 
-		movementSpeed = 0.2f;
+		movementSpeed = 2f;
 
-		vertLook = -0.9999999f;
-		horLook = HALF_PI + PI;
+		fYawSpeed = 0.0025f;
+		fPitchSpeed = 0.0025f;
 
-		horRotSpeed = 900;
-		vertRotSpeed = 2200;
-
-		sunPos = 0;
+		sunPos = PI;
 
 		showCrosshair = true;
 
@@ -106,47 +96,38 @@ public class Game3D extends Game2D {
 	}
 
 	@Override
+	public void defaultSettings() {
+		super.defaultSettings();
+
+		renderer = new PipeLineRenderer(this);
+		renderer.ConfigureDisplay();
+		renderer.SetProjection(fFov, height / width, fNear, fFar, 0.0f, 0.0f, width, height);
+		renderer.SetTransform(SMatrix.Matrix_MakeIdentity());
+		renderer.SetCamera(new SVector(), new SVector(), new SVector());
+		SVector light_pos = new SVector(0.0f, 0.0f, 0.0f);
+		SVector light_direction = new SVector(0.0f, 1.0f, -1.0f);
+		int light_color = 0xffffffff;
+		renderer.SetLightSource(light_pos, light_direction, light_color);
+	}
+
+	@Override
 	final void privateDraw() {
 		super.privateDraw();
 
 		cameraMovement();
 
-		// Calculated all that is general for this camera position
-		Calculator.SetPrederterminedInfo(this);
-
 		controlSunAndLight();
-
-//		Models.forEach(model -> model.updateModel());
-
-		Models.forEach(model -> {
-			if (model.needsUpdate()) model.updateModel();
-		});
-
-		// Set drawing order so closest polygons gets drawn last
-		setDrawOrder();
-		// Set the polygon that the mouse is currently over
-		setModelOver();
-
-//		drawCrosshair();
-	}
-
-	protected final void render() {
-		// Draw Models in the Order that is set by the 'setOrder' function
-		for (int i = 0; i < drawOrder.length; i++) {
-			BaseModel current = DModels.get(drawOrder[i]);
-			if (current instanceof DPolygon) ((DPolygon) current).renderStroke(outlines);
-			current.render();
-		}
 	}
 
 	public final void point(float x, float y, float z) {
 		boolean draw = true;
 
 		SVector applied = apply(x, y, z);
-		float[] pos2d = convert3Dto2D(applied);
-		float x2d = pos2d[0];
-		float y2d = pos2d[1];
-		if (pos2d[2] < 0) draw = false;
+		SVector pos2d = convert3Dto2D(applied);
+		if (pos2d == null) return;
+		float x2d = pos2d.x;
+		float y2d = pos2d.y;
+		if (pos2d.z < 0) draw = false;
 
 		if (draw) point(x2d, y2d);
 	}
@@ -155,16 +136,18 @@ public class Game3D extends Game2D {
 		boolean draw = true;
 
 		SVector applied = apply(x1, y1, z1);
-		float[] pos2d = convert3Dto2D(applied);
-		float x2d1 = pos2d[0];
-		float y2d1 = pos2d[1];
-		if (pos2d[2] < 0) draw = false;
+		SVector pos2d = convert3Dto2D(applied);
+		if (pos2d == null) return;
+		float x2d1 = pos2d.x;
+		float y2d1 = pos2d.y;
+		if (pos2d.z < 0) draw = false;
 
 		applied = apply(x2, y2, z2);
 		pos2d = convert3Dto2D(applied);
-		float x2d2 = pos2d[0];
-		float y2d2 = pos2d[1];
-		if (pos2d[2] < 0) draw = false;
+		if (pos2d == null) return;
+		float x2d2 = pos2d.x;
+		float y2d2 = pos2d.y;
+		if (pos2d.z < 0) draw = false;
 
 		if (draw) line(x2d1, y2d1, x2d2, y2d2);
 	}
@@ -172,96 +155,79 @@ public class Game3D extends Game2D {
 	public final void box(float l) { box(0, 0, 0, l); }
 
 	public final void box(float x, float y, float z, float l) {
-		beginShape(QUADS);
+		if (!stroke && !fill) return;
 
-		// Bottom
-		vertex(x, y, z);
-		vertex(x, y + l, z);
-		vertex(x + l, y + l, z);
-		vertex(x + l, y, z);
+		SMatrix matWorld = SMatrix.Matrix_MakeTranslation(x, y, z);
+		renderer.SetTransform(matWorld);
 
-		// Top
-		vertex(x, y, z + l);
-		vertex(x, y + l, z + l);
-		vertex(x + l, y + l, z + l);
-		vertex(x + l, y, z + l);
-
-		// Left
-		vertex(x, y, z);
-		vertex(x + l, y, z);
-		vertex(x + l, y, z + l);
-		vertex(x, y, z + l);
-
-		// Right
-		vertex(x, y + l, z);
-		vertex(x + l, y + l, z);
-		vertex(x + l, y + l, z + l);
-		vertex(x, y + l, z + l);
-
-		// Back
-		vertex(x + l, y, z);
-		vertex(x + l, y, z + l);
-		vertex(x + l, y + l, z + l);
-		vertex(x + l, y + l, z);
-
-		// Front
-		vertex(x, y, z);
-		vertex(x, y, z + l);
-		vertex(x, y + l, z + l);
-		vertex(x, y + l, z);
-
-		endShape(CLOSE);
+		if (fill) {
+			Mesh cube = Mesh.Cube();
+			cube.color(fillColor);
+			renderer.Render(cube.tris, RENDER_FLAT | RENDER_CULL_CW | RENDER_DEPTH | RENDER_LIGHTING_SUNLIGHT);
+		}
 	}
 
 	public final void vertex(float x, float y, float z) {
 		SVector applied = apply(x, y, z);
-		float[] pos2d = convert3Dto2D(applied);
-		float x2d = pos2d[0];
-		float y2d = pos2d[1];
-
-		vertices.add(applied);
+		SVector pos2d = convert3Dto2D(applied);
+		if (pos2d == null) return;
+		float x2d = pos2d.x;
+		float y2d = pos2d.y;
 		super.vertex(x2d, y2d);
 	}
 
 	@Override
 	public final void vertex(float x, float y) { vertex(x, y, 0); }
 
-	@Override
-	public void beginShape(int mode) {
-		super.beginShape(mode);
-		vertices = new ArrayList<>();
+	/**
+	 * @param pos
+	 *            3d position
+	 * @return 2d screen position if onscreen, else returns null
+	 */
+	public final SVector convert3Dto2D(SVector pos) {
+//		return convert3Dto2D(pos.x, pos.y, pos.z); 
+		SVector v2d = renderer.convert3Dto2D(pos);
+		return v2d;
 	}
 
-	public final float[] convert3Dto2D(SVector pos) { return convert3Dto2D(pos.x, pos.y, pos.z); }
-
-	public final float[] convert3Dto2D(float x, float y, float z) {
-		float[] calcPos = Calculator.CalculatePositionP(vCameraPos, vCameraDir, x, y, z);
-		float x2d = (width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * zoom();
-		float y2d = (height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * zoom();
-		return new float[] { x2d, y2d, Calculator.t };
+	public final SVector convert3Dto2D(float x, float y, float z) {
+		return convert3Dto2D(new SVector(x, y, z));
 	}
 
 	private final void controlSunAndLight() {
-		sunPos += 0.005f;
-		float mapSize = GenerateTerrain.mapSize * GenerateTerrain.Size;
-		vLightDir.x = mapSize / 2 - (mapSize / 2 + MathUtils.instance.cos(sunPos) * mapSize * 10);
-		vLightDir.y = mapSize / 2 - (mapSize / 2 + MathUtils.instance.sin(sunPos) * mapSize * 10);
-		vLightDir.z = -200.0f;
+		sunPos += 0.0025f;
+//		sunPos = PI * 1.5f;
+		light_dir.x = MathUtils.instance.cos(sunPos);
+		light_dir.y = MathUtils.instance.sin(sunPos);
+		light_dir.z = 0.0f;
 	}
 
+	// Forward + Sideways = faster
 	private final void cameraMovement() {
 		if (!isCameraActivated) return;
-		SVector viewVector = new SVector(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
-		SVector verticalVector = new SVector(0, 0, 1);
-		SVector sideViewVector = SVector.cross(viewVector, verticalVector).normalized();
+		float fSpeedM = 1.0f;
+		if (keyIsDown(SHIFT)) fSpeedM *= 2;
+		if (keyIsDown(ALT)) fSpeedM /= 4;
+
+		SVector vForward = new SVector(vCameraDir);
+		vForward.y = 0;
+		vForward.normalize().mult(fSpeedM);
+
+		SVector vRight = SVector.cross(vUp, vCameraDir);
+		vRight.normalize().mult(fSpeedM);
 
 		SVector moveVector = new SVector();
-		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
-		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
-		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		if (keys[3]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		moveVector.mult(movementSpeed);
 
+		if (keys[0]) moveVector.add(vForward);
+		if (keys[2]) moveVector.sub(vForward);
+
+		if (keys[1]) moveVector.add(vRight);
+		if (keys[3]) moveVector.sub(vRight);
+
+		if (keys[4]) moveVector.y += fSpeedM;
+		if (keys[5]) moveVector.y -= fSpeedM;
+
+		moveVector.mult(movementSpeed * fElapsedTime);
 		vCameraPos.add(moveVector);
 
 		updateView();
@@ -269,29 +235,33 @@ public class Game3D extends Game2D {
 
 	private final void mouseMovement(float NewMouseX, float NewMouseY) {
 		mouseDifX = (NewMouseX - width / 2);
-		mouseDifY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
+		mouseDifY = (NewMouseY - height / 2);
 
-		horLook += mouseDifX / horRotSpeed;
-		vertLook -= mouseDifY / vertRotSpeed;
+		fYaw += mouseDifX * fYawSpeed;
+		fPitch -= mouseDifY * fPitchSpeed;
 
-		if (vertLook > 0.9999999f) vertLook = 0.9999999f;
-		if (vertLook < -0.9999999f) vertLook = -0.9999999f;
+		fPitch = clamp(-HALF_PI * 0.99999f, fPitch, HALF_PI * 0.99999f);
+		fYaw = fYaw % TWO_PI;
 
 		updateView();
 	}
 
 	public final void updateView() {
-		float r = (float) Math.sqrt(1 - (vertLook * vertLook));
-		vCameraDir.x = vCameraPos.x + r * (float) Math.cos(horLook);
-		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
-		vCameraDir.z = vCameraPos.z + vertLook;
+		if (renderer == null) return;
+		SVector vTarget = new SVector(0.0f, 0.0f, 1.0f);
+		SMatrix matCameraRotX = SMatrix.Matrix_MakeRotationX(fPitch);
+		SMatrix matCameraRotY = SMatrix.Matrix_MakeRotationY(fYaw);
+		SMatrix matCameraRot = SMatrix.Matrix_MakeIdentity();
+		matCameraRot = SMatrix.Matrix_MultiplyMatrix(matCameraRot, matCameraRotX);
+		matCameraRot = SMatrix.Matrix_MultiplyMatrix(matCameraRot, matCameraRotY);
+		vCameraDir = SMatrix.Matrix_MultiplyVector(matCameraRot, vTarget);
+		vTarget = SVector.add(vCameraPos, vCameraDir);
 
-		Models.forEach(model -> model.markDirty());
+//		renderer.SetCamera(vCameraPos, vTarget, SVector.neg(vUp));
+		renderer.SetCamera(vCameraPos, vTarget, vUp);
 	}
 
 	private final void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
-
-//	private final void centerMouse() { moveMouse((int) -difX, (int) -difY); }
 
 	public final void invisibleMouse() {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -301,59 +271,6 @@ public class Game3D extends Game2D {
 	}
 
 	public final void visibleMouse() { canvas.setCursor(Cursor.getDefaultCursor()); }
-
-	public final void highlight(boolean highlight) { this.highlight = highlight; }
-
-	private final void setModelOver() {
-		PolygonOver = null;
-		DModels.forEach(p -> p.highlight(false));
-		for (int i = drawOrder.length - 1; i >= 0; i--) {
-			BaseModel current = DModels.get(drawOrder[i]);
-//			current.drawablePolygon.highlight = true;
-			if (current.draw() && current.visible() && current.contains(width / 2, height / 2)) {
-				PolygonOver = current;
-				if (highlight) current.highlight(true);
-				break;
-			}
-		}
-	}
-
-	private final void setDrawOrder() {
-		DModels.clear();
-
-		Models.forEach(model -> {
-//			if (model instanceof DPolygon) DModels.add((DPolygon) model);
-//			else if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DModels.add(pol);
-			if (model instanceof Base3DModel) for (DPolygon pol : ((Base3DModel) model).polys) DModels.add(pol);
-			else DModels.add(model);
-		});
-
-		int size = DModels.size();
-
-		float[] dists = new float[size];
-		drawOrder = new int[size];
-
-		for (int i = 0; i < size; i++) {
-			dists[i] = DModels.get(i).dist();
-			drawOrder[i] = i;
-		}
-
-		float ftemp;
-		int itemp;
-		for (int a = 0; a < size - 1; a++) {
-			for (int b = 0; b < size - 1; b++) {
-				if (dists[b] < dists[b + 1]) {
-					ftemp = dists[b];
-					itemp = drawOrder[b];
-					drawOrder[b] = drawOrder[b + 1];
-					dists[b] = dists[b + 1];
-
-					drawOrder[b + 1] = itemp;
-					dists[b + 1] = ftemp;
-				}
-			}
-		}
-	}
 
 	public final List<String> getInfo3D(List<String> info) {
 		float x = vCameraPos.x;
@@ -365,9 +282,9 @@ public class Game3D extends Game2D {
 		z = vCameraDir.z - z;
 		info.add("[" + x + "]" + "[" + y + "]" + "[" + z + "]");
 
-		x = horLook;
+		x = fPitch;
 		y = 0;
-		z = vertLook;
+		z = fYaw;
 		info.add("[" + x + "]" + "[" + y + "]" + "[" + z + "]");
 		return info;
 	}
@@ -453,7 +370,8 @@ public class Game3D extends Game2D {
 			if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = true;
 			if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = true;
 			if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = true;
-			if (e.getKeyCode() == KeyEvent.VK_O) outlines = !outlines;
+			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[4] = true;
+			if (e.getKeyCode() == KeyEvent.VK_CONTROL) keys[5] = true;
 			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
 		}
 
@@ -463,6 +381,8 @@ public class Game3D extends Game2D {
 			if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = false;
 			if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = false;
 			if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = false;
+			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[4] = false;
+			if (e.getKeyCode() == KeyEvent.VK_CONTROL) keys[5] = false;
 		}
 	}
 
@@ -480,16 +400,13 @@ public class Game3D extends Game2D {
 
 	private final class Game3DMouseListeners extends MouseAdapter {
 		@Override
-		public final void mousePressed(MouseEvent e) {
-			if (e.getButton() == MouseEvent.BUTTON1) if (PolygonOver != null) PolygonOver.seeThrough(false);
-			if (e.getButton() == MouseEvent.BUTTON3) if (PolygonOver != null) PolygonOver.seeThrough(true);
-		}
-
-		@Override
 		public final void mouseWheelMoved(MouseWheelEvent e) {
 			if (e.getUnitsToScroll() > 0) {
 				if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
 			} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
 		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) { centerMouse(); }
 	}
 }

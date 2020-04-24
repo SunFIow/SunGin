@@ -2,28 +2,25 @@ package com.sunflow.gfx;
 
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
-import com.sunflow.util.MathUtils;
 import com.sunflow.util.Transform;
 
-public class GraphicsMatrix {
-
-	private float tx, ty, tz;
-
-	private float sx, sy, sz;
+public class GraphicsMatrixOLC {
 
 	private int transformCount;
 	private static final int MATRIX_STACK_DEPTH = 32;
 	private Transform[] transformStack;
 
+	private float tx, ty, tz;
+	private float sx, sy, sz;
+
 	private SMatrix rotX, rotY, rotZ;
 	private float angleX, angleY, angleZ;
 
-	public GraphicsMatrix() {
-		tx = ty = tz = 0;
-
-		sx = sy = sz = 1;
-
+	public GraphicsMatrixOLC() {
 		transformStack = new Transform[MATRIX_STACK_DEPTH];
+
+		tx = ty = tz = 0;
+		sx = sy = sz = 1;
 
 		angleX = angleY = angleZ = 0;
 
@@ -112,35 +109,17 @@ public class GraphicsMatrix {
 
 	public final void rotateX(float angle) {
 		angleX += angle;
-		float[][] rotArrX = {
-				{ 1, 0, 0 },
-				{ 0, MathUtils.instance.cos(angleX), -MathUtils.instance.sin(angleX) },
-				{ 0, MathUtils.instance.sin(angleX), MathUtils.instance.cos(angleX) }
-		};
-		rotX = new SMatrix(3, 3);
-		rotX.set(rotArrX);
+		rotX = SMatrix.Matrix_MakeRotationX(angleX);
 	}
 
 	public final void rotateY(float angle) {
 		angleY += angle;
-		float[][] rotArrY = {
-				{ MathUtils.instance.cos(angleY), 0, MathUtils.instance.sin(angleY) },
-				{ 0, 1, 0 },
-				{ -MathUtils.instance.sin(angleY), 0, MathUtils.instance.cos(angleY) }
-		};
-		rotY = new SMatrix(3, 3);
-		rotY.set(rotArrY);
+		rotY = SMatrix.Matrix_MakeRotationY(angleY);
 	}
 
 	public final void rotateZ(float angle) {
 		angleZ += angle;
-		float[][] rotArrZ = {
-				{ MathUtils.instance.cos(angleZ), -MathUtils.instance.sin(angleZ), 0 },
-				{ MathUtils.instance.sin(angleZ), MathUtils.instance.cos(angleZ), 0 },
-				{ 0, 0, 1 }
-		};
-		rotZ = new SMatrix(3, 3);
-		rotZ.set(rotArrZ);
+		rotZ = SMatrix.Matrix_MakeRotationZ(angleZ);
 	}
 
 	public final SVector apply(SVector pos) { return apply(pos.x, pos.y, pos.z); }
@@ -159,17 +138,23 @@ public class GraphicsMatrix {
 	public final SVector rotated(float x, float y, float z) { return rotated(new SVector(x, y, z)); }
 
 	public final SVector rotated(SVector pos) {
-		SVector rotated = matmul(getRotationMatrixX(), pos);
-		rotated = matmul(getRotationMatrixY(), rotated);
-		rotated = matmul(getRotationMatrixZ(), rotated);
+//		SVector rotated = matmul(getRotationMatrixX(), pos);
+//		rotated = matmul(getRotationMatrixY(), rotated);
+//		rotated = matmul(getRotationMatrixZ(), rotated);
+//		return rotated;
+		SMatrix matTrans = SMatrix.Matrix_MakeIdentity();
+		matTrans = SMatrix.Matrix_MultiplyMatrix(matTrans, rotX);
+		matTrans = SMatrix.Matrix_MultiplyMatrix(matTrans, rotY);
+		matTrans = SMatrix.Matrix_MultiplyMatrix(matTrans, rotZ);
+		SVector rotated = SMatrix.Matrix_MultiplyVector(matTrans, pos);
 		return rotated;
 	}
 
-	private final SVector matmul(SMatrix a, SVector b) {
-		SMatrix m = b.get((SMatrix) null);
-		SMatrix matmul = a.dot(m);
-		return SVector.fromMatrix(matmul);
-	}
+//	private final SVector matmul(MatrixF a, SVector b) {
+//		MatrixF m = b.get((MatrixF) null);
+//		MatrixF matmul = a.dot(m);
+//		return SVector.fromMatrix(matmul);
+//	}
 
 	public final float getRotationX() { return angleX; }
 

@@ -30,7 +30,8 @@ public class ExampleGame3D extends Game3D {
 		title("ExampleGame 3D");
 //		undecorated(true);
 		isCameraActivated = true;
-		createCanvas(1280, 720);
+//		createCanvas(1280, 720);
+		createCanvas(800, 600, 1, 1);
 		syncMode(ASYNC);
 		frameRate(144);
 		tickRate(60);
