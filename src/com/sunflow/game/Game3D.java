@@ -13,6 +13,22 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.glfw.GLFW;
+
+import com.sunflow.engine.eventsystem.EventManager;
+import com.sunflow.engine.eventsystem.adapters.KeyInputAdapter;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyReleasedEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent.MousePressedEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent.MouseReleasedEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseDraggedEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
+import com.sunflow.engine.eventsystem.events.ScrollEvent;
+import com.sunflow.engine.eventsystem.listeners.MouseInputListener;
+import com.sunflow.engine.eventsystem.listeners.MouseMotionListener;
+import com.sunflow.engine.eventsystem.listeners.ScrollListener;
 import com.sunflow.gfx.GraphicsMatrix;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.Calculator;
@@ -23,7 +39,7 @@ import com.sunflow.math3d.models.DPolygon;
 import com.sunflow.math3d.models.GenerateTerrain;
 import com.sunflow.util.MathUtils;
 
-public class Game3D extends Game2D {
+public class Game3D extends GameBase {
 
 	// ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
 	public ArrayList<BaseModel> Models;
@@ -60,7 +76,6 @@ public class Game3D extends Game2D {
 
 	@Override
 	final void privatePreSetup() {
-		super.privatePreSetup();
 
 		Models = new ArrayList<>();
 		DModels = new ArrayList<>();
@@ -87,27 +102,36 @@ public class Game3D extends Game2D {
 
 		sunPos = 0;
 
-		showCrosshair = true;
-
 		gMatrix = new GraphicsMatrix();
+
+		super.privatePreSetup();
 
 //		shapes = new ArrayList<>();
 		updateView();
 	}
 
 	@Override
-	final void createFrame() {
-		super.createFrame();
-		canvas.addKeyListener(new Game3DKeyListeners());
-		Game3DMouseListeners ml = new Game3DMouseListeners();
-		canvas.addMouseListener(ml);
-		canvas.addMouseWheelListener(ml);
+	public void createCanvas(float width, float height, float scaleW, float scaleH) {
+		super.createCanvas(width, height, scaleW, scaleH);
+
+//		screen.addKeyListener(new Game3DKeyListeners());
+//		Game3DMouseListeners ml = new Game3DMouseListeners();
+//		screen.addMouseListener(ml);
+//		screen.addMouseWheelListener(ml);
+
+		EventManager.addKeyInputListener(new Game3DKeyInputListeners());
+		Game3DMouseInputListeners mil = new Game3DMouseInputListeners();
+		EventManager.addMouseInputListener(mil);
+		EventManager.addMouseMotionListener(mil);
+		EventManager.addScrollListener(mil);
+
 		if (isCameraActivated) invisibleMouse();
+		showCrosshair(true);
 	}
 
 	@Override
-	final void privateDraw() {
-		super.privateDraw();
+	protected final void preDraw() {
+		super.preDraw();
 
 		cameraMovement();
 
@@ -260,7 +284,7 @@ public class Game3D extends Game2D {
 		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
 		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
 		if (keys[3]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		moveVector.mult(movementSpeed);
+		moveVector.mult(movementSpeed * fElapsedTime * 33);
 
 		vCameraPos.add(moveVector);
 
@@ -297,10 +321,10 @@ public class Game3D extends Game2D {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		BufferedImage cursorImage = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 		Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvisibleCursor");
-		canvas.setCursor(invisibleCursor);
+		screen.setCursor(invisibleCursor);
 	}
 
-	public final void visibleMouse() { canvas.setCursor(Cursor.getDefaultCursor()); }
+	public final void visibleMouse() { screen.setCursor(Cursor.getDefaultCursor()); }
 
 	public final void highlight(boolean highlight) { this.highlight = highlight; }
 
@@ -466,18 +490,6 @@ public class Game3D extends Game2D {
 		}
 	}
 
-	@Override
-	final void updateMousePosition(int x, int y) {
-		if (!canvas.hasFocus()) return;
-		if (!isCameraActivated) {
-			super.updateMousePosition(x, y);
-			return;
-		}
-		mouseMovement(x, y);
-		super.updateMousePosition(x, y);
-		centerMouse();
-	}
-
 	private final class Game3DMouseListeners extends MouseAdapter {
 		@Override
 		public final void mousePressed(MouseEvent e) {
@@ -491,5 +503,60 @@ public class Game3D extends Game2D {
 				if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
 			} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
 		}
+	}
+
+	private final class Game3DKeyInputListeners extends KeyInputAdapter {
+		@Override
+		public void onKeyPressed(KeyPressedEvent e) {
+			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[0] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[1] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[2] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[3] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_O) outlines = !outlines;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) System.exit(0);
+		}
+
+		@Override
+		public void onKeyReleased(KeyReleasedEvent e) {
+			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[0] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[1] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[2] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[3] = false;
+		}
+	}
+
+	private final class Game3DMouseInputListeners implements MouseInputListener, MouseMotionListener, ScrollListener {
+		@Override
+		public void onMousePressed(MousePressedEvent e) {
+			if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) if (PolygonOver != null) PolygonOver.seeThrough(false);
+			if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) if (PolygonOver != null) PolygonOver.seeThrough(true);
+		}
+
+		@Override
+		public void onScrolled(ScrollEvent e) {
+			if (e.getAmountY() > 0) {
+				if (zoom > minZoom) zoom -= 25 * e.getAmountY();
+			} else if (zoom < maxZoom) zoom += 25 * -e.getAmountY();
+		}
+
+		@Override
+		public void onMouseMotion(MouseMotionEvent event) {
+			if (!screen.hasFocus()) return;
+			if (!isCameraActivated) return;
+			mouseMovement((float) event.getMouseX(), (float) event.getMouseY());
+			centerMouse();
+		}
+
+		@Override
+		public void onMouseInput(MouseInputEvent event) {}
+
+		@Override
+		public void onMouseReleased(MouseReleasedEvent event) {}
+
+		@Override
+		public void onMouseMoved(MouseMovedEvent event) {}
+
+		@Override
+		public void onMouseDragged(MouseDraggedEvent event) {}
 	}
 }

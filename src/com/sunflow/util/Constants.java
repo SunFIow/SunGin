@@ -375,6 +375,7 @@ public interface Constants {
 	static final int CONTROL = KeyEvent.VK_CONTROL;
 	static final int SHIFT = KeyEvent.VK_SHIFT;
 	static final int SPACE = KeyEvent.VK_SPACE;
+	static final int ESCAPE = KeyEvent.VK_ESCAPE;
 
 	// orientations (only used on Android, ignored on desktop)
 

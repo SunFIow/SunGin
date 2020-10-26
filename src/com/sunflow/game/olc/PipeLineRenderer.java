@@ -5,7 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import com.sunflow.game.Game2D;
+import com.sunflow.game.GameBase;
+import com.sunflow.logging.Log;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
@@ -29,7 +30,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 
 	private float fNear;
 
-	private Game2D game;
+	private GameBase game;
 
 	private SVector vCamera;
 
@@ -41,7 +42,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 
 	private int flags;
 
-	public PipeLineRenderer(Game2D game) { this.game = game; }
+	public PipeLineRenderer(GameBase game) { this.game = game; }
 
 	public void ConfigureDisplay() {
 		m_DepthBuffer = new float[game.width() * game.height()];
@@ -666,6 +667,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 					DrawTriangleWire(t, RED);
 				}
 
+				System.out.println(t);
 				nTriangleDrawnCount++;
 			}
 		}
@@ -817,6 +819,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 			int x2, int y2, float u2, float v2, float w2,
 			int y3,
 			BiFunction<Float, Float, Integer> colorFun) {
+
 		for (int i = y2; i <= y3; i++) {
 			int ax = (int) (x2 + (i - y2) * dax_step);
 			int bx = (int) (x1 + (i - y1) * dbx_step);
@@ -883,6 +886,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 	}
 
 	public void Draw(int x, int y, float u, float v, float w, BiFunction<Float, Float, Integer> colorFun) {
+		System.out.println("2");
 		boolean draw = false;
 		int index = y * game.width() + x;
 
@@ -905,6 +909,7 @@ public class PipeLineRenderer implements MathUtils, Constants {
 //			int color = sprTexture.SampleColor(tex_u / tex_w, tex_v / tex_w);
 			int color = colorFun.apply(u / w, v / w);
 			game.pixel(x, y, color);
+			Log.debug(x, y, color);
 		}
 	}
 }

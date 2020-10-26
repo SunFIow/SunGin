@@ -17,7 +17,7 @@ import com.sunflow.math3d.models.Pyramid;
 import com.sunflow.math3d.models.Sphere;
 
 public class ExampleGame3D extends Game3D {
-	public static void main(String[] args) { new ExampleGame3D(); }
+	public static void main(String[] args) { new ExampleGame3D().start(); }
 
 	private Base3DModel model;
 
@@ -75,12 +75,16 @@ public class ExampleGame3D extends Game3D {
 
 	double showElaspedTime, showMult;
 
+	SVector v0 = new SVector(0, 2, 3);
+
 	@Override
 	public List<String> getInfo() {
 		List<String> info = super.getInfo();
 
 		info.add(showElaspedTime + " ∆");
 		info.add(showMult + " x");
+
+		System.out.println(v0);
 
 		float x = vCameraPos.x;
 		float y = vCameraPos.y;

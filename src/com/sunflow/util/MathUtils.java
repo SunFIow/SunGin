@@ -1,9 +1,13 @@
 package com.sunflow.util;
 
-import com.sunflow.math.SVector;
-
 public interface MathUtils {
 	public static final MathUtils instance = new MathUtils() {};
+
+	default int ceil(float n) { return (int) Math.ceil(n); }
+
+	default float sq(float a) { return a * a; }
+
+	default double sq(double a) { return a * a; }
 
 	default float sqrt(float a) { return (float) Math.sqrt(a); }
 
@@ -90,7 +94,12 @@ public interface MathUtils {
 	}
 
 	default double dist(double x1, double y1, double x2, double y2) {
-		return SVector.dist(new SVector(x1, y1), new SVector(x2, y2));
+		return sqrt(sq(x2 - x1) + sq(y2 - y1));
+	}
+
+	default float dist(float x1, float y1, float z1,
+			float x2, float y2, float z2) {
+		return sqrt(sq(x2 - x1) + sq(y2 - y1) + sq(z2 - z1));
 	}
 
 	default int random(int high) { return (int) random((float) high); }

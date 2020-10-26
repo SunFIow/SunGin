@@ -1,8 +1,9 @@
 package com.sunflow.gfx;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseDraggedEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
+import com.sunflow.engine.eventsystem.listeners.MouseMotionListener;
 import com.sunflow.game.Game3D;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.util.Constants;
@@ -10,16 +11,16 @@ import com.sunflow.util.MathUtils;
 
 public class PeasyCam implements FrameLoopListener, MouseMotionListener, MathUtils, Constants {
 
-	private Game3D screen;
+	private Game3D game;
 
 	private float xr, yr, zr;
 
 	private boolean flipedX;
 	private boolean flipedY;
 
-	public PeasyCam(Game3D screen) {
-		this.screen = screen;
-		screen.addListener(this);
+	public PeasyCam(Game3D game) {
+		this.game = game;
+		game.addListener(this);
 	}
 
 	public void flip() {
@@ -37,18 +38,20 @@ public class PeasyCam implements FrameLoopListener, MouseMotionListener, MathUti
 
 	@Override
 	public void update() {
-		screen.rotateXTo(xr);
-		screen.rotateYTo(yr);
-		screen.rotateZTo(zr);
-		screen.updateView();
+		game.rotateXTo(xr);
+		game.rotateYTo(yr);
+		game.rotateZTo(zr);
+		game.updateView();
 //		zr += 0.01f;
 	}
 
+//	@Override
+//	public void mouseDragged(MouseEvent e) {
 	@Override
-	public void mouseDragged(MouseEvent e) {
+	public void onMouseDragged(MouseDraggedEvent event) {
 		float change = 0.006f;
-		float mxc = (screen.mouseX - screen.prevMouseX) * (flipedX ? -change : change);
-		float myc = (screen.mouseY - screen.prevMouseY) * (flipedY ? -change : change);
+		float mxc = (game.mouseX() - game.lastMouseX()) * (flipedX ? -change : change);
+		float myc = (game.mouseY() - game.lastMouseY()) * (flipedY ? -change : change);
 		float xc = 0, yc = 0, zc = 0;
 
 		// x - axis
@@ -92,5 +95,9 @@ public class PeasyCam implements FrameLoopListener, MouseMotionListener, MathUti
 //	}
 
 	@Override
-	public void mouseMoved(MouseEvent e) {}
+	public void onMouseMotion(MouseMotionEvent event) {}
+
+	@Override
+	public void onMouseMoved(MouseMovedEvent event) {}
+
 }

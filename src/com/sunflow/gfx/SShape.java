@@ -4,7 +4,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 
-import com.sunflow.game.Game2D;
 import com.sunflow.game.Game3D;
 import com.sunflow.math.SVector;
 import com.sunflow.util.Style;
@@ -20,18 +19,18 @@ public abstract class SShape {
 
 	public static void drawAll(SGraphics screen) {
 		if (screen instanceof Game3D) Shape3D.drawAll((Game3D) screen);
-		else if (screen instanceof Game2D) Shape2D.drawAll(screen);
+		else if (screen instanceof SGraphics) Shape2D.drawAll(screen);
 	}
 
 	public static void addShape(SGraphics screen) {
 		if (screen instanceof Game3D) Shape3D.addShape((Game3D) screen);
-		else if (screen instanceof Game2D) Shape2D.addShape(screen);
+		else if (screen instanceof SGraphics) Shape2D.addShape(screen);
 	}
 
 	public static void endShape(SGraphics screen) {
 		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
-		else if (screen instanceof Game2D) Shape2D.endShape(screen);
+		else if (screen instanceof SGraphics) Shape2D.endShape(screen);
 	}
 
 	public static void beginShape(SGraphics screen) {

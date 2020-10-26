@@ -10,7 +10,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.sunflow.game.Game2D;
+import com.sunflow.game.GameBase;
 
 public class Log {
 	public static final Level ALL = Level.ALL;
@@ -60,7 +60,7 @@ public class Log {
 		}
 
 //		Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.log(ERROR, "Uncaught Exception", e));
-		Thread.setDefaultUncaughtExceptionHandler((t, e) -> Game2D.UncaughtException(e));
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> GameBase.UncaughtException(e));
 
 		return new SunLogger(logger);
 	}

@@ -3,33 +3,48 @@ package com.sunflow.examples;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-import com.sunflow.game.Game2D;
+import com.sunflow.Settings;
+import com.sunflow.Settings.ScreenType;
+import com.sunflow.game.GameBase;
 
-public class ExampleGame2D extends Game2D {
+public class ExampleGame2D extends GameBase {
+	public static void main(String[] args) {
+		GameBase.settings = new Settings()
+				.screentype(ScreenType.JAVA)//
+//				.screentype(ScreenType.OPENGL)//
+		;
+		ExampleGame2D game = new ExampleGame2D();
+		game.start();
+	}
+
 	private float ballR;
 	private float ballX;
 	private float ballY;
 	private float ballVX;
 	private float ballVY;
 
-	public static void main(String[] args) { new ExampleGame2D(); }
+	private float test = 2.0f;
 
 	@Override
 	public void setup() {
 		title("ExampleGame 2D");
 		createCanvas(1000, 500);
-		smooth();
-		frameRate(60);
+//		smooth();
+		frameRate(600);
 		showInfo(true);
 		ballR = 25;
 		ballX = width / 2;
 		ballY = height / 2;
 		ballVX = 400;
 		ballVY = 200;
+
+		System.out.println(test);
+		System.out.println("test");
 	}
 
 	@Override
 	public List<String> getInfo() {
+		System.out.println(fElapsedTime);
 		List<String> list = super.getInfo();
 
 		list.add(0, "Position [" + ballX + "|[" + ballY + "]");
@@ -39,12 +54,12 @@ public class ExampleGame2D extends Game2D {
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent event) { paused = !paused; }
+	public void mouseClicked(MouseEvent event) { isPaused = !isPaused; }
 
 	@Override
 	public void update() {
-		ballX += ballVX * delta;
-		ballY += ballVY * delta;
+		ballX += ballVX * fElapsedTime;
+		ballY += ballVY * fElapsedTime;
 		if (ballX < ballR || ballX > width - ballR) {
 			ballVX *= -1;
 			ballX = ballX < ballR ? ballR : width - ballR;

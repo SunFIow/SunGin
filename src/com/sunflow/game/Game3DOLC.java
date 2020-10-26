@@ -19,7 +19,7 @@ import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.MathUtils;
 
-public class Game3DOLC extends Game2D {
+public class Game3DOLC extends GameBase {
 
 	protected static float fFov = 90f;
 	protected static float fNear = 0.1f;
@@ -54,7 +54,6 @@ public class Game3DOLC extends Game2D {
 
 	@Override
 	final void privatePreSetup() {
-		super.privatePreSetup();
 
 		isCameraActivated = true;
 //		vCameraPos = new SVector(197.0f, 198.0f, -980f);
@@ -77,22 +76,26 @@ public class Game3DOLC extends Game2D {
 
 		sunPos = PI;
 
-		showCrosshair = true;
-
 		gMatrix = new GraphicsMatrix();
 
 //		shapes = new ArrayList<>();
 		updateView();
+
+		super.privatePreSetup();
 	}
 
 	@Override
-	final void createFrame() {
-		super.createFrame();
-		canvas.addKeyListener(new Game3DKeyListeners());
+	public void createCanvas(float width, float height, float scaleW, float scaleH) {
+		super.createCanvas(width, height, scaleW, scaleH);
+
+		screen.addKeyListener(new Game3DKeyListeners());
 		Game3DMouseListeners ml = new Game3DMouseListeners();
-		canvas.addMouseListener(ml);
-		canvas.addMouseWheelListener(ml);
-		if (isCameraActivated) invisibleMouse();
+		screen.addMouseListener(ml);
+		screen.addMouseWheelListener(ml);
+		screen.addMouseMotionListener(ml);
+
+//		if (isCameraActivated) invisibleMouse();
+		showCrosshair(true);
 	}
 
 	@Override
@@ -111,8 +114,8 @@ public class Game3DOLC extends Game2D {
 	}
 
 	@Override
-	final void privateDraw() {
-		super.privateDraw();
+	protected final void preDraw() {
+		super.preDraw();
 
 		cameraMovement();
 
@@ -267,10 +270,10 @@ public class Game3DOLC extends Game2D {
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		BufferedImage cursorImage = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 		Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvisibleCursor");
-		canvas.setCursor(invisibleCursor);
+		screen.setCursor(invisibleCursor);
 	}
 
-	public final void visibleMouse() { canvas.setCursor(Cursor.getDefaultCursor()); }
+	public final void visibleMouse() { screen.setCursor(Cursor.getDefaultCursor()); }
 
 	public final List<String> getInfo3D(List<String> info) {
 		float x = vCameraPos.x;
@@ -386,18 +389,6 @@ public class Game3DOLC extends Game2D {
 		}
 	}
 
-	@Override
-	final void updateMousePosition(int x, int y) {
-		if (!canvas.hasFocus()) return;
-		if (!isCameraActivated) {
-			super.updateMousePosition(x, y);
-			return;
-		}
-		mouseMovement(x, y);
-		super.updateMousePosition(x, y);
-		centerMouse();
-	}
-
 	private final class Game3DMouseListeners extends MouseAdapter {
 		@Override
 		public final void mouseWheelMoved(MouseWheelEvent e) {
@@ -408,5 +399,18 @@ public class Game3DOLC extends Game2D {
 
 		@Override
 		public void mouseEntered(MouseEvent e) { centerMouse(); }
+
+		@Override
+		public void mouseDragged(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
+
+		@Override
+		public void mouseMoved(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
+	}
+
+	final void updateMousePosition(float x, float y) {
+		if (!screen.hasFocus()) return;
+		if (!isCameraActivated) return;
+		mouseMovement(x, y);
+		centerMouse();
 	}
 }

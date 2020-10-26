@@ -121,7 +121,7 @@ public class SGraphics extends SImage {
 	protected int textMode = MODEL;
 
 	/** The current text size (read-only) */
-	protected float textSize;
+	public float textSize;
 
 	/** The current text leading (read-only) */
 	protected float textLeading;

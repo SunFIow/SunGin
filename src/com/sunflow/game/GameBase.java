@@ -1,5 +1,8 @@
 package com.sunflow.game;
 
+import java.awt.AWTException;
+import java.awt.Graphics2D;
+import java.awt.Robot;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
@@ -17,56 +20,421 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
+import com.sunflow.Settings;
+import com.sunflow.engine.eventsystem.EventManager;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyReleasedEvent;
+import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyRepeatedEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent.MousePressedEvent;
+import com.sunflow.engine.eventsystem.events.MouseInputEvent.MouseReleasedEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseDraggedEvent;
+import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
+import com.sunflow.engine.eventsystem.events.ScrollEvent;
+import com.sunflow.engine.eventsystem.events.WindowMoveEvent;
+import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
+import com.sunflow.engine.eventsystem.listeners.EventListener;
+import com.sunflow.engine.eventsystem.listeners.KeyInputListener;
+import com.sunflow.engine.eventsystem.listeners.MouseInputListener;
+import com.sunflow.engine.eventsystem.listeners.ScrollListener;
+import com.sunflow.engine.eventsystem.listeners.WindowMoveListener;
+import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
+import com.sunflow.engine.screen.Screen;
+import com.sunflow.engine.screen.ScreenJava;
+import com.sunflow.engine.screen.ScreenOpenGL;
 import com.sunflow.gfx.SGraphics;
+import com.sunflow.interfaces.FrameLoopListener;
+import com.sunflow.interfaces.GameLoopListener;
+import com.sunflow.logging.Log;
 import com.sunflow.math.OpenSimplexNoise;
+import com.sunflow.math.SVector;
+import com.sunflow.util.Constants;
+import com.sunflow.util.GameUtils;
+import com.sunflow.util.GeometryUtils;
+import com.sunflow.util.MathUtils;
 
-abstract class GameBase extends SGraphics implements MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener {
+public abstract class GameBase extends SGraphics implements Runnable,
+		Constants, MathUtils, GameUtils, GeometryUtils,
+		MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener,
+		KeyInputListener, MouseInputListener, com.sunflow.engine.eventsystem.listeners.MouseMotionListener, ScrollListener, WindowResizeListener, WindowMoveListener {
 
-	protected Random random;
-//	private ImprovedNoise perlinnoise;
-	private OpenSimplexNoise noise;
+	public static Settings settings = new Settings().defaultSettings();
 
 	protected GameBase game;
 
-	public GameBase() { init(); }
+	protected boolean noLoop;
+	public boolean isRunning;
+	public boolean isPaused;
 
-	void init() {
-		game = this;
-		privatePreSetup();
-		preSetup();
+	private Thread thread;
 
-		setup();
+	protected Screen screen;
+
+	private long startTime;
+
+	// SYNC or ASYNC
+	protected byte syncMode;
+
+	protected int fps, tps;
+
+	protected int frameRate, tickRate;
+	protected long frameCount, tickCount;
+	int frames, ticks;
+
+	private float timePerTickNano, timePerTickMilli;
+	private float timePerFrameNano, timePerFrameMilli;
+
+	protected float delta, deltaMin;
+	protected float multiplier, multiplierMin;
+
+	protected float fElapsedTime, fElapsedTimeMin;
+
+//	protected float aimSize;
+//	protected Color aimColor;
+
+	protected ArrayList<GameLoopListener> gameLoopListeners;
+	protected ArrayList<FrameLoopListener> frameLoopListeners;
+
+//	private ImprovedNoise perlinnoise;
+	private OpenSimplexNoise noise;
+
+	private Random random;
+
+	private Robot robot;
+
+	public List<String> infos;
+
+	public GameBase() {
+		if (this instanceof Game3D) info("starting 3D Game");
+		else if (this instanceof GameBase) info("starting 2D Game");
+		else info("starting Custom Game");
+
+		if (settings.autostart) start();
+
+	}
+
+	final public void reset() {
+		stop();
+		privateRefresh();
+		refresh();
+		init();
 	}
 
 	void privatePreSetup() {
+		game = this;
+		infos = getInfo();
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
+
+		try {
+			robot = new Robot();
+		} catch (AWTException e) {
+			e.printStackTrace();
+		}
+//		aimSize = 8;
+//		aimColor = Color.black;
+
+		frameRate(60);
+		syncMode(SYNC);
+
+		multiplierMin = 5;
+		deltaMin = timePerTickNano / NANOSECOND * multiplierMin;
+		fElapsedTimeMin = timePerFrameNano / NANOSECOND * multiplierMin;
+
+		gameLoopListeners = new ArrayList<>();
+		frameLoopListeners = new ArrayList<>();
+		startTime = System.currentTimeMillis();
+
+		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(game);
+		else screen = new ScreenJava(this);
 	}
 
 	protected void preSetup() {}
 
 	protected void setup() {}
 
+	void privateRefresh() {
+
+		frameCount = 0;
+		frameRate = 0;
+		tickCount = 0;
+		tickRate = 0;
+
+		multiplierMin = 0;
+		deltaMin = 0;
+
+		width = 0;
+		height = 0;
+
+		fps = 0;
+
+		screen.refresh();
+	}
+
+	protected void refresh() {}
+
+	protected void start() {
+		if (isRunning) return;
+		isRunning = true;
+
+		thread = new Thread(this, "MainThread");
+//		thread.start();
+		thread.run();
+	}
+
+	public final void stop() {
+		if (!isRunning) return;
+		isRunning = false;
+	}
+
+	public final void createCanvas(float width, float height) { createCanvas(width, height, 1, 1); }
+
+	public final void createCanvas(float width, float height, float scale) { createCanvas(width, height, scale, scale); }
+
+	public void createCanvas(float width, float height, float scaleW, float scaleH) {
+		screen.createCanvas(width, height, scaleW, scaleH);
+		defaultSettings();
+		screen.show();
+		screen.requestFocus();
+	}
+
+	public final void title(String title) { screen.setTitle(title); }
+
+	public final void undecorated(boolean undecorated) { screen.setUndecorated(undecorated); }
+
 	@Override
-	protected void defaultSettings() { super.defaultSettings(); }
+	public void run() {
+		init();
+		loop();
+		destroy();
+	}
 
-	protected abstract int x();
+	void init() {
+		privatePreSetup();
+		preSetup();
 
-	protected abstract int y();
+		setup();
 
-	protected abstract int frameX();
+		thread.setName(screen.title + " MainThread");
+		screen.show();
+	}
 
-	protected abstract int frameY();
+	void tick() {
+		screen.privateUpdate();
+		for (GameLoopListener gll : gameLoopListeners) gll.update();
 
-	final public double noise(double xoff) { return noise.eval(xoff, 0); }
+		update();
 
-	final public double noise(double xoff, double yoff) { return noise.eval(xoff, yoff); }
+		ticks++;
+		tickCount++;
+	}
 
-	final public double noise(double xoff, double yoff, double zoff) { return noise.eval(xoff, yoff, zoff); }
+	protected void update() {}
 
-	final public double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
+//		if (!isRunning) return;
+	private void render() {
+
+		preDraw();
+
+		push();
+		draw();
+		draw(graphics);
+		pop();
+
+		postDraw();
+
+		if (!screen.render()) return;
+
+		frames++;
+		frameCount++;
+	}
+
+	protected void preDraw() {
+		handleSmooth();
+		for (FrameLoopListener fll : frameLoopListeners) fll.update();
+		screen.preDraw();
+	}
+
+	protected void postDraw() { screen.postDraw(); }
+
+	protected void draw() {}
+
+	protected void draw(Graphics2D g) {}
+
+	protected void info() {
+		tps = ticks;
+		ticks = 0;
+		fps = frames;
+		frames = 0;
+		infos = getInfo();
+//		frame.setTitle(title + " - FPS : " + fps);
+		screen.setTitleInfo(" - FPS : " + fps);
+	}
+
+	void loop() {
+		long currentTime;
+		long previousTime = System.nanoTime();
+		long passedTime;
+
+		long timeSinceLastTick = 0;
+		long timeSinceLastFrame = 0;
+		long timeSinceLastInfoUpdate = 0;
+
+		long lastTick = System.nanoTime();
+		long lastFrame = System.nanoTime();
+
+		if (noLoop) {
+			if (!isPaused) tick();
+			render();
+			return;
+		}
+		while (isRunning) {
+			currentTime = System.nanoTime();
+			passedTime = currentTime - previousTime;
+			previousTime = currentTime;
+
+			timeSinceLastTick += passedTime;
+			timeSinceLastFrame += passedTime;
+			timeSinceLastInfoUpdate += passedTime;
+
+			if (timeSinceLastTick >= timePerTickNano) {
+				timeSinceLastTick -= timePerTickNano;
+				delta = (currentTime - lastTick) / (float) NANOSECOND;
+				delta = Math.min(delta, deltaMin);
+				multiplier = (currentTime - lastTick) / timePerTickNano;
+				multiplier = Math.min(multiplier, multiplierMin);
+				lastTick = currentTime;
+
+				if (!isPaused) if (syncMode == ASYNC) tick();
+			}
+
+			if (timeSinceLastFrame >= timePerFrameNano) {
+				timeSinceLastFrame -= timePerFrameNano;
+				fElapsedTime = (currentTime - lastFrame) / (float) NANOSECOND;
+				fElapsedTime = Math.min(fElapsedTime, fElapsedTimeMin);
+				lastFrame = currentTime;
+
+				if (syncMode == ASYNC) render();
+				else {
+					if (!isPaused) tick();
+					render();
+				}
+			}
+
+			if (timeSinceLastInfoUpdate >= NANOSECOND) {
+				info();
+				timeSinceLastInfoUpdate -= NANOSECOND;
+			}
+		}
+	}
+
+	void destroy() {}
+
+	public List<String> getInfo() {
+		List<String> info = new ArrayList<>();
+		info.add(fps + " FPS");
+		info.add(tps + " TPS");
+		return info;
+	}
+
+//	void updateMousePosition(float x, float y) {
+//		screen.updateMousePosition(x,y);
+//	}
+
+	public final void noLoop() {
+		noLoop = true;
+		isRunning = false;
+		timePerFrameNano = MAX_FLOAT;
+	}
+
+	@Override
+	protected void defaultSettings() {
+		screen.defaultSettings();
+
+		showOverlay(false);
+		showInfo(false);
+		isPaused = false;
+
+		super.width = width();
+		super.height = height();
+		super.format = RGB;
+
+		super.defaultSettings();
+
+//		noSmooth();
+		smooth();
+	}
+
+	public final void tickRate(int newTarget) {
+		tickRate = newTarget;
+		timePerTickNano = newTarget < 1 ? 0 : NANOSECOND / tickRate;
+		timePerTickMilli = newTarget < 1 ? 0 : MILLISECOND / tickRate;
+		if (syncMode == SYNC) {
+			frameRate = tickRate;
+			timePerFrameNano = timePerTickNano;
+			timePerFrameMilli = timePerTickMilli;
+		}
+	}
+
+	public final void frameRate(int newTarget) {
+		frameRate = newTarget;
+		timePerFrameNano = newTarget < 1 ? 0 : NANOSECOND / frameRate;
+		timePerFrameMilli = newTarget < 1 ? 0 : MILLISECOND / frameRate;
+		if (syncMode == SYNC) {
+			tickRate = frameRate;
+			timePerTickNano = timePerFrameNano;
+			timePerTickMilli = timePerFrameMilli;
+		}
+	}
+
+	/**
+	 * @param mode
+	 *            either SYNC or ASYNC
+	 */
+	public final void syncMode(byte mode) { this.syncMode = mode; }
+
+	public final void addListener(EventListener l) {
+		if (l instanceof GameLoopListener) gameLoopListeners.add((GameLoopListener) l);
+		if (l instanceof FrameLoopListener) frameLoopListeners.add((FrameLoopListener) l);
+		EventManager.addEventListener(l);
+
+	}
+
+	public final void removeListener(EventListener l) {
+		if (l instanceof GameLoopListener) gameLoopListeners.remove(l);
+		if (l instanceof FrameLoopListener) frameLoopListeners.remove(l);
+		EventManager.removeEventListener(l);
+	}
+
+	public final void showOverlay(boolean show) { screen.showOverlay(show); }
+
+	public final void showInfo(boolean show) { screen.showInfo(show); }
+
+	public final void showCrosshair(boolean show) { screen.showCrosshair(show); }
+
+	public final long millis() { return System.currentTimeMillis() - startTime; }
+
+	public final float noise(float xoff) { return (float) noise.eval(xoff, 0); }
+
+	public final double noise(double xoff) { return noise.eval(xoff, 0); }
+
+	public final float noise(float xoff, float yoff) { return (float) noise.eval(xoff, yoff); }
+
+	public final double noise(double xoff, double yoff) { return noise.eval(xoff, yoff); }
+
+	public final float noise(float xoff, float yoff, float zoff) { return (float) noise.eval(xoff, yoff, zoff); }
+
+	public final double noise(double xoff, double yoff, double zoff) { return noise.eval(xoff, yoff, zoff); }
+
+	public final float noise(float xoff, float yoff, float zoff, float woff) { return (float) noise.eval(xoff, yoff, zoff, woff); }
+
+	public final double noise(double xoff, double yoff, double zoff, double woff) { return noise.eval(xoff, yoff, zoff, woff); }
 
 	/**
 	 * Simple utility function to
@@ -74,7 +442,7 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 	 * adds "rec/" to the fileName
 	 * if it contains no "/".
 	 */
-	final public static void serialize(String fileName, Serializable obj) {
+	public final static void serialize(String fileName, Serializable obj) {
 		serialize(getFile(fileName), obj);
 	}
 
@@ -82,7 +450,7 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 	 * Simple utility function to
 	 * save an Serializable obj to a file
 	 */
-	final public static void serialize(File file, Serializable obj) {
+	public final static void serialize(File file, Serializable obj) {
 		try {
 			FileOutputStream fos = new FileOutputStream(file);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -101,7 +469,7 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 	 * adds "rec/" to the fileName
 	 * if it contains no "/".
 	 */
-	final public static Serializable deserialize(String fileName) {
+	public final static Serializable deserialize(String fileName) {
 		return deserialize(getFile(fileName));
 	}
 
@@ -109,7 +477,7 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 	 * Simple utility function to
 	 * load an Serializable obj from file
 	 */
-	final public static Serializable deserialize(File file) {
+	public final static Serializable deserialize(File file) {
 		Serializable obj = null;
 		try {
 			FileInputStream fis = new FileInputStream(file);
@@ -140,6 +508,96 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 		if (!name.contains("/")) name = "rec/".concat(name);
 		return new File(name);
 	}
+
+	public final void moveMouse(SVector v) {
+		moveMouse(v.x(), v.y());
+	}
+
+	public final void moveMouse(float x, float y) {
+		moveMouseTo(screen.mouseX + x, screen.mouseY + y);
+	}
+
+	public final void moveMouseTo(SVector v) {
+		moveMouseTo(v.x, v.y);
+	}
+
+	public void moveMouseTo(float x, float y) {
+		robot.mouseMove((int) (x() + x), (int) (y() + y));
+	}
+
+	public final void moveMouseOnScreen(SVector v) {
+		moveMouseOnScreen(v.x, v.y);
+	}
+
+	public final void moveMouseOnScreen(float x, float y) {
+		moveMouseOnScreenTo(screen.mouseScreenX + x, screen.mouseScreenY + y);
+	}
+
+	public final void moveMouseOnScreenTo(SVector v) {
+		moveMouseOnScreenTo(v.x, v.y);
+	}
+
+	public final void moveMouseOnScreenTo(float x, float y) {
+		robot.mouseMove((int) x, (int) y);
+	}
+
+	public final void saveFrame(String fileName) { saveImage(image, fileName); }
+
+	protected int x() { return screen.getX(); }
+
+	protected int y() { return screen.getY(); }
+
+	protected int frameX() { return screen.getScreenX(); }
+
+	protected int frameY() { return screen.getScreenY(); }
+
+	public int width() { return screen.getWidth(); }
+
+	public int height() { return screen.getHeight(); }
+
+	public int mouseX() { return screen.getMouseX(); }
+
+	public int mouseY() { return screen.getMouseY(); }
+
+	public int lastMouseX() { return screen.getLastMouseX(); }
+
+	public int lastMouseY() { return screen.getLastMouseY(); }
+
+	protected boolean keyIsDown(char key) { return screen.keyIsDown(key); }
+
+	protected boolean keyIsDown(int key) { return screen.keyIsDown(key); }
+
+	protected boolean mouseIsDown(int button) { return screen.mouseIsDown(button); }
+
+	protected boolean mousePressed() { return screen.mousePressed(); }
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	public boolean keyPressed() { return false; }
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	public boolean keyReleased() { return false; }
+
+	/**
+	 * the character associated with the key in this event
+	 * the integer keyCode associated with the key in this event
+	 * 
+	 * @return if default functionality should be skipped
+	 */
+	public boolean keyTyped() { return false; }
+
+	public boolean mouseOnPressed() { return false; }
+
+	public boolean mouseOnReleased() { return false; }
 
 	@Override
 	public void keyPressed(KeyEvent e) {}
@@ -186,4 +644,47 @@ abstract class GameBase extends SGraphics implements MouseListener, MouseWheelLi
 	@Override
 	public void componentHidden(ComponentEvent e) {}
 
+	public static void UncaughtException(Throwable e) {
+		Log.log(Log.FATAL, "Uncaught Exception", e);
+		System.exit(1);
+	}
+
+	@Override
+	public void onMoved(WindowMoveEvent event) {}
+
+	@Override
+	public void onResized(WindowResizeEvent event) {}
+
+	@Override
+	public void onScrolled(ScrollEvent event) {}
+
+	@Override
+	public void onMouseMotion(MouseMotionEvent event) {}
+
+	@Override
+	public void onMouseMoved(MouseMovedEvent event) {}
+
+	@Override
+	public void onMouseDragged(MouseDraggedEvent event) {}
+
+	@Override
+	public void onMouseInput(MouseInputEvent event) {}
+
+	@Override
+	public void onMousePressed(MousePressedEvent event) {}
+
+	@Override
+	public void onMouseReleased(MouseReleasedEvent event) {}
+
+	@Override
+	public void onKeyInput(KeyInputEvent event) {}
+
+	@Override
+	public void onKeyPressed(KeyPressedEvent event) {}
+
+	@Override
+	public void onKeyReleased(KeyReleasedEvent event) {}
+
+	@Override
+	public void onKeyRepeated(KeyRepeatedEvent event) {}
 }

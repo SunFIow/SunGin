@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import com.sunflow.game.Game2D;
+import com.sunflow.game.GameBase;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
@@ -29,7 +29,7 @@ public class PipeLineRenderer2 implements MathUtils, Constants {
 
 	private float fNear;
 
-	private Game2D game;
+	private GameBase game;
 
 	private SVector vCamera;
 
@@ -41,7 +41,7 @@ public class PipeLineRenderer2 implements MathUtils, Constants {
 
 	private int flags;
 
-	public PipeLineRenderer2(Game2D game) { this.game = game; }
+	public PipeLineRenderer2(GameBase game) { this.game = game; }
 
 	public void ConfigureDisplay() {
 		m_DepthBuffer = new float[game.width() * game.height()];

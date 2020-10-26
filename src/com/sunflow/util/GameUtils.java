@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -57,7 +58,7 @@ public interface GameUtils {
 
 	default String nf(double num, int digits) { return String.format("%0" + digits + "d", num); }
 
-	default float[] convertArray(double[] arr) {
+	default float[] convert(double[] arr) {
 		float[] newArr = new float[arr.length];
 		for (int i = 0; i < newArr.length; i++) {
 			newArr[i] = (float) arr[i];
@@ -65,12 +66,93 @@ public interface GameUtils {
 		return newArr;
 	}
 
-	default double[] convertArray(float[] arr) {
+	default double[] convert(float[] arr) {
 		double[] newArr = new double[arr.length];
 		for (int i = 0; i < newArr.length; i++) {
 			newArr[i] = arr[i];
 		}
 		return newArr;
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SORT
+
+	/**
+	 * ( begin auto-generated from sort.xml )
+	 *
+	 * Sorts an array of numbers from smallest to largest and puts an array of
+	 * words in alphabetical order. The original array is not modified, a
+	 * re-ordered array is returned. The <b>count</b> parameter states the
+	 * number of elements to sort. For example if there are 12 elements in an
+	 * array and if count is the value 5, only the first five elements on the
+	 * array will be sorted. <!--As of release 0126, the alphabetical ordering
+	 * is case insensitive.-->
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref data:array_functions
+	 * @param list
+	 *            array to sort
+	 * @see PApplet#reverse(boolean[])
+	 */
+	default byte[] sort(byte list[]) {
+		return sort(list, list.length);
+	}
+
+	/**
+	 * @param count
+	 *            number of elements to sort, starting from 0
+	 */
+	default byte[] sort(byte[] list, int count) {
+		byte[] outgoing = new byte[list.length];
+		System.arraycopy(list, 0, outgoing, 0, list.length);
+		Arrays.sort(outgoing, 0, count);
+		return outgoing;
+	}
+
+	default char[] sort(char list[]) {
+		return sort(list, list.length);
+	}
+
+	default char[] sort(char[] list, int count) {
+		char[] outgoing = new char[list.length];
+		System.arraycopy(list, 0, outgoing, 0, list.length);
+		Arrays.sort(outgoing, 0, count);
+		return outgoing;
+	}
+
+	default int[] sort(int list[]) {
+		return sort(list, list.length);
+	}
+
+	default int[] sort(int[] list, int count) {
+		int[] outgoing = new int[list.length];
+		System.arraycopy(list, 0, outgoing, 0, list.length);
+		Arrays.sort(outgoing, 0, count);
+		return outgoing;
+	}
+
+	default float[] sort(float list[]) {
+		return sort(list, list.length);
+	}
+
+	default float[] sort(float[] list, int count) {
+		float[] outgoing = new float[list.length];
+		System.arraycopy(list, 0, outgoing, 0, list.length);
+		Arrays.sort(outgoing, 0, count);
+		return outgoing;
+	}
+
+	default String[] sort(String list[]) {
+		return sort(list, list.length);
+	}
+
+	default String[] sort(String[] list, int count) {
+		String[] outgoing = new String[list.length];
+		System.arraycopy(list, 0, outgoing, 0, list.length);
+		Arrays.sort(outgoing, 0, count);
+		return outgoing;
 	}
 
 	default String loadFileAsString(String fileName) {
