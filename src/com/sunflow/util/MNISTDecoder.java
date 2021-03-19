@@ -28,9 +28,9 @@ public class MNISTDecoder {
 			int readHeadLabel = 8;
 			while (readHeadData < dataByte.length) {
 				byte[][] data = new byte[SIZE][SIZE];
-				for (int i = 0; i < SIZE; i++) {
-					for (int k = 0; k < SIZE; k++) {
-						data[i][k] = dataByte[readHeadData++];
+				for (int x = 0; x < SIZE; x++) {
+					for (int y = 0; y < SIZE; y++) {
+						data[y][x] = dataByte[readHeadData++];
 					}
 				}
 				int label = toUnsignedByte(labelByte[readHeadLabel++]);
@@ -55,15 +55,30 @@ public class MNISTDecoder {
 			this.label = label;
 			this.data = data;
 			loadPixels();
-			for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
+			for (int x = 0; x < SIZE; x++) for (int y = 0; y < SIZE; y++) {
 				int gray = MNISTDecoder.toUnsignedByte(data[x][y]);
-				fill(gray);
-				pixel(y, x);
+				stroke(gray);
+				pixel(x, y);
 			}
 			updatePixels();
 		}
 
 		@Override
 		public String toString() { return Integer.toString(label); }
+
+		public String toData() {
+			StringBuilder builder = new StringBuilder();
+			builder.append(label)
+					.append(":")
+					.append(System.lineSeparator());
+			for (int x = 0; x < SIZE; x++) {
+				for (int y = 0; y < SIZE; y++) {
+					int gray = MNISTDecoder.toUnsignedByte(data[x][y]);
+					builder.append((gray < 10 ? "  " : gray < 100 ? " " : "") + gray);
+				}
+				builder.append(System.lineSeparator());
+			}
+			return builder.toString();
+		}
 	}
 }

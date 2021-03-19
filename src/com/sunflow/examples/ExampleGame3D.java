@@ -39,7 +39,7 @@ public class ExampleGame3D extends Game3D {
 		highlight(true);
 		noSmooth();
 
-		vCameraPos = new SVector(0, 0, 0);
+		vCameraPos = new SVector(0, 0, 50);
 
 		Models.add(new Pyramid(this, 0, -5, 0, 2, 2, 2, Color.green));
 
@@ -73,18 +73,14 @@ public class ExampleGame3D extends Game3D {
 //		Models.add(point);
 	}
 
-	double showElaspedTime, showMult;
-
-	SVector v0 = new SVector(0, 2, 3);
+	double showElapsedTime, showMult;
 
 	@Override
 	public List<String> getInfo() {
 		List<String> info = super.getInfo();
 
-		info.add(showElaspedTime + " ∆");
+		info.add(showElapsedTime + " ∆");
 		info.add(showMult + " x");
-
-		System.out.println(v0);
 
 		float x = vCameraPos.x;
 		float y = vCameraPos.y;
@@ -120,7 +116,7 @@ public class ExampleGame3D extends Game3D {
 		sx += 0.1;
 
 		if (frameCount % frameRate == 0) {
-			showElaspedTime = delta;
+			showElapsedTime = delta;
 			showMult = multiplier;
 		}
 

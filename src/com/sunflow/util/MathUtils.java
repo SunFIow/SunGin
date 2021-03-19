@@ -102,9 +102,9 @@ public interface MathUtils {
 		return sqrt(sq(x2 - x1) + sq(y2 - y1) + sq(z2 - z1));
 	}
 
-	default int random(int high) { return (int) random((float) high); }
+	default int random(int high) { return (int) random((double) high); }
 
-	default int random(int low, int high) { return (int) random((float) low, (float) high); }
+	default int random(int low, int high) { return (int) random((double) low, (double) high); }
 
 	default float random() { return random(1.0f); }
 

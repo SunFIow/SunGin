@@ -1,13 +1,18 @@
 package com.sunflow.math3d;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
 
+import com.sunflow.logging.Log;
 import com.sunflow.math.SVector;
-import com.sunflow.util.LogUtils;
 import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
+import com.sunflow.util.SimpleMapper;
 
-public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
+public class SMatrix implements Cloneable, Serializable
+//		, MathUtils, LogUtils
+{
+	private static final long serialVersionUID = 8448225411066843402L;
 
 	public int rows;
 	public int cols;
@@ -29,9 +34,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 
 	public SMatrix(float[][] data) {
 		if (this.rows != data.length || this.cols != data[0].length) {
-			error("MatrixF#add: rows and cols didnt match");
-			error("MatrixF#add this: \n" + this);
-			error("matrixF#add data: \n" + data);
+			Log.error("MatrixF#add: rows and cols didnt match");
+			Log.error("MatrixF#add this: \n" + this);
+			Log.error("matrixF#add data: \n" + data);
 		}
 		this.data = data;
 	}
@@ -51,9 +56,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 
 	public SMatrix set(float[][] data) {
 		if (this.rows != data.length || this.cols != data[0].length) {
-			error("MatrixF#add: rows and cols didnt match");
-			error("MatrixF#add this: \n" + this);
-			error("matrixF#add data: \n" + data);
+			Log.error("MatrixF#add: rows and cols didnt match");
+			Log.error("MatrixF#add this: \n" + this);
+			Log.error("matrixF#add data: \n" + data);
 		}
 
 		this.data = data;
@@ -76,9 +81,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 
 	public SMatrix add(SMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			error("MatrixF#add: rows and cols didnt match");
-			error("MatrixF#add this: \n" + this);
-			error("matrixF#add b: \n" + b);
+			Log.error("MatrixF#add: rows and cols didnt match");
+			Log.error("MatrixF#add this: \n" + this);
+			Log.error("matrixF#add b: \n" + b);
 		}
 		map((x, i, j) -> x + b.data[i][j]);
 		return this;
@@ -95,9 +100,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 
 	public SMatrix substract(SMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			error("MatrixF#substract: rows and cols didnt match");
-			error("MatrixF#substract this: \n" + this);
-			error("matrixF#substract b: \n" + b);
+			Log.error("MatrixF#substract: rows and cols didnt match");
+			Log.error("MatrixF#substract this: \n" + this);
+			Log.error("matrixF#substract b: \n" + b);
 		}
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
@@ -125,9 +130,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 	// Hadamar product
 	public SMatrix multiply(SMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			error("MatrixF#multiply: rows and cols didnt match");
-			error("MatrixF#multiply this: \n" + this);
-			error("matrixF#multiply b: \n" + b);
+			Log.error("MatrixF#multiply: rows and cols didnt match");
+			Log.error("MatrixF#multiply this: \n" + this);
+			Log.error("matrixF#multiply b: \n" + b);
 		}
 		map((x, i, j) -> x * b.data[i][j]);
 		return this;
@@ -141,9 +146,9 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 	// Matrix dot product
 	public SMatrix dot(SMatrix b) {
 		if (this.cols != b.rows) {
-			error("MatrixF#dot: cols and rows didnt match");
-			error("MatrixF#dot this: \n" + this);
-			error("matrixF#dot b: \n" + b);
+			Log.error("MatrixF#dot: cols and rows didnt match");
+			Log.error("MatrixF#dot this:\n" + this);
+			Log.error("matrixF#dot b:\n" + b);
 		}
 		SMatrix result = new SMatrix(this.rows, b.cols);
 		result.map((x, i, j) -> {
@@ -167,26 +172,43 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 	}
 
 	public SMatrix randomize(float high) {
-		map((x, i, j) -> random(high));
+		map((x, i, j) -> MathUtils.instance.random(high));
 		return this;
 	}
 
 	public SMatrix randomize(float low, float high) {
-		map((x, i, j) -> random(low, high));
+		map((x, i, j) -> MathUtils.instance.random(low, high));
 		return this;
 	}
 
 	public SMatrix map(Mapper mapper) {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				data[i][j] = mapper.func(data[i][j], i, j);
-			}
-		}
+		for (int i = 0; i < rows; i++) for (int j = 0; j < cols; j++)
+			data[i][j] = mapper.func(data[i][j], i, j);
+
+		return this;
+	}
+
+	public SMatrix map(SimpleMapper mapper) {
+		for (int i = 0; i < rows; i++) for (int j = 0; j < cols; j++)
+			data[i][j] = mapper.func(data[i][j]);
 		return this;
 	}
 
 	static public SMatrix map(SMatrix matrix, Mapper mapper) {
 		return matrix.clone().map(mapper);
+	}
+
+	static public SMatrix map(SMatrix matrix, SimpleMapper mapper) {
+		return matrix.clone().map(mapper);
+	}
+
+	public void forEach(Consumer<Float> consumer) {
+		for (int i = 0; i < rows; i++) for (int j = 0; j < cols; j++)
+			consumer.accept(data[i][j]);
+	}
+
+	static public void forEach(SMatrix matrix, Consumer<Float> consumer) {
+		matrix.forEach(consumer);
 	}
 
 	static public SMatrix fromArray(float[] arr) {
@@ -195,24 +217,33 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 
 	public float[] toArray() {
 		float[] arr = new float[rows * cols];
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				arr[j + i * cols] = data[i][j];
-			}
-		}
+		for (int i = 0; i < rows; i++) for (int j = 0; j < cols; j++)
+			arr[j + i * cols] = data[i][j];
 		return arr;
 	}
 
 	@Override
 	public String toString() {
-		String s = "MatrixF[" + rows + "][" + cols + "]" + System.lineSeparator();
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				s += "|" + data[i][j] + "|";
-			}
-			s += System.lineSeparator();
+//		System.out.println("tostring");
+//		String s = "MatrixF[" + rows + "][" + cols + "]" + System.lineSeparator();
+//
+//		System.out.println(rows + "; " + cols);
+//		for (int i = 0; i < rows; i++, s += System.lineSeparator()) for (int j = 0; j < cols; j++) {
+////			System.out.println(i + ", " + j);
+//			s += "|" + data[i][j] + "|";
+//		}
+//		System.out.println("tostring: " + s);
+//		return s;
+
+		System.out.println("tostring");
+		StringBuilder builder = new StringBuilder("MatrixF[" + rows + "][" + cols + "]" + System.lineSeparator());
+
+		System.out.println(rows + "; " + cols);
+		for (int i = 0; i < rows; i++, builder.append(System.lineSeparator())) for (int j = 0; j < cols; j++) {
+//			System.out.println(i + ", " + j);
+			builder.append("|" + data[i][j] + "|");
 		}
-		return s;
+		return builder.toString();
 	}
 
 	// 3D Math
@@ -374,4 +405,5 @@ public class SMatrix implements MathUtils, LogUtils, Cloneable, Serializable {
 		matrix.data[3][3] = 1.0f;
 		return matrix;
 	}
+
 }

@@ -622,12 +622,14 @@ public class SGraphics extends SImage {
 		backgroundImpl();
 	}
 
+	boolean b = false;
+
 	private final void backgroundImpl() {
 		if (backgroundAlpha) {
 			clearPixels(backgroundColor);
-
 		} else {
-			Color bgColor = new Color(backgroundColor);
+//			Color bgColor = new Color(backgroundColor);
+			Color bgColor = new Color(backgroundColor, calcAlpha);
 			// seems to fire an additional event that causes flickering,
 			// like an extra background erase on OS X
 //	      if (canvas != null) {
@@ -1189,6 +1191,8 @@ public class SGraphics extends SImage {
 		return new Font("Lucida Sans", Font.PLAIN, 12);
 	}
 
+	public final void string(String text, float x, float y) { text(text, x, y); }
+
 	public final void text(String text, float x, float y) {
 		if (textFont == null) textFont = createDefaultFont();
 
@@ -1217,6 +1221,10 @@ public class SGraphics extends SImage {
 		popMatrix();
 	}
 
+	public final void circle(float x, float y, float w) {
+		ellipse(x, y, w, w);
+	}
+
 	public final void ellipse(float x, float y, float w, float h) {
 		if (ellipseMode == CORNERS) {
 			w = w - x;
@@ -1242,6 +1250,10 @@ public class SGraphics extends SImage {
 		}
 
 		ellipseImpl(x, y, w, h);
+	}
+
+	public final void square(float x, float y, float w) {
+		rect(x, y, w, w);
 	}
 
 	public final void rect(float x, float y, float w, float h) {

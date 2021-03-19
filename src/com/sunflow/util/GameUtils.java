@@ -5,6 +5,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -12,6 +15,7 @@ import javax.imageio.ImageIO;
 
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SImage;
+import com.sunflow.logging.Log;
 import com.sunflow.math.SVector;
 
 public interface GameUtils {
@@ -205,7 +209,13 @@ public interface GameUtils {
 
 	default void saveImage(BufferedImage image, String fileName) {
 		try {
-			File outputfile = new File(fileName);
+			Path dir = Paths.get(fileName);
+			if (Files.notExists(dir.getParent())) try {
+				Files.createDirectory(dir.getParent());
+			} catch (IOException e) {
+				Log.error("File Directory could't be created", e);
+			}
+			File outputfile = dir.toFile();
 			ImageIO.write(image, "png", outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();

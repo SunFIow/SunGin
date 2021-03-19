@@ -4,7 +4,6 @@ import java.awt.Canvas;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
@@ -15,11 +14,13 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
+import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SShape;
@@ -34,7 +35,7 @@ public class ScreenJava extends Screen {
 	// Overlay
 	protected SGraphics overlay;
 
-	public ScreenJava(GameBase game) { super(game); }
+	public ScreenJava(GameBase game, Mouse mouse) { super(game, mouse); }
 
 	@Override
 	public void refresh() {
@@ -47,7 +48,7 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public boolean render() {
-		if (!createdScreen) return false;
+		if (!isCreated) return false;
 
 //		Drawing the image
 		do {
@@ -149,8 +150,9 @@ public class ScreenJava extends Screen {
 		canvas.addMouseListener(new MouseListener() {
 			@Override
 			public void mousePressed(MouseEvent e) {
+//				System.err.println("mouspressed");
 				button = e.getButton();
-				mouse[e.getButton()] = true;
+				mouseButtons[e.getButton()] = true;
 				if (e.getButton() == MouseEvent.BUTTON1)
 					mousePressed = true;
 				if (game.mouseOnPressed()) return;
@@ -159,7 +161,7 @@ public class ScreenJava extends Screen {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				button = e.getButton();
-				mouse[e.getButton()] = false;
+				mouseButtons[e.getButton()] = false;
 				if (e.getButton() == MouseEvent.BUTTON1)
 					mousePressed = false;
 				if (game.mouseOnReleased()) return;
@@ -177,10 +179,14 @@ public class ScreenJava extends Screen {
 
 		canvas.addMouseMotionListener(new MouseMotionListener() {
 			@Override
-			public void mouseMoved(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
+			public void mouseMoved(MouseEvent e) { mouse.updatePosition(e.getX(), e.getY()); }
 
 			@Override
-			public void mouseDragged(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
+			public void mouseDragged(MouseEvent e) { mouse.updatePosition(e.getX(), e.getY()); }
+		});
+		canvas.addMouseWheelListener(new MouseWheelListener() {
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) { mouseWheel = e.getPreciseWheelRotation(); }
 		});
 		canvas.addComponentListener(new ComponentAdapter() {
 			@Override
@@ -207,8 +213,8 @@ public class ScreenJava extends Screen {
 
 	@Override
 	final public void createCanvas(float width, float height, float scaleW, float scaleH) {
-		if (!createdScreen) {
-			createdScreen = true;
+		if (!isCreated) {
+			isCreated = true;
 			this.width = width;
 			this.height = height;
 			this.scaleWidth = scaleW;
@@ -228,7 +234,7 @@ public class ScreenJava extends Screen {
 	}
 
 	@Override
-	public void show() { if (createdScreen) frame.setVisible(true); }
+	public void show() { if (isCreated) frame.setVisible(true); }
 
 	@Override
 	public void requestFocus() {
@@ -238,13 +244,13 @@ public class ScreenJava extends Screen {
 	@Override
 	public void setTitle(String title) {
 		super.setTitle(title);
-		if (createdScreen) frame.setTitle(title + title_info);
+		if (isCreated) frame.setTitle(title + title_info);
 	}
 
 	@Override
 	public void setTitleInfo(String title_info) {
 		super.setTitleInfo(title_info);
-		if (createdScreen) frame.setTitle(title + title_info);
+		if (isCreated) frame.setTitle(title + title_info);
 	}
 
 	@Override
@@ -269,12 +275,6 @@ public class ScreenJava extends Screen {
 			frame.pack();
 			frame.setVisible(true);
 		}
-	}
-
-	@Override
-	public void privateUpdate() {
-		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
-		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
 	}
 
 	@Override
@@ -312,8 +312,8 @@ public class ScreenJava extends Screen {
 		int aimStroke = aimStrokeWidth * 2;
 		overlay.noStroke();
 		overlay.fill(aimColor.getRGB());
-		overlay.rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
+		overlay.rect((int) (mouse.x - aimSize), mouse.y - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouse.x - aimStrokeWidth, (int) (mouse.y - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
 	@Override
@@ -347,34 +347,15 @@ public class ScreenJava extends Screen {
 	public boolean hasFocus() { return canvas.hasFocus(); }
 
 	@Override
-	public boolean keyIsDown(char key) {
-		return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key));
-	}
+	public int getX() { return canvas.getLocationOnScreen().x; }
 
 	@Override
-	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keys[key]; }
+	public int getY() { return canvas.getLocationOnScreen().y; }
 
 	@Override
-	public boolean mouseIsDown(int button) { if (button < 0 || button > mouse.length) return false; return mouse[button]; }
+	public int getScreenX() { return frame.getLocationOnScreen().x; }
 
 	@Override
-	public int getX() {
-		return canvas.getLocationOnScreen().x;
-	}
-
-	@Override
-	public int getY() {
-		return canvas.getLocationOnScreen().y;
-	}
-
-	@Override
-	public int getScreenX() {
-		return frame.getLocationOnScreen().x;
-	}
-
-	@Override
-	public int getScreenY() {
-		return frame.getLocationOnScreen().y;
-	}
+	public int getScreenY() { return frame.getLocationOnScreen().y; }
 
 }

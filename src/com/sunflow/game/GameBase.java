@@ -12,19 +12,24 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import com.sunflow.Settings;
+import com.sunflow.engine.Mouse;
 import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
@@ -61,12 +66,13 @@ import com.sunflow.util.MathUtils;
 
 public abstract class GameBase extends SGraphics implements Runnable,
 		Constants, MathUtils, GameUtils, GeometryUtils,
-		MouseListener, MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener,
+		MouseListener,
+		MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener,
 		KeyInputListener, MouseInputListener, com.sunflow.engine.eventsystem.listeners.MouseMotionListener, ScrollListener, WindowResizeListener, WindowMoveListener {
 
 	public static Settings settings = new Settings().defaultSettings();
 
-	protected GameBase game;
+//	protected GameBase game;
 
 	protected boolean noLoop;
 	public boolean isRunning;
@@ -75,6 +81,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	private Thread thread;
 
 	protected Screen screen;
+	protected float width, height;
+	protected Mouse mouse;
+	protected float mouseX, mouseY;
 
 	private long startTime;
 
@@ -116,7 +125,6 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		else info("starting Custom Game");
 
 		if (settings.autostart) start();
-
 	}
 
 	final public void reset() {
@@ -127,10 +135,11 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	}
 
 	void privatePreSetup() {
-		game = this;
+//		game = this;
 		infos = getInfo();
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
+		mouse = new Mouse();
 
 		try {
 			robot = new Robot();
@@ -151,8 +160,8 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		frameLoopListeners = new ArrayList<>();
 		startTime = System.currentTimeMillis();
 
-		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(game);
-		else screen = new ScreenJava(this);
+		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(this, mouse);
+		else screen = new ScreenJava(this, mouse);
 	}
 
 	protected void preSetup() {}
@@ -160,7 +169,6 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	protected void setup() {}
 
 	void privateRefresh() {
-
 		frameCount = 0;
 		frameRate = 0;
 		tickCount = 0;
@@ -188,6 +196,8 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		thread.run();
 	}
 
+	public final void exit() { stop(); }
+
 	public final void stop() {
 		if (!isRunning) return;
 		isRunning = false;
@@ -202,6 +212,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		defaultSettings();
 		screen.show();
 		screen.requestFocus();
+
+		this.width = width;
+		this.height = height;
 	}
 
 	public final void title(String title) { screen.setTitle(title); }
@@ -227,8 +240,13 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 	void tick() {
 		screen.privateUpdate();
-		for (GameLoopListener gll : gameLoopListeners) gll.update();
 
+		width = screen.width;
+		height = screen.height;
+		mouseX = mouse.x;
+		mouseY = mouse.y;
+
+		for (GameLoopListener gll : gameLoopListeners) gll.update();
 		update();
 
 		ticks++;
@@ -323,7 +341,8 @@ public abstract class GameBase extends SGraphics implements Runnable,
 				if (syncMode == ASYNC) render();
 				else {
 					if (!isPaused) tick();
-					render();
+					if (screen.isCreated()) // TODO: USE STH ELSE
+						render();
 				}
 			}
 
@@ -451,14 +470,22 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	 * save an Serializable obj to a file
 	 */
 	public final static void serialize(File file, Serializable obj) {
+//		if (file.isAbsolute()) {
+//			// make sure that the intermediate folders have been created
+//			PApplet.createPath(file);
+//		} else {
+//			String msg = "PImage.save() requires an absolute path. " +
+//					"Use createImage(), or pass savePath() to save().";
+//			PGraphics.showException(msg);
+//		}
 		try {
-			FileOutputStream fos = new FileOutputStream(file);
-			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+			ObjectOutputStream oos = new ObjectOutputStream(os);
 
 			oos.writeObject(obj);
 			oos.close();
-			fos.close();
 		} catch (IOException e) {
+			System.err.println("Error while serializing (" + obj + ").");
 			e.printStackTrace();
 		}
 	}
@@ -480,23 +507,42 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	public final static Serializable deserialize(File file) {
 		Serializable obj = null;
 		try {
-			FileInputStream fis = new FileInputStream(file);
-			ObjectInputStream ois = new ObjectInputStream(fis);
+			InputStream is = new BufferedInputStream(new FileInputStream(file));
+			ObjectInputStream ois = new ObjectInputStream(is);
+			obj = (Serializable) ois.readObject();
 
-			try {
-				while (true) {
-					Object o = ois.readObject();
-					obj = (Serializable) o;
-				}
-			} catch (EOFException e) {} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
 			ois.close();
-			fis.close();
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		return obj;
+	}
+
+	/**
+	 * Simple utility function to
+	 * load an Serializable obj from file
+	 */
+	public final static Serializable[] deserializeToArray(File file) {
+		List<Serializable> objs = new ArrayList<>();
+
+		ObjectInputStream ois = null;
+		try {
+			InputStream is = new BufferedInputStream(new FileInputStream(file));
+			ois = new ObjectInputStream(is);
+
+			while (true) objs.add((Serializable) ois.readObject());
+
+		} catch (EOFException e) {
+			if (ois != null) try {
+				ois.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		return objs.toArray(new Serializable[0]);
 	}
 
 	/*
@@ -514,14 +560,14 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	}
 
 	public final void moveMouse(float x, float y) {
-		moveMouseTo(screen.mouseX + x, screen.mouseY + y);
+		moveMouseTo(mouse.x + x, mouse.y + y);
 	}
 
 	public final void moveMouseTo(SVector v) {
 		moveMouseTo(v.x, v.y);
 	}
 
-	public void moveMouseTo(float x, float y) {
+	public final void moveMouseTo(float x, float y) {
 		robot.mouseMove((int) (x() + x), (int) (y() + y));
 	}
 
@@ -530,7 +576,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	}
 
 	public final void moveMouseOnScreen(float x, float y) {
-		moveMouseOnScreenTo(screen.mouseScreenX + x, screen.mouseScreenY + y);
+		moveMouseOnScreenTo(mouse.screenX + x, mouse.screenY + y);
 	}
 
 	public final void moveMouseOnScreenTo(SVector v) {
@@ -541,48 +587,85 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		robot.mouseMove((int) x, (int) y);
 	}
 
-	public final void saveFrame(String fileName) { saveImage(image, fileName); }
+	public final void saveFrame(String fileName) {
+		for (int i = 10; i > 0; i--) {
+			String s = "";
+			for (int j = 0; j < i; j++) s += "#";
 
-	protected int x() { return screen.getX(); }
+			if (fileName.contains(s)) {
+				String f = String.format("%0" + i + "d", frameCount);
+				saveImage(image, fileName.replace(s, f));
+				return;
+			}
+		}
+	}
 
-	protected int y() { return screen.getY(); }
+	public final float elapsedTime() { return delta(); }
 
-	protected int frameX() { return screen.getScreenX(); }
+	public final float delta() { return delta; }
 
-	protected int frameY() { return screen.getScreenY(); }
+	public final int x() { return screen.getX(); }
 
-	public int width() { return screen.getWidth(); }
+	public final int y() { return screen.getY(); }
 
-	public int height() { return screen.getHeight(); }
+	public final int frameX() { return screen.getScreenX(); }
 
-	public int mouseX() { return screen.getMouseX(); }
+	public final int frameY() { return screen.getScreenY(); }
 
-	public int mouseY() { return screen.getMouseY(); }
+	public final int width() { return screen.getWidth(); }
 
-	public int lastMouseX() { return screen.getLastMouseX(); }
+	public final int height() { return screen.getHeight(); }
 
-	public int lastMouseY() { return screen.getLastMouseY(); }
+	public final int mouseX() { return (int) mouse.x; }
 
-	protected boolean keyIsDown(char key) { return screen.keyIsDown(key); }
+	public final int mouseY() { return (int) mouse.y; }
 
-	protected boolean keyIsDown(int key) { return screen.keyIsDown(key); }
+	public final int lastMouseX() { return (int) mouse.lastX; }
 
-	protected boolean mouseIsDown(int button) { return screen.mouseIsDown(button); }
+	public final int lastMouseY() { return (int) mouse.lastY; }
 
-	protected boolean mousePressed() { return screen.mousePressed(); }
+	public final boolean keyIsDown(int key) { return screen.keyIsDown(key); }
+
+	public final boolean keyIsPressed(int key) { return screen.keyIsPressed(key); }
+
+	public final boolean keyIsHeld(int key) { return screen.keyIsHeld(key); }
+
+	public final boolean keyIsReleased(int key) { return screen.keyIsReleased(key); }
+
+	public final boolean keyIsDown(char key) { return screen.keyIsDown(key); }
+
+	public final boolean keyIsPressed(char key) { return screen.keyIsPressed(key); }
+
+	public final boolean keyIsHeld(char key) { return screen.keyIsHeld(key); }
+
+	public final boolean keyIsReleased(char key) { return screen.keyIsReleased(key); }
+
+	public final boolean mouseIsDown(int button) { return screen.mouseIsDown(button); }
+
+	public final boolean mouseIsPressed(int button) { return screen.mouseIsPressed(button); }
+
+	public final boolean mouseIsHeld(int button) { return screen.mouseIsHeld(button); }
+
+	public final boolean mouseIsReleased(int button) { return screen.mouseIsReleased(button); }
+
+	public final double mouseWheel() { return screen.mouseWheel(); }
+
+	public final boolean mousePressed() { return screen.mousePressed(); }
+
+	public final char key() { return screen.key(); }
+
+	public final int keyCode() { return screen.keyCode(); }
+
+	public final boolean[] keys() { return screen.keys(); }
+
+	void updateMousePosition(float x, float y) {}
 
 	/**
-	 * the character associated with the key in this event
-	 * the integer keyCode associated with the key in this event
-	 * 
 	 * @return if default functionality should be skipped
 	 */
 	public boolean keyPressed() { return false; }
 
 	/**
-	 * the character associated with the key in this event
-	 * the integer keyCode associated with the key in this event
-	 * 
 	 * @return if default functionality should be skipped
 	 */
 	public boolean keyReleased() { return false; }
@@ -644,10 +727,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	@Override
 	public void componentHidden(ComponentEvent e) {}
 
-	public static void UncaughtException(Throwable e) {
-		Log.log(Log.FATAL, "Uncaught Exception", e);
-		System.exit(1);
-	}
+	// CUSTOM EVENT SYSTEM
 
 	@Override
 	public void onMoved(WindowMoveEvent event) {}
@@ -687,4 +767,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 	@Override
 	public void onKeyRepeated(KeyRepeatedEvent event) {}
+
+	public static void UncaughtException(Throwable e) {
+		Log.log(Log.FATAL, "Uncaught Exception", e);
+		System.exit(1);
+	}
 }

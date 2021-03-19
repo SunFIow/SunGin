@@ -3,11 +3,14 @@ package com.sunflow.engine.screen;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 
+import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
 import com.sunflow.math.SVector;
 
@@ -24,7 +27,7 @@ public abstract class Screen {
 
 	protected int frameWidth, frameHeight;
 
-	protected boolean createdScreen;
+	protected boolean isCreated;
 
 	public boolean undecorated;
 	protected boolean fullscreen;
@@ -32,17 +35,25 @@ public abstract class Screen {
 	protected SVector savedSize;
 	protected SVector savedPos;
 
-	public float mouseX, mouseY;
-	public float lastMouseX, lastMouseY;
-	public float mouseScreenX, mouseScreenY;
+//	public float mouseX, mouseY;
+//	public float lastMouseX, lastMouseY;
+//	public float mouseScreenX, mouseScreenY;
 
 	protected boolean mousePressed;
 	protected int button;
+	protected double mouseWheel;
+	protected double mouseWheelOld;
+	protected double mouseWheelNew;
 	protected char key;
 	protected int keyCode;
 
 	protected boolean[] keys = new boolean[65536];
-	protected boolean[] mouse = new boolean[MouseInfo.getNumberOfButtons()];
+	protected boolean[] keysNew = new boolean[keys.length];
+	protected boolean[] keysOld = new boolean[keys.length];
+
+	protected boolean[] mouseButtons = new boolean[MouseInfo.getNumberOfButtons()];
+	protected boolean[] mouseButtonsNew = new boolean[mouseButtons.length];
+	protected boolean[] mouseButtonsOld = new boolean[mouseButtons.length];
 
 	// Overlay
 	protected boolean showOverlay;
@@ -50,28 +61,44 @@ public abstract class Screen {
 	protected boolean showCrosshair;
 
 	protected GameBase game;
+	protected Mouse mouse;
 
-	public Screen(GameBase game) {
+	public Screen(GameBase game, Mouse mouse) {
 		this.game = game;
-		title = "";
-		savedSize = new SVector();
-		savedPos = new SVector();
+		this.mouse = mouse;
+		this.title = "";
+		this.savedSize = new SVector();
+		this.savedPos = new SVector();
 	}
 
 	public void refresh() {
-		frameWidth = 0;
-		frameHeight = 0;
+		this.frameWidth = 0;
+		this.frameHeight = 0;
 
-		mouseX = 0;
-		mouseY = 0;
-		mouseScreenX = 0;
-		mouseScreenY = 0;
+//		this.mouseX = 0;
+//		this.mouseY = 0;
+//		this.mouseScreenX = 0;
+//		this.mouseScreenY = 0;
 
-		fullscreen = false;
-		showInfo = true;
+		this.fullscreen = false;
+		this.showInfo = true;
 	}
 
-	public void privateUpdate() {}
+	public void privateUpdate() {
+		for (int i = 0; i < keys.length; i++) keysOld[i] = keysNew[i];
+		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsOld[i] = mouseButtonsNew[i];
+
+		for (int i = 0; i < keys.length; i++) keysNew[i] = keys[i];
+		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsNew[i] = mouseButtons[i];
+		mouseWheelOld = mouseWheelNew;
+		mouseWheelNew = mouseWheel;
+		mouseWheel = 0;
+
+//		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
+//		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
+		Point mSP = MouseInfo.getPointerInfo().getLocation();
+		mouse.updateScreenPosition(mSP.x, mSP.y);
+	}
 
 	public abstract boolean render();
 
@@ -105,25 +132,53 @@ public abstract class Screen {
 
 	public abstract int getScreenY();
 
-	public abstract boolean keyIsDown(char key);
+	public char key() { return key; }
 
-	public abstract boolean keyIsDown(int key);
+	public int keyCode() { return keyCode; }
 
-	public abstract boolean mouseIsDown(int button);
+	public boolean[] keys() { return keys; }
+
+	public boolean keyIsDown(char key) { return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key)); }
+
+	public boolean keyIsPressed(char key) { return keyIsPressed(KeyEvent.getExtendedKeyCodeForChar(key)); }
+
+	public boolean keyIsHeld(char key) { return keyIsHeld(KeyEvent.getExtendedKeyCodeForChar(key)); }
+
+	public boolean keyIsReleased(char key) { return keyIsReleased(KeyEvent.getExtendedKeyCodeForChar(key)); }
+
+	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keysNew[key]; }
+
+	public boolean keyIsPressed(int key) { if (key < 0 || key > keys.length) return false; return !keysOld[key] && keysNew[key]; }
+
+	public boolean keyIsHeld(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && keysNew[key]; }
+
+	public boolean keyIsReleased(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && !keysNew[key]; }
+
+	public boolean mouseIsDown(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsNew[button]; }
+
+	public boolean mouseIsPressed(int button) { if (button < 0 || button > mouseButtons.length) return false; return !mouseButtonsOld[button] && mouseButtonsNew[button]; }
+
+	public boolean mouseIsHeld(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsOld[button] && mouseButtonsNew[button]; }
+
+	public boolean mouseIsReleased(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsOld[button] && !mouseButtonsNew[button]; }
+
+	public double mouseWheel() { return mouseWheelNew; }
 
 	public boolean mousePressed() { return mousePressed; }
 
-	public int getMouseX() { return (int) mouseX; }
-
-	public int getMouseY() { return (int) mouseY; }
-
-	public int getLastMouseX() { return (int) lastMouseX; }
-
-	public int getLastMouseY() { return (int) lastMouseY; }
+//	public int getMouseX() { return (int) mouseX; }
+//
+//	public int getMouseY() { return (int) mouseY; }
+//
+//	public int getLastMouseX() { return (int) lastMouseX; }
+//
+//	public int getLastMouseY() { return (int) lastMouseY; }
 
 	public int getWidth() { return (int) width; }
 
 	public int getHeight() { return (int) height; }
+
+	public boolean isCreated() { return isCreated; }
 
 	public abstract void drawCrosshair();
 
@@ -162,10 +217,4 @@ public abstract class Screen {
 		else showOverlay = false;
 	}
 
-	public void updateMousePosition(float x, float y) {
-		lastMouseX = mouseX;
-		lastMouseY = mouseY;
-		mouseX = x / scaleWidth;
-		mouseY = y / scaleHeight;
-	}
 }

@@ -1,6 +1,9 @@
 package com.sunflow.logging;
 
+import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,7 +16,11 @@ public class SunLogger {
 	public static final Level FATAL = SunLevel.FATAL;
 	public static final Level OFF = Level.OFF;
 
-	final Logger logger;
+	private final Logger logger;
+
+	public void forEachHandler(Consumer<? super Handler> action) {
+		Arrays.asList(logger.getHandlers()).forEach(action);
+	}
 
 	public SunLogger(Logger logger) { this.logger = logger; }
 

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -69,7 +68,7 @@ public class Log {
 		Logger logger = Logger.getLogger(logName);
 		logger.setUseParentHandlers(false);
 		logger.setLevel(ALL);
-		Arrays.asList(sunLogger.logger.getHandlers()).forEach(logger::addHandler);
+		sunLogger.forEachHandler(logger::addHandler);
 		return new SunLogger(logger);
 	}
 

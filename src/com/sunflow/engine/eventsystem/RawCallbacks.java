@@ -74,13 +74,19 @@ public class RawCallbacks implements EventConstants {
 		}
 	}
 
+	private int currentButton, currentMods;
+	private double currentMouseX, currentMouseY, oldMouseX, oldMouseY;
+
 	public class MouseInputCallback extends GLFWMouseButtonCallback {
 		@Override
 		public void invoke(long window, int button, int action, int mods) {
 			MouseInputEvent event = null;
-			if (action == PRESS) event = new MousePressedEvent(window, button, mods);
-			else if (action == RELEASE) event = new MouseReleasedEvent(window, button, mods);
-			else event = new MouseInputEvent(EventType.MOUSE_INPUT, window, button, action, mods);
+			if (action == PRESS) event = new MousePressedEvent(window, button, mods,
+					currentMouseX, currentMouseY, oldMouseX, oldMouseY);
+			else if (action == RELEASE) event = new MouseReleasedEvent(window, button, mods,
+					currentMouseX, currentMouseY, oldMouseX, oldMouseY);
+			else event = new MouseInputEvent(EventType.MOUSE_INPUT, window, button, action, mods,
+					currentMouseX, currentMouseY, oldMouseX, oldMouseY);
 			EventManager.addEvent(event);
 
 			if (action == PRESS && currentButton == -1) {
@@ -93,8 +99,6 @@ public class RawCallbacks implements EventConstants {
 		}
 	}
 
-	private int currentButton, currentMods;
-
 	public class MouseMotionCallback extends GLFWCursorPosCallback {
 		private double lastX, lastY;
 
@@ -104,6 +108,11 @@ public class RawCallbacks implements EventConstants {
 			if (currentButton < 0) event = new MouseMovedEvent(window, mouseX, mouseY, lastX, lastY);
 			else if (currentButton <= MOUSE_BUTTON_LAST) event = new MouseDraggedEvent(window, mouseX, mouseY, lastX, lastY, currentButton, currentMods);
 			else event = new MouseMotionEvent(EventType.MOUSE_MOTION, window, mouseX, mouseY, lastX, lastY);
+			oldMouseX = lastX;
+			oldMouseY = lastY;
+			currentMouseX = mouseX;
+			currentMouseY = mouseY;
+
 			lastX = mouseX;
 			lastY = mouseY;
 			EventManager.addEvent(event);
@@ -126,8 +135,10 @@ public class RawCallbacks implements EventConstants {
 		@Override
 		public void invoke(long window, boolean onScreen) {
 			MouseOnScreenEvent event = null;
-			if (onScreen) event = new MouseEnteredEvent(window);
-			else event = new MouseExitedEvent(window);
+			if (onScreen) event = new MouseEnteredEvent(window,
+					currentMouseX, currentMouseY, oldMouseX, oldMouseY);
+			else event = new MouseExitedEvent(window,
+					currentMouseX, currentMouseY, oldMouseX, oldMouseY);
 			EventManager.addEvent(event);
 		}
 	}
@@ -142,14 +153,11 @@ public class RawCallbacks implements EventConstants {
 	}
 
 	public class WindowMoveCallback extends GLFWWindowPosCallback {
-
 		@Override
 		public void invoke(long window, int xpos, int ypos) {
 			WindowMoveEvent event = null;
 			event = new WindowMoveEvent(EventType.WINDOW_MOVE, window, xpos, ypos);
 			EventManager.addEvent(event);
 		}
-
 	}
-
 }

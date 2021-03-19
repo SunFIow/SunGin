@@ -7,7 +7,7 @@ import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.Constants;
 import com.sunflow.util.MathUtils;
 
-public class SVector implements Cloneable, MathUtils {
+public class SVector implements Cloneable {
 
 	public float x = 0.0f;
 	public float y = 0.0f;
@@ -219,11 +219,19 @@ public class SVector implements Cloneable, MathUtils {
 
 	public float length() { return mag(); }
 
-	public float mag() { return sqrt(dot(this, this)); }
+	public float mag() { return MathUtils.instance.sqrt(dot(this, this)); }
 
 	public float magSq() { return dot(this, this); }
 
 	public static SVector add(SVector a, SVector b) { return a.clone().add(b); }
+
+	public SVector added(SVector v) { return clone().add(v); }
+
+	public SVector added(float x, float y) { return clone().add(x, y); }
+
+	public SVector added(float x, float y, float z) { return clone().add(x, y, z); }
+
+	public SVector added(float x, float y, float z, float w) { return clone().add(x, y, z, w); }
 
 	public SVector add(SVector v) { return add(v.x, v.y, v.z, v.w); }
 
@@ -250,6 +258,14 @@ public class SVector implements Cloneable, MathUtils {
 
 	public static SVector sub(SVector a, SVector b) { return a.clone().sub(b); }
 
+	public SVector subtracted(SVector v) { return clone().sub(v); }
+
+	public SVector subtracted(float x, float y) { return clone().sub(x, y); }
+
+	public SVector subtracted(float x, float y, float z) { return clone().sub(x, y, z); }
+
+	public SVector subtracted(float x, float y, float z, float w) { return clone().sub(x, y, z, w); }
+
 	public SVector sub(SVector v) { return sub(v.x, v.y, v.z, v.w); }
 
 	public SVector sub(float x, float y) {
@@ -272,6 +288,14 @@ public class SVector implements Cloneable, MathUtils {
 		this.w -= w;
 		return this;
 	}
+
+	public SVector multipied(SVector v) { return clone().mult(v); }
+
+	public SVector multipied(float x, float y) { return clone().mult(x, y); }
+
+	public SVector multipied(float x, float y, float z) { return clone().mult(x, y, z); }
+
+	public SVector multipied(float x, float y, float z, float w) { return clone().mult(x, y, z, w); }
 
 	public static SVector mult(SVector v, float n) { return v.clone().mult(n); }
 
@@ -302,6 +326,14 @@ public class SVector implements Cloneable, MathUtils {
 		return this;
 	}
 
+	public SVector divied(SVector v) { return clone().div(v); }
+
+	public SVector divied(float x, float y) { return clone().div(x, y); }
+
+	public SVector divied(float x, float y, float z) { return clone().div(x, y, z); }
+
+	public SVector divied(float x, float y, float z, float w) { return clone().div(x, y, z, w); }
+
 	public static SVector div(SVector v, float n) { return v.clone().mult(1.0f / n); }
 
 	public SVector div(float n) { return mult(1.0f / n); }
@@ -311,23 +343,23 @@ public class SVector implements Cloneable, MathUtils {
 	public SVector div(SVector v) { return div(v.x, v.y, v.z, v.w); }
 
 	public SVector div(float x, float y) {
-		this.x /= x;
-		this.y /= y;
+		if (x != 0) this.x /= x;
+		if (y != 0) this.y /= y;
 		return this;
 	}
 
 	public SVector div(float x, float y, float z) {
-		this.x /= x;
-		this.y /= y;
-		this.z /= z;
+		if (x != 0) this.x /= x;
+		if (y != 0) this.y /= y;
+		if (z != 0) this.z /= z;
 		return this;
 	}
 
 	public SVector div(float x, float y, float z, float w) {
-		this.x /= x;
-		this.y /= y;
-		this.z /= z;
-		this.w /= w;
+		if (x != 0) this.x /= x;
+		if (y != 0) this.y /= y;
+		if (z != 0) this.z /= z;
+		if (w != 0) this.w /= w;
 		return this;
 	}
 
@@ -399,8 +431,8 @@ public class SVector implements Cloneable, MathUtils {
 	public SVector rotate(float theta) {
 		float temp = x;
 		// Might need to check for rounding errors like with angleBetween function?
-		x = x * cos(theta) - y * sin(theta);
-		y = temp * sin(theta) + y * cos(theta);
+		x = x * MathUtils.instance.cos(theta) - y * MathUtils.instance.sin(theta);
+		y = temp * MathUtils.instance.sin(theta) + y * MathUtils.instance.cos(theta);
 		return this;
 	}
 
@@ -413,9 +445,9 @@ public class SVector implements Cloneable, MathUtils {
 	 *            The amount of interpolation; some value between 0.0 (old vector) and 1.0 (new vector). 0.1 is very near the old vector; 0.5 is halfway in between.
 	 */
 	public SVector lerp(SVector v, float amt) {
-		x = lerp(x, v.x, amt);
-		y = lerp(y, v.y, amt);
-		z = lerp(z, v.z, amt);
+		x = MathUtils.instance.lerp(x, v.x, amt);
+		y = MathUtils.instance.lerp(y, v.y, amt);
+		z = MathUtils.instance.lerp(z, v.z, amt);
 		return this;
 	}
 
@@ -444,9 +476,9 @@ public class SVector implements Cloneable, MathUtils {
 	 *            the z component to lerp to
 	 */
 	public SVector lerp(float x, float y, float z, float amt) {
-		this.x = lerp(this.x, x, amt);
-		this.y = lerp(this.y, y, amt);
-		this.z = lerp(this.z, z, amt);
+		this.x = MathUtils.instance.lerp(this.x, x, amt);
+		this.y = MathUtils.instance.lerp(this.y, y, amt);
+		this.z = MathUtils.instance.lerp(this.z, z, amt);
 		return this;
 	}
 
@@ -503,13 +535,11 @@ public class SVector implements Cloneable, MathUtils {
 		return SVector.cross(SVector.sub(b, a), SVector.sub(c, a)).normalize();
 	}
 
-	public SVector neg() {
-		return mult(-1);
-	}
+	public SVector neg() { return mult(-1); }
 
-	public static SVector neg(SVector v) {
-		return v.clone().mult(-1);
-	}
+	public SVector negated() { return clone().neg(); }
+
+	public static SVector neg(SVector v) { return v.negated(); }
 
 	public static SVector avg(SVector... ins) {
 		SVector avg = new SVector();
@@ -533,4 +563,47 @@ public class SVector implements Cloneable, MathUtils {
 				array.length > 1 ? array[1] : 0,
 				array.length > 2 ? array[2] : 0);
 	}
+
+	public static SVector floor(SVector v) { return new SVector(v.x(), v.y()); }
+
+	public SVector floor() { x = x(); y = y(); z = z(); w = w(); return this; }
+
+	public SVector floored() { return clone().floor(); }
+
+	public static SVector min(SVector a, SVector b) { return min(a.x, a.y, b.x, b.y); }
+
+	public static SVector min(SVector a, float bx, float by) { return min(a.x, a.y, bx, by); }
+
+	public static SVector min(float ax, float ay, float bx, float by) {
+		return new SVector(
+				MathUtils.instance.min(ax, bx),
+				MathUtils.instance.min(ay, by));
+	}
+
+	public SVector min(SVector b) { return min(b.x, b.y); }
+
+	public SVector min(float bx, float by) { x = MathUtils.instance.min(x, bx); y = MathUtils.instance.min(y, by); return this; }
+
+	public SVector mined(SVector b) { return clone().min(b); }
+
+	public SVector mined(float bx, float by) { return clone().min(bx, by); }
+
+	public static SVector max(SVector a, SVector b) { return max(a.x, a.y, b.x, b.y); }
+
+	public static SVector max(SVector a, float bx, float by) { return max(a.x, a.y, bx, by); }
+
+	public static SVector max(float ax, float ay, float bx, float by) {
+		return new SVector(
+				MathUtils.instance.max(ax, bx),
+				MathUtils.instance.max(ay, by));
+	}
+
+	public SVector max(SVector b) { return max(b.x, b.y); }
+
+	public SVector max(float bx, float by) { x = MathUtils.instance.max(x, bx); y = MathUtils.instance.max(y, by); return this; }
+
+	public SVector maxed(SVector b) { return clone().max(b); }
+
+	public SVector maxed(float bx, float by) { return clone().max(bx, by); }
+
 }

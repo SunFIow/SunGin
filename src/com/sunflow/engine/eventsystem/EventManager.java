@@ -53,7 +53,7 @@ public class EventManager {
 	}
 
 	static public void destroyRawCallbacks(long windowID) {
-		RawCallbacks rawCallbacks = mRawCallbacks.get(windowID);
+		RawCallbacks rawCallbacks = mRawCallbacks.remove(windowID);
 		if (rawCallbacks != null) rawCallbacks.destroy();
 	}
 

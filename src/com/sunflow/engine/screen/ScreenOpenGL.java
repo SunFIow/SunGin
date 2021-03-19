@@ -3,7 +3,6 @@ package com.sunflow.engine.screen;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
-import java.awt.MouseInfo;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
@@ -17,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL46;
 
+import com.sunflow.engine.Mouse;
 import com.sunflow.engine.WindowLWJGL;
 import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.adapters.KeyInputAdapter;
@@ -49,7 +49,7 @@ public class ScreenOpenGL extends Screen {
 
 	ByteBuffer buffer;
 
-	public ScreenOpenGL(GameBase game) { super(game); }
+	public ScreenOpenGL(GameBase game, Mouse mouse) { super(game, mouse); }
 
 	@Override
 	public void refresh() {
@@ -67,7 +67,7 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public boolean render() {
-		if (!createdScreen) return false;
+		if (!isCreated) return false;
 
 		BufferedImage image = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
@@ -211,25 +211,25 @@ public class ScreenOpenGL extends Screen {
 			@Override
 			public void onMousePressed(MousePressedEvent e) {
 				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = true;
-				mouse[e.getButton()] = true;
+				mouseButtonsOld[e.getButton()] = true;
 			}
 
 			@Override
 			public void onMouseReleased(MouseReleasedEvent e) {
 				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = false;
-				mouse[e.getButton()] = false;
+				mouseButtonsOld[e.getButton()] = false;
 			}
 		});
 
 		EventManager.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
 			public void onMouseMotion(MouseMotionEvent e) {
-				updateMousePosition((float) e.getMouseX(), (float) e.getMouseY());
+				mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY());
 			}
 
 			@Override
 			public void onMouseMoved(MouseMovedEvent e) {
-				updateMousePosition((float) e.getMouseX(), (float) e.getMouseY());
+				mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY());
 			}
 		});
 
@@ -251,8 +251,8 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	final public void createCanvas(float width, float height, float scaleW, float scaleH) {
-		if (!createdScreen) {
-			createdScreen = true;
+		if (!isCreated) {
+			isCreated = true;
 			this.width = width;
 			this.height = height;
 			this.scaleWidth = scaleW;
@@ -272,31 +272,31 @@ public class ScreenOpenGL extends Screen {
 		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
 		overlay.smooth();
 
-		System.out.println(createdScreen);
+		System.out.println(isCreated);
 		textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 	}
 
 	@Override
 	public void show() {
-		if (createdScreen) window.setVisible(true);
+		if (isCreated) window.setVisible(true);
 	}
 
 	@Override
 	public void requestFocus() {
-		if (createdScreen) window.requestFocus();
+		if (isCreated) window.requestFocus();
 	}
 
 	@Override
 	public void setTitle(String title) {
 		super.setTitle(title);
-		if (createdScreen) window.setTitle(title + title_info);
+		if (isCreated) window.setTitle(title + title_info);
 	}
 
 	@Override
 	public void setTitleInfo(String title_info) {
 		super.setTitleInfo(title_info);
-		if (createdScreen) window.setTitle(title + title_info);
+		if (isCreated) window.setTitle(title + title_info);
 	}
 
 	@Override
@@ -310,8 +310,7 @@ public class ScreenOpenGL extends Screen {
 
 		if (window.isCloseRequested()) game.isRunning = false;
 
-		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
-		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
+		super.privateUpdate();
 	}
 
 	static float aimSize = 3;
@@ -352,8 +351,8 @@ public class ScreenOpenGL extends Screen {
 		int aimStroke = aimStrokeWidth * 2;
 		overlay.noStroke();
 		overlay.fill(aimColor.getRGB());
-		overlay.rect((int) (mouseX - aimSize), mouseY - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		overlay.rect(mouseX - aimStrokeWidth, (int) (mouseY - aimSize), aimStroke, (int) (aimSize * 2));
+		overlay.rect((int) (mouse.x - aimSize), mouse.y - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouse.x - aimStrokeWidth, (int) (mouse.y - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
 	@Override
@@ -373,17 +372,6 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public boolean hasFocus() { return window.hasFocus(); }
-
-	@Override
-	public boolean keyIsDown(char key) {
-		return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key));
-	}
-
-	@Override
-	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keys[key]; }
-
-	@Override
-	public boolean mouseIsDown(int button) { if (button < 0 || button > mouse.length) return false; return mouse[button]; }
 
 	@Override
 	public int getX() { return window.getX(); }
