@@ -10,10 +10,10 @@ import com.sunflow.logging.Log;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
-import com.sunflow.util.Constants;
+import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
 
-public class PipeLineRenderer implements MathUtils, Constants {
+public class PipeLineRenderer implements MathUtils, SConstants {
 
 	private float[] m_DepthBuffer, m_DepthBuffer_Local;
 

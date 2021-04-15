@@ -112,12 +112,11 @@ public class Log {
 		int num = params.length;
 		StringBuilder builder = new StringBuilder();
 		String part1 = "{";
-		String part2 = "}";
+		String part2 = "} ";
 		for (int i = 0; i < num; i++) {
 			builder.append(part1);
 			builder.append(i);
 			builder.append(part2);
-			builder.append(" ");
 		}
 		return builder.toString();
 	}

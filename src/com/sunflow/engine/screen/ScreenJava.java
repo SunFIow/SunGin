@@ -24,13 +24,14 @@ import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SShape;
-import com.sunflow.util.Constants;
+import com.sunflow.util.GameUtils;
+import com.sunflow.util.SConstants;
 
 public class ScreenJava extends Screen {
 
 	protected JFrame frame;
 	protected Canvas canvas;
-	protected BufferStrategy bs;
+//	protected BufferStrategy bs;
 
 	// Overlay
 	protected SGraphics overlay;
@@ -48,18 +49,35 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public boolean render() {
-		if (!isCreated) return false;
+		if (!isCreated) {
+			System.out.println("not created");
+			return false;
+		}
 
+		if (canvas.getBufferStrategy() == null) {
+			canvas.createBufferStrategy(2);
+		}
+		BufferStrategy strategy = canvas.getBufferStrategy();
+		if (strategy != null) {
 //		Drawing the image
-		do {
 			do {
-				Graphics g = bs.getDrawGraphics();
-				g.drawImage(game.image, 0, 0, scaledWidth, scaledHeight, null);
-				if (showOverlay) g.drawImage(overlay.image, 0, 0, null);
-				g.dispose();
-			} while (bs.contentsRestored());
-			bs.show();
-		} while (bs.contentsLost());
+				// The following loop ensures that the contents of the drawing buffer
+				// are consistent in case the underlying surface was recreated
+				do {
+//					Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
+					Graphics draw = strategy.getDrawGraphics();
+					// draw to width/height, since this may be a 2x image
+					draw.drawImage(game.image, 0, 0, scaledWidth, scaledHeight, null);
+					if (showOverlay) draw.drawImage(overlay.image, 0, 0, null);
+					draw.dispose();
+				} while (strategy.contentsRestored());
+
+				// Display the buffer
+				strategy.show();
+
+				// Repeat the rendering if the drawing buffer was lost
+			} while (strategy.contentsLost());
+		}
 
 		return true;
 	}
@@ -99,17 +117,11 @@ public class ScreenJava extends Screen {
 		frame.setVisible(false);
 //		screen.addToFrame(frame);
 
-		canvas.createBufferStrategy(3);
-		bs = canvas.getBufferStrategy();
+//		canvas.createBufferStrategy(3);
+//		bs = canvas.getBufferStrategy();
 
 		frame.pack();
 		frame.setLocationRelativeTo(null);
-
-		canvas.addKeyListener(game);
-		canvas.addMouseListener(game);
-		canvas.addMouseMotionListener(game);
-		canvas.addMouseWheelListener(game);
-		canvas.addComponentListener(game);
 
 		canvas.addKeyListener(new KeyAdapter() {
 			@Override
@@ -184,10 +196,12 @@ public class ScreenJava extends Screen {
 			@Override
 			public void mouseDragged(MouseEvent e) { mouse.updatePosition(e.getX(), e.getY()); }
 		});
+
 		canvas.addMouseWheelListener(new MouseWheelListener() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) { mouseWheel = e.getPreciseWheelRotation(); }
 		});
+
 		canvas.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -209,6 +223,12 @@ public class ScreenJava extends Screen {
 				frameHeight = e.getComponent().getHeight();
 			}
 		});
+
+		canvas.addKeyListener(game);
+		canvas.addMouseListener(game);
+		canvas.addMouseMotionListener(game);
+		canvas.addMouseWheelListener(game);
+		canvas.addComponentListener(game);
 	}
 
 	@Override
@@ -229,7 +249,9 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public void defaultSettings() {
-		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
+//		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
+		overlay = GameUtils.instance.createGraphics(scaledWidth, scaledHeight);
+//		overlay.init(); //TODO
 		overlay.smooth();
 	}
 
@@ -255,36 +277,41 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public void toggleFullscreen() {
-		synchronized (bs) {
-			int w, h;
-			if (fullscreen) {
-				w = savedSize.x();
-				h = savedSize.y();
-				frame.setLocation(savedPos.get((Point) null));
-			} else {
-				savedSize.set(scaledWidth, scaledHeight);
-				savedPos.set(frame.getLocation());
-				w = Toolkit.getDefaultToolkit().getScreenSize().width;
-				h = Toolkit.getDefaultToolkit().getScreenSize().height;
-				frame.setLocation(0, 0);
-			}
-			fullscreen = !fullscreen;
-			frame.dispose();
-			frame.setUndecorated(!(!fullscreen && frame.isOpaque()));
-			frame.getContentPane().setPreferredSize(new Dimension(w, h));
-			frame.pack();
-			frame.setVisible(true);
+//		synchronized (bs) {
+		int w, h;
+		if (fullscreen) {
+			w = savedSize.x();
+			h = savedSize.y();
+			frame.setLocation(savedPos.get((Point) null));
+		} else {
+			savedSize.set(scaledWidth, scaledHeight);
+			savedPos.set(frame.getLocation());
+			w = Toolkit.getDefaultToolkit().getScreenSize().width;
+			h = Toolkit.getDefaultToolkit().getScreenSize().height;
+			frame.setLocation(0, 0);
 		}
+		fullscreen = !fullscreen;
+		frame.dispose();
+		frame.setUndecorated(!(!fullscreen && frame.isOpaque()));
+		frame.getContentPane().setPreferredSize(new Dimension(w, h));
+		frame.pack();
+		frame.setVisible(true);
+//		}
 	}
 
 	@Override
 	public final void drawOverlay() {
+		overlay.beginDraw();
 		overlay.clear();
 		if (showInfo) drawInfo();
 		if (showCrosshair) drawCrosshair();
 		// if(showX) drawX();
 		// if(show???) draw???();
+		overlay.endDraw();
 	}
+
+	@Override
+	public final void infoSize(float size) { overlay.textSize(size); }
 
 	@Override
 	public final void drawInfo() {
@@ -295,11 +322,11 @@ public class ScreenJava extends Screen {
 		overlay.fill(255, 255, 0);
 		overlay.stroke(0, 100);
 		overlay.strokeWeight(5);
-		overlay.textSize(13);
-		overlay.textAlign(Constants.LEFT, Constants.TOP);
+//		overlay.textSize(13);
+		overlay.textAlign(SConstants.LEFT, SConstants.TOP);
 
 		float xoff = 5, yoff = 5;
-		float ychange = game.textSize * 1.25f;
+		float ychange = overlay.textSize * 1.25f;
 		for (String info : game.infos) {
 			overlay.text(info, xoff, yoff);
 			yoff += ychange;

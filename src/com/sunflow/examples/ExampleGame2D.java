@@ -30,7 +30,7 @@ public class ExampleGame2D extends GameBase {
 		title("ExampleGame 2D");
 		createCanvas(1000, 500);
 //		smooth();
-		frameRate(600);
+		frameRate(0);
 		showInfo(true);
 		ballR = 25;
 		ballX = width / 2;

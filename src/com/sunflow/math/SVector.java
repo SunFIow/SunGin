@@ -4,7 +4,7 @@ import java.awt.Point;
 
 import com.sunflow.game.GameBase;
 import com.sunflow.math3d.SMatrix;
-import com.sunflow.util.Constants;
+import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
 
 public class SVector implements Cloneable {
@@ -113,8 +113,8 @@ public class SVector implements Cloneable {
 
 	public static SVector random2D(SVector target, GameBase parent) {
 		return (parent == null)
-				? fromAngle(MathUtils.instance.random() * Constants.TWO_PI, target)
-				: fromAngle(parent.random(Constants.TAU), target);
+				? fromAngle(MathUtils.instance.random() * SConstants.TWO_PI, target)
+				: fromAngle(parent.random(SConstants.TAU), target);
 	}
 
 	public static SVector random3D() {
@@ -133,10 +133,10 @@ public class SVector implements Cloneable {
 		float angle;
 		float vz;
 		if (parent == null) {
-			angle = MathUtils.instance.random() * Constants.TWO_PI;
+			angle = MathUtils.instance.random() * SConstants.TWO_PI;
 			vz = MathUtils.instance.random() * 2 - 1;
 		} else {
-			angle = parent.random(Constants.TWO_PI);
+			angle = parent.random(SConstants.TWO_PI);
 			vz = parent.random(-1, 1);
 		}
 		float vx = MathUtils.instance.sqrt(1 - vz * vz) * MathUtils.instance.cos(angle);
@@ -291,6 +291,8 @@ public class SVector implements Cloneable {
 
 	public SVector multipied(SVector v) { return clone().mult(v); }
 
+	public SVector multipied(float n) { return clone().mult(n, n, n, n); }
+
 	public SVector multipied(float x, float y) { return clone().mult(x, y); }
 
 	public SVector multipied(float x, float y, float z) { return clone().mult(x, y, z); }
@@ -383,11 +385,35 @@ public class SVector implements Cloneable {
 		return cross(this, b);
 	}
 
+	public float crossX(SVector b) {
+		return crossX(this, b);
+	}
+
+	public float crossY(SVector b) {
+		return crossY(this, b);
+	}
+
+	public float crossZ(SVector b) {
+		return crossZ(this, b);
+	}
+
 	public static SVector cross(SVector a, SVector b) {
 		return new SVector(
 				(a.y * b.z - a.z * b.y),
 				(a.z * b.x - a.x * b.z),
 				(a.x * b.y - a.y * b.x));
+	}
+
+	public static float crossX(SVector a, SVector b) {
+		return a.y * b.z - a.z * b.y;
+	}
+
+	public static float crossY(SVector a, SVector b) {
+		return a.z * b.x - a.x * b.z;
+	}
+
+	public static float crossZ(SVector a, SVector b) {
+		return a.x * b.y - a.y * b.x;
 	}
 
 	public SVector normalize() {
@@ -505,7 +531,7 @@ public class SVector implements Cloneable {
 		// http://code.google.com/p/processing/issues/detail?id=340
 		// Otherwise if outside the range, acos() will return NaN
 		// http://www.cppreference.com/wiki/c/math/acos
-		if (amt <= -1) return Constants.PI;
+		if (amt <= -1) return SConstants.PI;
 		else if (amt >= 1) return 0;
 		return (float) Math.acos(amt);
 	}

@@ -29,12 +29,16 @@ public class Style {
 	public int ellipseMode;
 	public int shapeMode;
 
+	public int blendMode;
+
 	public int colorMode;
 	public float colorModeX;
 	public float colorModeY;
 	public float colorModeZ;
 	public float colorModeA;
 
+	public boolean tint;
+	public int tintColor;
 	public boolean fill;
 	public int fillColor;
 	public boolean stroke;

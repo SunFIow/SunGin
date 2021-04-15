@@ -6,11 +6,43 @@ import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import com.sunflow.math.DVector;
 import com.sunflow.math.SVector;
 
 public interface GeometryUtils {
 	public static final GeometryUtils instance = new GeometryUtils() {};
+
+	/***
+	 * Returns an Optional SVector containing the intersection point, provided there is one.
+	 */
+
+	default Optional<SVector> cast(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
+		float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+		if (den == 0) return Optional.empty();
+
+		float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+		float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+		if (t <= 0 || t >= 1 || u <= 0) return Optional.empty();
+
+		float x = x1 + t * (x2 - x1);
+		float y = y1 + t * (y2 - y1);
+		return Optional.of(new SVector(x, y));
+	}
+
+	default Optional<DVector> cast(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+		double den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+		if (den == 0) return Optional.empty();
+
+		double t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+		double u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+		if (t <= 0 || t >= 1 || u <= 0) return Optional.empty();
+
+		double x = x1 + t * (x2 - x1);
+		double y = y1 + t * (y2 - y1);
+		return Optional.of(new DVector(x, y));
+	}
 
 	default boolean hitLineLine(double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2) {
 		return Line2D.linesIntersect(l1x1, l1y1, l1x2, l1y2, l2x1, l2y1, l2x2, l2y2);
@@ -89,11 +121,15 @@ public interface GeometryUtils {
 	}
 
 	default boolean hitBoxPoint(float bx, float by, float w, float h, float px, float py) {
+		return new Rectangle2D.Float(bx, by, w, h).contains(px, py);
+	}
+
+	default boolean hitBoxPoint(double bx, double by, double w, double h, double px, double py) {
 		return new Rectangle2D.Double(bx, by, w, h).contains(px, py);
 	}
 
-	default double distLinePoint(float x1, float y1, float x2, float y2, float px, float py) {
-		return Line2D.ptLineDist(x1, y1, x2, y2, px, py);
+	default double distLinePoint(double x1, double y1, double x2, double y2, double px, double py) {
+		return Line2D.Double.ptLineDist(x1, y1, x2, y2, px, py);
 	}
 
 }

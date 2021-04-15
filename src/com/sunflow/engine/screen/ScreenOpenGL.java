@@ -33,7 +33,8 @@ import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SShape;
-import com.sunflow.util.Constants;
+import com.sunflow.util.GameUtils;
+import com.sunflow.util.SConstants;
 
 public class ScreenOpenGL extends Screen {
 
@@ -169,15 +170,7 @@ public class ScreenOpenGL extends Screen {
 		window = new WindowLWJGL();
 		window.createWindow(scaledWidth, scaledHeight, title);
 
-		EventManager.addKeyInputListener(game);
-		EventManager.addMouseInputListener(game);
-		EventManager.addMouseMotionListener(game);
-		EventManager.addScrollListener(game);
-		EventManager.addWindowResizeListener(game);
-		EventManager.addWindowMoveListener(game);
-
 		EventManager.addKeyInputListener(new KeyInputAdapter() {
-
 			@Override
 			public void onKeyPressed(KeyPressedEvent e) {
 				key = e.getKeyChar();
@@ -207,7 +200,6 @@ public class ScreenOpenGL extends Screen {
 		});
 
 		EventManager.addMouseInputListener(new MouseInputAdapter() {
-
 			@Override
 			public void onMousePressed(MousePressedEvent e) {
 				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = true;
@@ -247,6 +239,13 @@ public class ScreenOpenGL extends Screen {
 				game.resize(width, height);
 			}
 		});
+
+		EventManager.addKeyInputListener(game);
+		EventManager.addMouseInputListener(game);
+		EventManager.addMouseMotionListener(game);
+		EventManager.addScrollListener(game);
+		EventManager.addWindowResizeListener(game);
+		EventManager.addWindowMoveListener(game);
 	}
 
 	@Override
@@ -269,7 +268,9 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public void defaultSettings() {
-		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
+//		overlay = new SGraphics(scaledWidth, scaledHeight);
+		overlay = GameUtils.instance.createGraphics(scaledWidth, scaledHeight);
+//		overlay.init();
 		overlay.smooth();
 
 		System.out.println(isCreated);
@@ -326,6 +327,9 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
+	public final void infoSize(float size) { overlay.textSize(size); }
+
+	@Override
 	public final void drawInfo() {
 		if (game.infos == null || game.infos.isEmpty()) return;
 
@@ -334,11 +338,11 @@ public class ScreenOpenGL extends Screen {
 		overlay.fill(255, 255, 0);
 		overlay.stroke(0, 100);
 		overlay.strokeWeight(5);
-		overlay.textSize(13);
-		overlay.textAlign(Constants.LEFT, Constants.TOP);
+//		overlay.textSize(13);
+		overlay.textAlign(SConstants.LEFT, SConstants.TOP);
 
 		float xoff = 5, yoff = 5;
-		float ychange = game.textSize * 1.25f;
+		float ychange = overlay.textSize * 1.25f;
 		for (String info : game.infos) {
 			overlay.text(info, xoff, yoff);
 			yoff += ychange;

@@ -217,4 +217,6 @@ public abstract class Screen {
 		else showOverlay = false;
 	}
 
+	public abstract void infoSize(float size);
+
 }

@@ -59,13 +59,14 @@ import com.sunflow.interfaces.GameLoopListener;
 import com.sunflow.logging.Log;
 import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.math.SVector;
-import com.sunflow.util.Constants;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
+import com.sunflow.util.LogUtils;
 import com.sunflow.util.MathUtils;
+import com.sunflow.util.SConstants;
 
 public abstract class GameBase extends SGraphics implements Runnable,
-		Constants, MathUtils, GameUtils, GeometryUtils,
+		SConstants, MathUtils, GameUtils, GeometryUtils, LogUtils,
 		MouseListener,
 		MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener,
 		KeyInputListener, MouseInputListener, com.sunflow.engine.eventsystem.listeners.MouseMotionListener, ScrollListener, WindowResizeListener, WindowMoveListener {
@@ -79,6 +80,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	public boolean isPaused;
 
 	private Thread thread;
+
+	String renderer = JAVA2D;
+	String outputPath;
 
 	protected Screen screen;
 	protected float width, height;
@@ -111,9 +115,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	protected ArrayList<FrameLoopListener> frameLoopListeners;
 
 //	private ImprovedNoise perlinnoise;
-	private OpenSimplexNoise noise;
+	protected OpenSimplexNoise noise;
 
-	private Random random;
+	protected Random random;
 
 	private Robot robot;
 
@@ -209,6 +213,11 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 	public void createCanvas(float width, float height, float scaleW, float scaleH) {
 		screen.createCanvas(width, height, scaleW, scaleH);
+
+		setPrimary(true);
+		setSize(width(), height());
+		graphics = checkImage();
+
 		defaultSettings();
 		screen.show();
 		screen.requestFocus();
@@ -216,6 +225,13 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		this.width = width;
 		this.height = height;
 	}
+
+	protected SGraphics createPrimaryGraphics() {
+		return makeGraphics(width(), height(), renderer, outputPath, true);
+	}
+
+	@Override
+	public boolean external() { return false; }
 
 	public final void title(String title) { screen.setTitle(title); }
 
@@ -257,7 +273,6 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 //		if (!isRunning) return;
 	private void render() {
-
 		preDraw();
 
 		push();
@@ -274,12 +289,14 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	}
 
 	protected void preDraw() {
-		handleSmooth();
+		super.beginDraw();
+//		graphics = checkImage();
+//		handleSmooth();
 		for (FrameLoopListener fll : frameLoopListeners) fll.update();
 		screen.preDraw();
 	}
 
-	protected void postDraw() { screen.postDraw(); }
+	protected void postDraw() { super.endDraw(); screen.postDraw(); }
 
 	protected void draw() {}
 
@@ -309,7 +326,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 		if (noLoop) {
 			if (!isPaused) tick();
-			render();
+			if (screen.isCreated()) render();
 			return;
 		}
 		while (isRunning) {
@@ -341,8 +358,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 				if (syncMode == ASYNC) render();
 				else {
 					if (!isPaused) tick();
-					if (screen.isCreated()) // TODO: USE STH ELSE
-						render();
+					if (screen.isCreated()) render(); // TODO: USE STH ELSE
 				}
 			}
 
@@ -432,6 +448,8 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	}
 
 	public final void showOverlay(boolean show) { screen.showOverlay(show); }
+
+	public final void infoSize(float size) { screen.infoSize(size); }
 
 	public final void showInfo(boolean show) { screen.showInfo(show); }
 
@@ -587,17 +605,51 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		robot.mouseMove((int) x, (int) y);
 	}
 
-	public final void saveFrame(String fileName) {
-		for (int i = 10; i > 0; i--) {
-			String s = "";
-			for (int j = 0; j < i; j++) s += "#";
+	@Override
+	public final boolean save(String fileName) { return saveFrame(fileName); }
 
-			if (fileName.contains(s)) {
-				String f = String.format("%0" + i + "d", frameCount);
-				saveImage(image, fileName.replace(s, f));
-				return;
-			}
+	public boolean saveFrame() {
+		try {
+//			saveImage(image, savePath("screen-" + nf(frameCount, 4) + ".tif"));
+//			graphics.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
+			return save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
+		} catch (SecurityException se) {
+			System.err.println("Can't use saveFrame() when running in a browser, " +
+					"unless using a signed applet.");
+			return false;
 		}
+	}
+
+	public boolean saveFrame(String fileName) {
+		try {
+//			saveImage(image, fileName.replace(s, f));
+//			graphics.save(savePath(insertFrame(fileName)));
+			return save(savePath(insertFrame(fileName)));
+		} catch (SecurityException se) {
+			System.err.println("Can't use saveFrame() when running in a browser, " +
+					"unless using a signed applet.");
+			return false;
+		}
+	}
+
+	/**
+	 * Check a string for #### signs to see if the frame number should be
+	 * inserted. Used for functions like saveFrame() and beginRecord() to
+	 * replace the # marks with the frame number. If only one # is used,
+	 * it will be ignored, under the assumption that it's probably not
+	 * intended to be the frame number.
+	 */
+	public String insertFrame(String what) {
+		int first = what.indexOf('#');
+		int last = what.lastIndexOf('#');
+
+		if ((first != -1) && (last - first > 0)) {
+			String prefix = what.substring(0, first);
+			int count = last - first + 1;
+			String suffix = what.substring(last + 1);
+			return prefix + nf(frameCount, count) + suffix;
+		}
+		return what; // no change
 	}
 
 	public final float elapsedTime() { return delta(); }
@@ -767,6 +819,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 	@Override
 	public void onKeyRepeated(KeyRepeatedEvent event) {}
+
+	@Override
+	public void printStackTrace(Throwable e) { e.printStackTrace(); }
 
 	public static void UncaughtException(Throwable e) {
 		Log.log(Log.FATAL, "Uncaught Exception", e);

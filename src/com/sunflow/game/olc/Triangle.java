@@ -280,11 +280,10 @@ public class Triangle {
 		List<int[]> mapping = getMapping(polygIn);
 
 		List<Triangle> triangs = new ArrayList<>();
-		for (int[] map : mapping) {
-			triangs.add(new Triangle(
-					polygIn.get(map[0]), polygIn.get(map[1]), polygIn.get(map[2]),
-					texIn.get(map[0]), texIn.get(map[1]), texIn.get(map[2])));
-		}
+		for (int[] map : mapping) triangs.add(new Triangle(
+				polygIn.get(map[0]), polygIn.get(map[1]), polygIn.get(map[2]),
+				texIn.get(map[0]), texIn.get(map[1]), texIn.get(map[2])));
+
 		return triangs;
 	}
 
@@ -292,47 +291,57 @@ public class Triangle {
 		List<int[]> mapping = getMapping(polygIn);
 
 		List<Triangle> triangs = new ArrayList<>();
-		for (int[] map : mapping) {
-			triangs.add(new Triangle(polygIn.get(map[0]), polygIn.get(map[1]), polygIn.get(map[2])));
-		}
+		for (int[] map : mapping) triangs.add(new Triangle(
+				polygIn.get(map[0]),
+				polygIn.get(map[1]),
+				polygIn.get(map[2])));
+
 		return triangs;
 	}
 
 	static public List<int[]> getMapping(List<SVector> polygIn) {
+//		Log.info();
 		List<SVector> polyg = new ArrayList<>(polygIn);
 
-		boolean isCw = orien(polyg.toArray(new SVector[0])) > 0.0f;
+//		boolean isCw = orien(polyg.toArray(new SVector[0])) > 0.0f;
+		boolean isCw = orien(polyg) > 0.0f;
 
 		if (!isCw) Collections.reverse(polyg);
 
 		List<int[]> mapping = new ArrayList<>();
 		while (polyg.size() >= 3) {
-			int sz = polyg.size();
+//			System.out.println("a");
 			boolean isTriagRemoved = false;
+			int sz = polyg.size();
 			for (int i = 0; i < sz; i++) {
-				SVector p1 = polyg.get(i);
-				SVector p2 = polyg.get((i + 1) % sz);
-				SVector p3 = polyg.get((i + 2) % sz);
+				int a = i;
+				int b = (i + 1) % sz;
+				int c = (i + 2) % sz;
+				SVector p1 = polyg.get(a);
+				SVector p2 = polyg.get(b);
+				SVector p3 = polyg.get(c);
 
-				boolean Cw = orien(p1, p2, p3) > 0.0f;
-				if (!Cw) continue;
+				if (orien(p1, p2, p3) <= 0.0f) continue;
 
-				boolean hasSVector[] = new boolean[1];
-				polyg.forEach((p) -> {
-					if (pointInTriang(p, new SVector[] { p1, p2, p3 })) {
-						hasSVector[0] = true;
+				boolean hasSVector = false;
+				for (int index = 0; index < polyg.size(); index++) {
+					if (pointInTriang(polyg.get(index), new SVector[] { p1, p2, p3 })) {
+						hasSVector = true;
+						break;
 					}
-				});
-				if (hasSVector[0]) continue;
+				}
+				if (hasSVector) continue;
+//				System.out.println("b");
 
 				isTriagRemoved = true;
 
-				mapping.add(new int[] {
-						polygIn.indexOf(p1),
-						polygIn.indexOf(p2),
-						polygIn.indexOf(p3) });
+				int pi1 = polygIn.indexOf(p1);
+				int pi2 = polygIn.indexOf(p2);
+				int pi3 = polygIn.indexOf(p3);
+//				Log.info(pi1, pi2, pi3);
+				mapping.add(new int[] { pi1, pi2, pi3 });
 
-				polyg.remove((i + 1) % sz);
+				polyg.remove(b);
 				sz = polyg.size();
 			}
 			if (!isTriagRemoved) break;
@@ -340,10 +349,14 @@ public class Triangle {
 		return mapping;
 	}
 
-	static private float orien(final SVector... polyg) {
+	static private float orien(final SVector v1, final SVector v2, final SVector v3) {
+		return SVector.crossZ(v1, v2) + SVector.crossZ(v2, v3) + SVector.crossZ(v3, v1);
+	}
+
+	static private float orien(final List<SVector> polyg) {
 		float sum = 0;
-		for (int i = 0; i < polyg.length; i++) {
-			sum += SVector.cross(polyg[i], polyg[(i + 1) % polyg.length]).z;
+		for (int i = 0; i < polyg.size(); i++) {
+			sum += SVector.crossZ(polyg.get(i), polyg.get((i + 1) % polyg.size()));
 		}
 		return sum;
 	}

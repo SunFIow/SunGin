@@ -193,11 +193,11 @@ public interface MathUtils {
 	 * @see PApplet#radians(float)
 	 */
 	default double degrees(double radians) {
-		return radians * Constants.RAD_TO_DEG_D;
+		return radians * SConstants.RAD_TO_DEG_D;
 	}
 
 	default float degrees(float radians) {
-		return radians * Constants.RAD_TO_DEG;
+		return radians * SConstants.RAD_TO_DEG;
 	}
 
 	/**
@@ -217,10 +217,10 @@ public interface MathUtils {
 	 * @see PApplet#degrees(float)
 	 */
 	default double radians(double degrees) {
-		return degrees * Constants.DEG_TO_RAD_D;
+		return degrees * SConstants.DEG_TO_RAD_D;
 	}
 
 	default float radians(float degrees) {
-		return degrees * Constants.DEG_TO_RAD;
+		return degrees * SConstants.DEG_TO_RAD;
 	}
 }

@@ -6,10 +6,10 @@ import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
 import com.sunflow.engine.eventsystem.listeners.MouseMotionListener;
 import com.sunflow.game.Game3D;
 import com.sunflow.interfaces.FrameLoopListener;
-import com.sunflow.util.Constants;
+import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
 
-public class PeasyCam implements FrameLoopListener, MouseMotionListener, MathUtils, Constants {
+public class PeasyCam implements FrameLoopListener, MouseMotionListener, MathUtils, SConstants {
 
 	private Game3D game;
 

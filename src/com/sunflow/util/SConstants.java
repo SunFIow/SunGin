@@ -33,7 +33,15 @@ import java.awt.image.BufferedImage;
  *
  * @usage Web &amp; Application
  */
-public interface Constants {
+public interface SConstants {
+
+	static final String JAVA2D = "com.sunflow.gfx.SGraphics";
+
+//	static final String P2D = "processing.opengl.PGraphics2D";
+//	static final String P3D = "processing.opengl.PGraphics3D"
+
+//	static final String OPENGL = P3D;
+
 	// Mouse Buttons
 	static final int MOUSE_LEFT = 1, BUTTON_LEFT = 1,
 			MOUSE_MIDDLE = 2, BUTTON_MIDDLE = 2,

@@ -9,10 +9,10 @@ import com.sunflow.game.GameBase;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
-import com.sunflow.util.Constants;
+import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
 
-public class PipeLineRenderer2 implements MathUtils, Constants {
+public class PipeLineRenderer2 implements MathUtils, SConstants {
 
 	private float[] m_DepthBuffer, m_DepthBuffer_Local;
 
