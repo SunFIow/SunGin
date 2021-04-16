@@ -23,8 +23,7 @@ import javax.swing.JFrame;
 import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
-import com.sunflow.gfx.SShape;
-import com.sunflow.util.GameUtils;
+import com.sunflow.gfx.S_Shape;
 import com.sunflow.util.SConstants;
 
 public class ScreenJava extends Screen {
@@ -90,7 +89,7 @@ public class ScreenJava extends Screen {
 	@Override
 	public void postDraw() {
 		super.postDraw();
-		SShape.drawAll(game);
+		S_Shape.drawAll(game);
 		if (showOverlay) drawOverlay();
 	}
 
@@ -250,7 +249,7 @@ public class ScreenJava extends Screen {
 	@Override
 	public void defaultSettings() {
 //		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
-		overlay = GameUtils.instance.createGraphics(scaledWidth, scaledHeight);
+		overlay = game.createGraphics(scaledWidth, scaledHeight);
 //		overlay.init(); //TODO
 		overlay.smooth();
 	}

@@ -563,7 +563,7 @@ public class SImage implements Cloneable, SConstants {
 		SImage target = new SImage(targetWidth / pixelDensity,
 				targetHeight / pixelDensity,
 				targetFormat, pixelDensity);
-//	    target.parent = parent;  // parent may be null so can't use createImage()
+		target.parent = parent; // parent may be null so can't use createImage()
 		if (w > 0 && h > 0) {
 			getImpl(x, y, w, h, target, targetX, targetY);
 		}
@@ -602,18 +602,20 @@ public class SImage implements Cloneable, SConstants {
 		}
 	}
 
-	public final void pixel(float x, float y, int color) {
-		int i = index(x, y);
-		if (i < 0 || i >= pixels.length) {
-			Log.warn("Tried to set a pixel out of bounds. " + i + "/" + (pixels.length - 1));
+	public void pixel(int x, int y, int color) {
+		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) {
+			Log.warn("Tried to set a pixel out of bounds.");
 			return;
 		}
-		pixels[i] = color;
+		pixels[index(x, y)] = color;
 	}
 
 	public void set(int x, int y, int c) {
-		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
-		pixels[y * pixelWidth + x] = c;
+		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) {
+			Log.warn("Tried to set a pixel out of bounds.");
+			return;
+		}
+		pixels[index(x, y)] = c;
 		updatePixels(x, y, 1, 1); // slow...
 	}
 
@@ -686,7 +688,7 @@ public class SImage implements Cloneable, SConstants {
 //		return index((int) x, (int) y);
 	}
 
-	public final int index(int x, int y) { return x + y * width; }
+	public final int index(int x, int y) { return x + y * pixelWidth; }
 
 	public void filterOPAQUE() {
 		loadPixels();

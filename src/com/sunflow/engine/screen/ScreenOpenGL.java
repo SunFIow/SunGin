@@ -32,7 +32,7 @@ import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
 import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
-import com.sunflow.gfx.SShape;
+import com.sunflow.gfx.S_Shape;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.SConstants;
 
@@ -158,7 +158,7 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public void postDraw() {
-		SShape.drawAll(game);
+		S_Shape.drawAll(game);
 		if (showOverlay) drawOverlay();
 	}
 

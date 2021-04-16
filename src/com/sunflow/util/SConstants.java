@@ -130,11 +130,11 @@ public interface SConstants {
 
 	// shapes
 
-//	static  final int VERTEX = 0;
-//	static  final int BEZIER_VERTEX = 1;
-//	static  final int QUADRATIC_VERTEX = 2;
-//	static  final int CURVE_VERTEX = 3;
-//	static  final int BREAK = 4;
+	static final int VERTEX = 0;
+	static final int BEZIER_VERTEX = 1;
+	static final int QUADRATIC_VERTEX = 2;
+	static final int CURVE_VERTEX = 3;
+	static final int BREAK = 4;
 
 //	@Deprecated
 //	static  final int QUAD_BEZIER_VERTEX = 2; // should not have been exposed

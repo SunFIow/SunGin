@@ -19,7 +19,7 @@
 
 package com.sunflow.util;
 
-import java.awt.Font;
+import com.sunflow.gfx.SFont;
 
 public class Style {
 	public int smooth;
@@ -47,7 +47,7 @@ public class Style {
 	public int strokeCap;
 	public int strokeJoin;
 
-	public Font textFont;
+	public SFont textFont;
 	public int textAlign;
 	public int textAlignY;
 	public int textMode;

@@ -12,8 +12,7 @@ import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.font.FontRenderContext;
-import java.awt.font.TextLayout;
+import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
@@ -25,35 +24,31 @@ import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.util.ArrayList;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.BiFunction;
 
+import com.sunflow.game.GameBase;
 import com.sunflow.logging.Log;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.Style;
 
-public class SGraphics extends SImage {
+public class SGraphics extends SImage implements SGFX {
 
 	/**
-	 * Storage for renderer-specific image data. In 1.x, renderers wrote cache
-	 * data into the image object. In 2.x, the renderer has a weak-referenced
-	 * map that points at any of the images it has worked on already. When the
-	 * images go out of scope, they will be properly garbage collected.
-	 * 
-	 * Also caches already used Composites
+	 * Java AWT Image object associated with this renderer. For the 1.0 version
+	 * The offscreen drawing buffer.
 	 */
-	protected WeakHashMap<Object, Object> cacheMap = new WeakHashMap<>();
-
-	// ........................................................
 
 	public BufferedImage image;
 
+	/** Screen object that we're talking to */
+	protected PScreen screen;
+
 	public Graphics2D graphics;
-//	public Graphics2D g2;
 
 	/// the anti-aliasing level for renderers that support it
 	public int smooth;
@@ -78,6 +73,99 @@ public class SGraphics extends SImage {
 	protected boolean primaryGraphics;
 
 	// ........................................................
+
+	/**
+	 * Storage for renderer-specific image data. In 1.x, renderers wrote cache
+	 * data into the image object. In 2.x, the renderer has a weak-referenced
+	 * map that points at any of the images it has worked on already. When the
+	 * images go out of scope, they will be properly garbage collected.
+	 * 
+	 * Also caches already used Composites
+	 */
+	protected WeakHashMap<Object, Object> cacheMap = new WeakHashMap<>();
+
+	////////////////////////////////////////////////////////////
+
+	// Vertex fields, moved from PConstants (after 2.0a8) because they're too
+	// general to show up in all sketches as defined variables.
+
+	// X, Y and Z are still stored in PConstants because of their general
+	// usefulness, and that X we'll always want to be 0, etc.
+
+//	static public final int R = 3; // actual rgb, after lighting
+//	static public final int G = 4; // fill stored here, transform in place
+//	static public final int B = 5; // TODO don't do that anymore (?)
+//	static public final int A = 6;
+//
+//	static public final int U = 7; // texture
+//	static public final int V = 8;
+//
+//	static public final int NX = 9; // normal
+//	static public final int NY = 10;
+//	static public final int NZ = 11;
+//
+//	static public final int EDGE = 12;
+//
+//	// stroke
+//
+//	/** stroke argb values */
+//	static public final int SR = 13;
+//	static public final int SG = 14;
+//	static public final int SB = 15;
+//	static public final int SA = 16;
+//
+//	/** stroke weight */
+//	static public final int SW = 17;
+//
+//	// transformations (2D and 3D)
+//
+//	static public final int TX = 18; // transformed xyzw
+//	static public final int TY = 19;
+//	static public final int TZ = 20;
+//
+//	static public final int VX = 21; // view space coords
+//	static public final int VY = 22;
+//	static public final int VZ = 23;
+//	static public final int VW = 24;
+//
+//	// material properties
+//
+//	// Ambient color (usually to be kept the same as diffuse)
+//	// fill(_) sets both ambient and diffuse.
+//	static public final int AR = 25;
+//	static public final int AG = 26;
+//	static public final int AB = 27;
+//
+//	// Diffuse is shared with fill.
+//	static public final int DR = 3; // TODO needs to not be shared, this is a material property
+//	static public final int DG = 4;
+//	static public final int DB = 5;
+//	static public final int DA = 6;
+//
+//	// specular (by default kept white)
+//	static public final int SPR = 28;
+//	static public final int SPG = 29;
+//	static public final int SPB = 30;
+//
+//	static public final int SHINE = 31;
+//
+//	// emissive (by default kept black)
+//	static public final int ER = 32;
+//	static public final int EG = 33;
+//	static public final int EB = 34;
+//
+//	// has this vertex been lit yet
+//	static public final int BEEN_LIT = 35;
+//
+//	// has this vertex been assigned a normal yet
+//	static public final int HAS_NORMAL = 36;
+
+	static public final int VERTEX_FIELD_COUNT = 2; // 37;
+
+	////////////////////////////////////////////////////////////
+
+	// ........................................................
+
 	/** The current colorMode */
 	protected int colorMode; // = RGB;
 
@@ -179,6 +267,7 @@ public class SGraphics extends SImage {
 	protected int ellipseMode;
 
 	/** The current shape alignment mode (read-only) */
+	@SuppressWarnings("unused")
 	protected int shapeMode;
 
 	/** The current image alignment (read-only) */
@@ -189,7 +278,7 @@ public class SGraphics extends SImage {
 	// Text and font properties
 
 	/** The current text font (read-only) */
-	protected Font textFont;
+	protected SFont textFont;
 
 	/** The current text align (read-only) */
 	protected int textAlign = LEFT;
@@ -234,8 +323,15 @@ public class SGraphics extends SImage {
 	private Rectangle2D.Float rect = new Rectangle2D.Float();
 	private Arc2D.Float arc = new Arc2D.Float();
 
+	protected int shape;
+
+	// vertices
+	public static final int DEFAULT_VERTICES = 512;
+	protected float vertices[][] = new float[DEFAULT_VERTICES][VERTEX_FIELD_COUNT];
+	protected int vertexCount;
+
 	protected GeneralPath gpath;
-	protected ArrayList<Shape> shapes_tmp;
+//	protected ArrayList<Shape> shapes_tmp;
 
 	protected Color tintColorObject;
 
@@ -250,8 +346,16 @@ public class SGraphics extends SImage {
 
 	Font fontObject;
 
+	private static final String ERROR_TEXTFONT_NULL_FONT = "A null Font was passed to textFont()";
+
+	/**
+	 * Internal buffer used by the text() functions
+	 * because the String object is slow
+	 */
+	protected char[] textBuffer = new char[8 * 1024];
+	protected char[] textWidthBuffer = new char[8 * 1024];
+
 	private Composite defaultComposite;
-	private static final String ERROR_TEXTFONT_NULL_PFONT = "A null Font was passed to textFont()";
 
 //	public SGraphics() {
 //		// In 3.1.2, giving up on the async image saving as the default
@@ -268,16 +372,17 @@ public class SGraphics extends SImage {
 
 //	public SGraphics(BufferedImage bi) { super(bi); }
 
-//	public void setParent(PApplet parent) { // ignore
-//		this.parent = parent;
-//
-//		// Some renderers (OpenGL) need to know what smoothing level will be used
-//		// before the rendering surface is even created.
-//		smooth = parent.sketchSmooth();
-//		pixelDensity = parent.sketchPixelDensity();
-//	}
+	public void setParent(GameBase parent) {
+		this.parent = parent;
 
-	public void setPrimary(boolean primary) { // ignore
+		// Some renderers (OpenGL) need to know what smoothing level will be used
+		// before the rendering surface is even created.
+		smooth = parent.smooth;
+		pixelDensity = parent.pixelDensity;
+	}
+
+	@Override
+	public void setPrimary(boolean primary) {
 		this.primaryGraphics = primary;
 
 		// base images must be opaque (for performance and general
@@ -288,11 +393,13 @@ public class SGraphics extends SImage {
 		}
 	}
 
-	public void setPath(String path) { // ignore
+	@Override
+	public void setPath(String path) {
 		this.path = path;
 	}
 
-	public void setSize(int w, int h) { // ignore
+	@Override
+	public void setSize(int w, int h) {
 		width = w;
 		height = h;
 
@@ -307,12 +414,90 @@ public class SGraphics extends SImage {
 		reapplySettings = true;
 	}
 
+	public void setCache(Object key, Object val) {
+		cacheMap.put(key, val);
+	}
+
+	public Object getCache(Object key) {
+		return cacheMap.get(key);
+	}
+
+	public void removeCache(Object key) {
+		cacheMap.remove(key);
+	}
+
+	public PScreen createScreen() {
+		return screen = new PScreenAWT(this);
+	}
+
+	/**
+	 * Still need a means to get the java.awt.Image object, since getNative()
+	 * is going to return the {@link Graphics2D} object.
+	 */
+	@Override
+	public BufferedImage getImage() {
+		return image;
+	}
+
+	/** Returns the java.awt.Graphics2D object used by this renderer. */
+	@Override
+	public Object getNative() {
+		return graphics;
+	}
+
+	@Override
+	public Graphics2D checkImage() {
+		if (image == null ||
+				image.getWidth() != width * pixelDensity ||
+				image.getHeight() != height * pixelDensity) {
+			int wide = width * pixelDensity;
+			int high = height * pixelDensity;
+			image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
+		}
+		return (Graphics2D) image.getGraphics();
+	}
+
+	@Override
+	public void beginDraw() {
+		graphics = checkImage();
+
+		// Calling getGraphics() seems to nuke several settings.
+		// It seems to be re-creating a new Graphics2D object each time.
+		// https://github.com/processing/processing/issues/3331
+		if (strokeObject != null) {
+			graphics.setStroke(strokeObject);
+		}
+		// https://github.com/processing/processing/issues/2617
+		if (fontObject != null) {
+			graphics.setFont(fontObject);
+		}
+		// https://github.com/processing/processing/issues/4019
+		if (blendMode != 0) {
+			blendMode(blendMode);
+		}
+		handleSmooth();
+
+		checkSettings();
+		resetMatrix(); // reset model matrix
+//		vertexCount = 0;
+	}
+
+	@Override
+	public void endDraw() {
+		if (primaryGraphics) {} else {
+			// TODO this is probably overkill for most tasks...
+			loadPixels();
+		}
+		setModified();
+		graphics.dispose();
+	}
+
 	protected void checkSettings() {
 		if (!settingsInited) defaultSettings();
 		if (reapplySettings) reapplySettings();
 	}
 
-	protected void defaultSettings() { // ignore
+	protected void defaultSettings() {
 //		image = new BufferedImage(width, height, format);
 //		super.defaultSettings();
 //		graphics = image.createGraphics();
@@ -407,79 +592,8 @@ public class SGraphics extends SImage {
 
 		reapplySettings = false;
 	}
-//	  @Override
-//	  public PSurface createSurface() {
-//	    return surface = new PSurfaceAWT(this);
-//	  }
 
-	/**
-	 * Still need a means to get the java.awt.Image object, since getNative()
-	 * is going to return the {@link Graphics2D} object.
-	 */
 	@Override
-	public BufferedImage getImage() {
-		return image;
-	}
-
-	/** Returns the java.awt.Graphics2D object used by this renderer. */
-	@Override
-	public Object getNative() {
-		return graphics;
-	}
-
-	public Graphics2D checkImage() {
-		if (image == null ||
-				image.getWidth() != width * pixelDensity ||
-				image.getHeight() != height * pixelDensity) {
-			int wide = width * pixelDensity;
-			int high = height * pixelDensity;
-			image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
-		}
-		return (Graphics2D) image.getGraphics();
-	}
-
-	public void beginDraw() {
-		graphics = checkImage();
-
-		// Calling getGraphics() seems to nuke several settings.
-		// It seems to be re-creating a new Graphics2D object each time.
-		// https://github.com/processing/processing/issues/3331
-		if (strokeObject != null) {
-			graphics.setStroke(strokeObject);
-		}
-		// https://github.com/processing/processing/issues/2617
-		if (fontObject != null) {
-			graphics.setFont(fontObject);
-		}
-		// https://github.com/processing/processing/issues/4019
-		if (blendMode != 0) {
-			blendMode(blendMode);
-		}
-		handleSmooth();
-
-		checkSettings();
-		resetMatrix(); // reset model matrix
-//		vertexCount = 0;
-	}
-
-	public void endDraw() {
-		if (primaryGraphics) {} else {
-			// TODO this is probably overkill for most tasks...
-			loadPixels();
-		}
-		setModified();
-		graphics.dispose();
-	}
-
-	public final void pixel(float x, float y) { pixel(x, y, strokeColor); }
-
-// 	PROCESSING CODE
-// 	| | | | | | | |
-// 	V V V V V V V V
-
-	protected int shape;
-	protected int vNum;
-
 	public final void beginShape() { beginShape(POLYGON); }
 
 	// POINTS,LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
@@ -487,67 +601,177 @@ public class SGraphics extends SImage {
 	 * @param mode
 	 *            POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
 	 */
+	@Override
 	public void beginShape(int mode) {
 		shape = mode;
-		vNum = 0;
+		vertexCount = 0;
 		gpath = null;
-		SShape.beginShape(this);
+		S_Shape.beginShape(this);
 	}
 
-	public void vertex(float x, float y) {
-		if (gpath == null) {
-			gpath = new GeneralPath();
-			gpath.moveTo(x, y);
-		} else gpath.lineTo(x, y);
-		vNum++;
-		testVertex();
-	}
-
-	private void testVertex() {
-		boolean end = false;
-		if (shape == POINTS && vNum == 1) end = true;
-		if (shape == LINES && vNum == 2) end = true;
-		if (shape == TRIANGLES && vNum == 3) end = true;
-//		if (shape == TRIANGLE_FAN && vNum == ??) end = true;
-//		if (shape == TRIANGLE_STRIP && vNum == 4) end = true;
-		if (shape == QUADS && vNum == 4) end = true;
-//		if (shape == QUAD_STRIP && vNum == 4) end = true;
-
-		if (end) {
-			SShape.tempShape = true;
-			endShape(CLOSE);
-			beginShape(shape);
-			SShape.tempShape = false;
+	protected void vertexCheck() {
+		if (vertexCount == vertices.length) {
+			float temp[][] = new float[vertexCount << 1][VERTEX_FIELD_COUNT];
+			System.arraycopy(vertices, 0, temp, 0, vertexCount);
+			vertices = temp;
 		}
 	}
 
-	public final void closeShape() { gpath.closePath(); }
+	@Override
+	public void vertex(float x, float y) {
+		vertexCheck();
+
+		// not everyone needs this, but just easier to store rather
+		// than adding another moving part to the code...
+		vertices[vertexCount][X] = x;
+		vertices[vertexCount][Y] = y;
+		vertexCount++;
+
+		switch (shape) {
+			case POINTS:
+				point(x, y);
+				break;
+
+			case LINES:
+				if ((vertexCount % 2) == 0) {
+					line(vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y], x, y);
+				}
+				break;
+
+			case TRIANGLES:
+				if ((vertexCount % 3) == 0) {
+					triangle(vertices[vertexCount - 3][X],
+							vertices[vertexCount - 3][Y],
+							vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y],
+							x, y);
+				}
+				break;
+
+			case TRIANGLE_STRIP:
+				if (vertexCount >= 3) {
+					triangle(vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y],
+							vertices[vertexCount - 1][X],
+							vertices[vertexCount - 1][Y],
+							vertices[vertexCount - 3][X],
+							vertices[vertexCount - 3][Y]);
+				}
+				break;
+
+			case TRIANGLE_FAN:
+				if (vertexCount >= 3) {
+					// This is an unfortunate implementation because the stroke for an
+					// adjacent triangle will be repeated. However, if the stroke is not
+					// redrawn, it will replace the adjacent line (when it lines up
+					// perfectly) or show a faint line (when off by a small amount).
+					// The alternative would be to wait, then draw the shape as a
+					// polygon fill, followed by a series of vertices. But that's a
+					// poor method when used with PDF, DXF, or other recording objects,
+					// since discrete triangles would likely be preferred.
+					triangle(vertices[0][X],
+							vertices[0][Y],
+							vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y],
+							x, y);
+				}
+				break;
+
+			case QUAD:
+			case QUADS:
+				if ((vertexCount % 4) == 0) {
+					quad(vertices[vertexCount - 4][X],
+							vertices[vertexCount - 4][Y],
+							vertices[vertexCount - 3][X],
+							vertices[vertexCount - 3][Y],
+							vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y],
+							x, y);
+				}
+				break;
+
+			case QUAD_STRIP:
+				// 0---2---4
+				// | | |
+				// 1---3---5
+				if ((vertexCount >= 4) && ((vertexCount % 2) == 0)) {
+					quad(vertices[vertexCount - 4][X],
+							vertices[vertexCount - 4][Y],
+							vertices[vertexCount - 2][X],
+							vertices[vertexCount - 2][Y],
+							x, y,
+							vertices[vertexCount - 3][X],
+							vertices[vertexCount - 3][Y]);
+				}
+				break;
+
+			case POLYGON:
+				if (gpath == null) {
+					gpath = new GeneralPath();
+					gpath.moveTo(x, y);
+				} else {
+					gpath.lineTo(x, y);
+				}
+				break;
+		}
+	}
+
+	@Override
+	public void vertex(int[] v) { vertex(v[X], v[Y]); }
+
+	@Override
+	public void vertex(float[] v) { vertex(v[X], v[Y]); }
+
+	@Override
+	public void endShape() { endShape(OPEN); }
 
 	/**
 	 * @param mode
 	 *            OPEN or CLOSE
 	 */
+	@Override
 	public void endShape(int mode) {
-		if (mode == CLOSE) if (gpath != null) gpath.closePath();
-		endShape();
+		if (gpath == null || shape != POLYGON) {
+			shape = 0;
+			return;
+		}
+
+		if (mode == CLOSE) gpath.closePath();
+		drawShape(gpath);
+
+//		boolean completeShape = true;
+//		if (shape == POINTS && vertexCount < 1) completeShape = false;
+//		if (shape == LINES && vertexCount < 2) completeShape = false;
+//		if (shape == TRIANGLES && vertexCount < 3) completeShape = false;
+////		if (shape == TRIANGLE_FAN && vertexCount < 0) completeShape = false;
+////		if (shape == TRIANGLE_STRIP && vertexCount < 0) completeShape = false;
+//		if (shape == QUADS && vertexCount < 4) completeShape = false;
+////		if (shape == QUAD_STRIP && vertexCount < 0) completeShape = false;
+//
+//		if (completeShape) SShape.addShape(this);
+//		SShape.endShape(this);
 	}
 
-	public void endShape() {
-		boolean completeShape = true;
-		if (shape == POINTS && vNum < 1) completeShape = false;
-		if (shape == LINES && vNum < 2) completeShape = false;
-		if (shape == TRIANGLES && vNum < 3) completeShape = false;
-//		if(shape == TRIANGLE_FAN && vNum < 0) bla = false;
-//		if(shape == TRIANGLE_STRIP && vNum < 0)bla = false;
-		if (shape == QUADS && vNum < 4) completeShape = false;
-//		if(shape == QUAD_STRIP && vNum < 0) bla = false;
+//	private void testVertex() {
+//		boolean end = false;
+//		if (shape == POINTS && vertexCount == 1) end = true;
+//		if (shape == LINES && vertexCount == 2) end = true;
+//		if (shape == TRIANGLES && vertexCount == 3) end = true;
+////		if (shape == TRIANGLE_FAN && vNum == ??) end = true;
+////		if (shape == TRIANGLE_STRIP && vNum == 4) end = true;
+//		if (shape == QUADS && vertexCount == 4) end = true;
+////		if (shape == QUAD_STRIP && vNum == 4) end = true;
+//
+//		if (end) {
+//			SShape.tempShape = true;
+//			endShape(CLOSE);
+//			beginShape(shape);
+//			SShape.tempShape = false;
+//		}
+//	}
 
-//		drawShape(gpath);
-		if (completeShape && gpath != null) SShape.addShape(this);
-		SShape.endShape(this);
-	}
-
-// COPY PASTA
+	//////////////////////////////////////////////////////////////
 
 	// BLEND
 
@@ -562,6 +786,7 @@ public class SGraphics extends SImage {
 	 * @param mode
 	 *            the blending mode to use
 	 */
+	@Override
 	public void blendMode(int mode) {
 		this.blendMode = mode;
 		blendModeImpl();
@@ -573,7 +798,7 @@ public class SGraphics extends SImage {
 		} else {
 			Composite comp = (Composite) getCache(blendMode);
 			if (comp == null) {
-				comp = new Composite() {
+				setCache(blendMode, comp = new Composite() {
 
 					@Override
 					public CompositeContext createContext(ColorModel srcColorModel,
@@ -581,8 +806,7 @@ public class SGraphics extends SImage {
 							RenderingHints hints) {
 						return new BlendingContext(blendMode);
 					}
-				};
-				setCache(blendMode, comp);
+				});
 			}
 			graphics.setComposite(comp);
 		}
@@ -632,7 +856,250 @@ public class SGraphics extends SImage {
 
 	//////////////////////////////////////////////////////////////
 
-	final public void smooth() { smooth(3); }
+	// POINT, LINE, TRIANGLE, QUAD
+
+	@Override
+	public void point(float x, float y) {
+		if (stroke) line(x, y, x + EPSILON, y + EPSILON);
+	}
+
+	@Override
+	public void line(float x1, float y1, float x2, float y2) {
+		line.setLine(x1, y1, x2, y2);
+		strokeShape(line);
+	}
+
+	@Override
+	public void triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+		gpath = new GeneralPath();
+		gpath.moveTo(x1, y1);
+		gpath.lineTo(x2, y2);
+		gpath.lineTo(x3, y3);
+		gpath.closePath();
+		drawShape(gpath);
+	}
+
+	@Override
+	public void quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
+		GeneralPath gp = new GeneralPath();
+		gp.moveTo(x1, y1);
+		gp.lineTo(x2, y2);
+		gp.lineTo(x3, y3);
+		gp.lineTo(x4, y4);
+		gp.closePath();
+		drawShape(gp);
+
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// RECT
+
+	/**
+	 * @param mode
+	 *            either CORNER, CORNERS, CENTER, or RADIUS
+	 */
+	@Override
+	public void rectMode(int mode) { rectMode = mode; }
+
+	@Override
+	public void rect(float x, float y, float w, float h) {
+		float hradius, vradius;
+		switch (rectMode) {
+			case CORNERS:
+				break;
+			case CORNER:
+				w += x;
+				h += y;
+				break;
+			case RADIUS:
+				hradius = w;
+				vradius = h;
+				w = x + hradius;
+				h = y + vradius;
+				x -= hradius;
+				y -= vradius;
+				break;
+			case CENTER:
+				hradius = w / 2.0f;
+				vradius = h / 2.0f;
+				w = x + hradius;
+				h = y + vradius;
+				x -= hradius;
+				y -= vradius;
+		}
+
+		if (x > w) {
+			float temp = x;
+			x = w;
+			w = temp;
+		}
+
+		if (y > h) {
+			float temp = y;
+			y = h;
+			h = temp;
+		}
+
+		rectImpl(x, y, w, h);
+	}
+
+	protected void rectImpl(float x1, float y1, float x2, float y2) {
+		rect.setFrame(x1, y1, x2 - x1, y2 - y1);
+		drawShape(rect);
+	}
+
+	@Override
+	public void square(float x, float y, float w) { rect(x, y, w, w); }
+
+	//////////////////////////////////////////////////////////////
+
+	// ELLIPSE AND ARC
+
+	/**
+	 * @param mode
+	 *            either CENTER, RADIUS, CORNER, or CORNERS
+	 */
+	@Override
+	public final void ellipseMode(int mode) { ellipseMode = mode; }
+
+	@Override
+	public final void ellipse(float x, float y, float w, float h) {
+		if (ellipseMode == CORNERS) {
+			w = w - x;
+			h = h - y;
+		} else if (ellipseMode == RADIUS) {
+			x = x - w;
+			y = y - h;
+			w = w * 2;
+			h = h * 2;
+		} else if (ellipseMode == DIAMETER) {
+			x = x - w / 2f;
+			y = y - h / 2f;
+		}
+
+		if (w < 0) { // undo negative width
+			x += w;
+			w = -w;
+		}
+
+		if (h < 0) { // undo negative height
+			y += h;
+			h = -h;
+		}
+
+		ellipseImpl(x, y, w, h);
+	}
+
+	protected void ellipseImpl(float x, float y, float w, float h) {
+		ellipse.setFrame(x, y, w, h);
+		drawShape(ellipse);
+	}
+
+	@Override
+	public final void ellipse(float x, float y, float r) { ellipse(x, y, r, r); }
+
+	@Override
+	public final void circle(float x, float y, float r) { ellipse(x, y, r, r); }
+
+	/**
+	 * @param a
+	 *            x-coordinate of the arc's ellipse
+	 * @param b
+	 *            y-coordinate of the arc's ellipse
+	 * @param c
+	 *            width of the arc's ellipse by default
+	 * @param d
+	 *            height of the arc's ellipse by default
+	 * @param start
+	 *            angle to start the arc, specified in radians
+	 * @param stop
+	 *            angle to stop the arc, specified in radians
+	 */
+	public void arc(float a, float b, float c, float d,
+			float start, float stop) {
+		arc(a, b, c, d, start, stop, 0);
+	}
+
+	/*
+	 * @param mode either OPEN, CHORD, or PIE
+	 */
+	public void arc(float a, float b, float c, float d,
+			float start, float stop, int mode) {
+		float x = a;
+		float y = b;
+		float w = c;
+		float h = d;
+
+		if (ellipseMode == CORNERS) {
+			w = c - a;
+			h = d - b;
+
+		} else if (ellipseMode == RADIUS) {
+			x = a - c;
+			y = b - d;
+			w = c * 2;
+			h = d * 2;
+
+		} else if (ellipseMode == CENTER) {
+			x = a - c / 2f;
+			y = b - d / 2f;
+		}
+
+// make sure the loop will exit before starting while
+		if (!Float.isInfinite(start) && !Float.isInfinite(stop)) {
+// ignore equal and degenerate cases
+			if (stop > start) {
+				// make sure that we're starting at a useful point
+				while (start < 0) {
+					start += TWO_PI;
+					stop += TWO_PI;
+				}
+
+				if (stop - start > TWO_PI) {
+					// don't change start, it is visible in PIE mode
+					stop = start + TWO_PI;
+				}
+				arcImpl(x, y, w, h, start, stop, mode);
+			}
+		}
+	}
+
+	private final void arcImpl(float x, float y, float w, float h, float start, float stop, int mode) {
+		start = -start * RAD_TO_DEG;
+		stop = -stop * RAD_TO_DEG;
+		float sweep = stop - start;
+
+		int fillMode = Arc2D.PIE;
+		int strokeMode = Arc2D.OPEN;
+
+		if (mode == OPEN) {
+			fillMode = Arc2D.OPEN;
+
+		} else if (mode == PIE) {
+			strokeMode = Arc2D.PIE;
+
+		} else if (mode == CHORD) {
+			fillMode = Arc2D.CHORD;
+			strokeMode = Arc2D.CHORD;
+		}
+
+		if (fill) {
+			arc.setArc(x, y, w, h, start, sweep, fillMode);
+			fillShape(arc);
+		}
+		if (stroke) {
+			arc.setArc(x, y, w, h, start, sweep, strokeMode);
+			strokeShape(arc);
+		}
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SMOOTHING
+
+	@Override
+	public final void smooth() { smooth(3); }
 
 	/**
 	 * 
@@ -645,15 +1112,16 @@ public class SGraphics extends SImage {
 	 *            5 : + Fractionalmetrics
 	 *            6 : all default
 	 */
-
-	final public void smooth(int quality) { // ignore
+	@Override
+	public final void smooth(int quality) {
 		if (smooth == quality) return;
 		if (quality < 0 || quality > 6) quality = 0;
 		this.smooth = quality;
 //		handleSmooth();
 	}
 
-	public final void noSmooth() { // ignore
+	@Override
+	public final void noSmooth() {
 		smooth(0);
 	}
 
@@ -743,738 +1211,15 @@ public class SGraphics extends SImage {
 		}
 	}
 
-	public final void strokeCap(int cap) {
-		strokeCap = cap;
-		strokeImpl();
-	}
-
-	public final void strokeJoin(int join) {
-		strokeJoin = join;
-		strokeImpl();
-	}
-
-	public final void strokeWeight(float weight) {
-		strokeWeight = weight;
-		strokeImpl();
-	}
-
-	private final void strokeImpl() {
-		int cap = BasicStroke.CAP_BUTT;
-		if (strokeCap == ROUND) {
-			cap = BasicStroke.CAP_ROUND;
-		} else if (strokeCap == PROJECT) {
-			cap = BasicStroke.CAP_SQUARE;
-		}
-
-		int join = BasicStroke.JOIN_BEVEL;
-		if (strokeJoin == MITER) {
-			join = BasicStroke.JOIN_MITER;
-		} else if (strokeJoin == ROUND) {
-			join = BasicStroke.JOIN_ROUND;
-		}
-
-		strokeObject = new BasicStroke(strokeWeight, cap, join);
-		graphics.setStroke(strokeObject);
-	}
-
-	public final void noFill() {
-		fill = false;
-	}
-
-	/**
-	 * @param rgb
-	 *            color value in hexadecimal notation
-	 */
-
-	public final void fill(int rgb) {
-		colorCalc(rgb);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param alpha
-	 *            opacity of the fill
-	 */
-
-	public final void fill(int rgb, float alpha) {
-		colorCalc(rgb, alpha);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param gray
-	 *            number specifying value between white and black
-	 */
-
-	public final void fill(float gray) {
-		colorCalc(gray);
-		fillFromCalc();
-	}
-
-	public final void fill(float gray, float alpha) {
-		colorCalc(gray, alpha);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param v1
-	 *            red or hue value (depending on current color mode)
-	 * @param v2
-	 *            green or saturation value (depending on current color mode)
-	 * @param v3
-	 *            blue or brightness value (depending on current color mode)
-	 */
-
-	public final void fill(float v1, float v2, float v3) {
-		colorCalc(v1, v2, v3);
-		fillFromCalc();
-	}
-
-	public final void fill(float v1, float v2, float v3, float alpha) {
-		colorCalc(v1, v2, v3, alpha);
-		fillFromCalc();
-	}
-
-	private final void fillFromCalc() {
-		fill = true;
-		fillR = calcR;
-		fillG = calcG;
-		fillB = calcB;
-		fillA = calcA;
-		fillRi = calcRi;
-		fillGi = calcGi;
-		fillBi = calcBi;
-		fillAi = calcAi;
-		fillColor = calcColor;
-		fillAlpha = calcAlpha;
-
-		fillColorObject = new Color(fillColor, true);
-		fillGradient = false;
-	}
-
-	public final void noStroke() {
-		stroke = false;
-	}
-
-	/**
-	 * @param rgb
-	 *            color value in hexadecimal notation
-	 */
-
-	public final void stroke(int rgb) {
-		colorCalc(rgb);
-		strokeFromCalc();
-	}
-
-	/**
-	 * @param alpha
-	 *            opacity of the stroke
-	 */
-
-	public final void stroke(int rgb, float alpha) {
-		colorCalc(rgb, alpha);
-		strokeFromCalc();
-	}
-
-	/**
-	 * @param gray
-	 *            specifies a value between white and black
-	 */
-
-	public final void stroke(float gray) {
-		colorCalc(gray);
-		strokeFromCalc();
-	}
-
-	public final void stroke(float gray, float alpha) {
-		colorCalc(gray, alpha);
-		strokeFromCalc();
-	}
-
-	/**
-	 * @param v1
-	 *            red or hue value (depending on current color mode)
-	 * @param v2
-	 *            green or saturation value (depending on current color mode)
-	 * @param v3
-	 *            blue or brightness value (depending on current color mode)
-	 * @webref color:setting
-	 */
-
-	public final void stroke(float v1, float v2, float v3) {
-		colorCalc(v1, v2, v3);
-		strokeFromCalc();
-	}
-
-	public final void stroke(float v1, float v2, float v3, float alpha) {
-		colorCalc(v1, v2, v3, alpha);
-		strokeFromCalc();
-	}
-
-	/**
-	 * ( begin auto-generated from noTint.xml )
-	 *
-	 * Removes the current fill value for displaying images and reverts to
-	 * displaying images with their original hues.
-	 *
-	 * ( end auto-generated )
-	 *
-	 * @webref image:loading_displaying
-	 * @usage web_application
-	 * @see PGraphics#tint(float, float, float, float)
-	 * @see PGraphics#image(PImage, float, float, float, float)
-	 */
-	public void noTint() {
-		tint = false;
-	}
-
-	public void tint(int rgb) {
-		colorCalc(rgb);
-		tintFromCalc();
-	}
-
-	/**
-	 * @param alpha
-	 *            opacity of the image
-	 */
-	public void tint(int rgb, float alpha) {
-		colorCalc(rgb, alpha);
-		tintFromCalc();
-	}
-
-	/**
-	 * @param gray
-	 *            specifies a value between white and black
-	 */
-	public void tint(float gray) {
-		colorCalc(gray);
-		tintFromCalc();
-	}
-
-	public void tint(float gray, float alpha) {
-		colorCalc(gray, alpha);
-		tintFromCalc();
-	}
-
-	/**
-	 * @param v1
-	 *            red or hue value (depending on current color mode)
-	 * @param v2
-	 *            green or saturation value (depending on current color mode)
-	 * @param v3
-	 *            blue or brightness value (depending on current color mode)
-	 */
-	public void tint(float v1, float v2, float v3) {
-		colorCalc(v1, v2, v3);
-		tintFromCalc();
-	}
-
-	public void tint(float v1, float v2, float v3, float alpha) {
-		colorCalc(v1, v2, v3, alpha);
-		tintFromCalc();
-	}
-
-	protected void tintFromCalc() {
-		tint = true;
-		tintR = calcR;
-		tintG = calcG;
-		tintB = calcB;
-		tintA = calcA;
-		tintRi = calcRi;
-		tintGi = calcGi;
-		tintBi = calcBi;
-		tintAi = calcAi;
-		tintColor = calcColor;
-		tintAlpha = calcAlpha;
-	}
-
-	private final void strokeFromCalc() {
-		stroke = true;
-		strokeR = calcR;
-		strokeG = calcG;
-		strokeB = calcB;
-		strokeA = calcA;
-		strokeRi = calcRi;
-		strokeGi = calcGi;
-		strokeBi = calcBi;
-		strokeAi = calcAi;
-		strokeColor = calcColor;
-		strokeAlpha = calcAlpha;
-
-		strokeColorObject = new Color(strokeColor, true);
-		strokeGradient = false;
-	}
-
-	/**
-	 * @param rgb
-	 *            color value in hexadecimal notation
-	 */
-
-	public final void background(int rgb) {
-		colorCalc(rgb);
-		backgroundFromCalc();
-	}
-
-	/**
-	 * @param alpha
-	 *            opacity of the background
-	 */
-
-	public final void background(int rgb, float alpha) {
-		colorCalc(rgb, alpha);
-		backgroundFromCalc();
-	}
-
-	/**
-	 * @param gray
-	 *            specifies a value between white and black
-	 */
-
-	public final void background(float gray) {
-		colorCalc(gray);
-		backgroundFromCalc();
-	}
-
-	public final void background(float gray, float alpha) {
-		if (format == RGB) {
-			background(gray); // ignore alpha for main drawing surface
-
-		} else {
-			colorCalc(gray, alpha);
-			backgroundFromCalc();
-		}
-	}
-
-	/**
-	 * @param v1
-	 *            red or hue value (depending on the current color mode)
-	 * @param v2
-	 *            green or saturation value (depending on the current color mode)
-	 * @param v3
-	 *            blue or brightness value (depending on the current color mode)
-	 */
-
-	public final void background(float v1, float v2, float v3) {
-		colorCalc(v1, v2, v3);
-		backgroundFromCalc();
-	}
-
-	public final void background(float v1, float v2, float v3, float alpha) {
-		colorCalc(v1, v2, v3, alpha);
-		backgroundFromCalc();
-	}
-
-	public final void clear() { background(0, 0, 0, 0); }
-
-	private final void backgroundFromCalc() {
-		backgroundR = calcR;
-		backgroundG = calcG;
-		backgroundB = calcB;
-		// backgroundA = (format == RGB) ? colorModeA : calcA;
-		// If drawing surface is opaque, this maxes out at 1.0. [fry 150513]
-		backgroundA = (format == RGB) ? 1 : calcA;
-		backgroundRi = calcRi;
-		backgroundGi = calcGi;
-		backgroundBi = calcBi;
-		backgroundAi = (format == RGB) ? 255 : calcAi;
-		backgroundAlpha = (format == RGB) ? false : calcAlpha;
-		backgroundColor = calcColor;
-
-		backgroundImpl();
-	}
-
 	//////////////////////////////////////////////////////////////
 
-	// BACKGROUND
-
-	int[] clearPixels;
-
-	protected void clearPixels(int color) {
-		// On a hi-res display, image may be larger than width/height
-		int imageWidth = image.getWidth(null);
-		int imageHeight = image.getHeight(null);
-
-		// Create a small array that can be used to set the pixels several times.
-		// Using a single-pixel line of length 'width' is a tradeoff between
-		// speed (setting each pixel individually is too slow) and memory
-		// (an array for width*height would waste lots of memory if it stayed
-		// resident, and would terrify the gc if it were re-created on each trip
-		// to background().
-//	    WritableRaster raster = ((BufferedImage) image).getRaster();
-//	    WritableRaster raster = image.getRaster();
-		WritableRaster raster = getRaster();
-		if ((clearPixels == null) || (clearPixels.length < imageWidth)) {
-			clearPixels = new int[imageWidth];
-		}
-		Arrays.fill(clearPixels, 0, imageWidth, backgroundColor);
-		for (int i = 0; i < imageHeight; i++) {
-			raster.setDataElements(0, i, imageWidth, 1, clearPixels);
-		}
-	}
-
-	private final void backgroundImpl() {
-		if (backgroundAlpha) {
-			clearPixels(backgroundColor);
-		} else {
-//			Color bgColor = new Color(backgroundColor);
-			Color bgColor = new Color(backgroundColor, calcAlpha);
-			// seems to fire an additional event that causes flickering,
-			// like an extra background erase on OS X
-//	      if (canvas != null) {
-//	        canvas.setBackground(bgColor);
-//	      }
-			// new Exception().printStackTrace(System.out);
-			// in case people do transformations before background(),
-			// need to handle this with a push/reset/pop
-
-//			Composite oldComposite = graphics.getComposite();
-//			graphics.setComposite(defaultComposite);
-//			AffineTransform at = graphics.getTransform();
-
-			pushMatrix();
-			resetMatrix();
-			graphics.setColor(bgColor); // , backgroundAlpha));
-//	      	g2.fillRect(0, 0, width, height);
-			// On a hi-res display, image may be larger than width/height
-			if (image != null) {
-				// image will be null in subclasses (i.e. PDF)
-				graphics.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
-			} else {
-				// hope for the best if image is null
-				graphics.fillRect(0, 0, width, height);
-			}
-			popMatrix();
-
-//			graphics.setTransform(at);
-//			graphics.setComposite(oldComposite);
-		}
-	}
-
-	private final void colorCalc(int rgb) {
-		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) {
-			colorCalc((float) rgb);
-
-		} else {
-			colorCalcARGB(rgb, colorModeA);
-		}
-	}
-
-	private final void colorCalc(int rgb, float alpha) {
-		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) { // see above
-			colorCalc((float) rgb, alpha);
-
-		} else {
-			colorCalcARGB(rgb, alpha);
-		}
-	}
-
-	private final void colorCalc(float gray) {
-		colorCalc(gray, colorModeA);
-	}
-
-	private final void colorCalc(float gray, float alpha) {
-		if (gray > colorModeX) gray = colorModeX;
-		if (alpha > colorModeA) alpha = colorModeA;
-
-		if (gray < 0) gray = 0;
-		if (alpha < 0) alpha = 0;
-
-		calcR = colorModeScale ? (gray / colorModeX) : gray;
-		calcG = calcR;
-		calcB = calcR;
-		calcA = colorModeScale ? (alpha / colorModeA) : alpha;
-
-		calcRi = (int) (calcR * 255);
-		calcGi = (int) (calcG * 255);
-		calcBi = (int) (calcB * 255);
-		calcAi = (int) (calcA * 255);
-		calcColor = (calcAi << 24) | (calcRi << 16) | (calcGi << 8) | calcBi;
-		calcAlpha = (calcAi != 255);
-	}
-
-	private final void colorCalc(float x, float y, float z) {
-		colorCalc(x, y, z, colorModeA);
-	}
-
-	private final void colorCalc(float x, float y, float z, float a) {
-		if (x > colorModeX) x = colorModeX;
-		if (y > colorModeY) y = colorModeY;
-		if (z > colorModeZ) z = colorModeZ;
-		if (a > colorModeA) a = colorModeA;
-
-		if (x < 0) x = 0;
-		if (y < 0) y = 0;
-		if (z < 0) z = 0;
-		if (a < 0) a = 0;
-
-		switch (colorMode) {
-			case RGB:
-				if (colorModeScale) {
-					calcR = x / colorModeX;
-					calcG = y / colorModeY;
-					calcB = z / colorModeZ;
-					calcA = a / colorModeA;
-				} else {
-					calcR = x;
-					calcG = y;
-					calcB = z;
-					calcA = a;
-				}
-				break;
-
-			case HSB:
-				x /= colorModeX; // h
-				y /= colorModeY; // s
-				z /= colorModeZ; // b
-
-				calcA = colorModeScale ? (a / colorModeA) : a;
-
-				if (y == 0) { // saturation == 0
-					calcR = calcG = calcB = z;
-
-				} else {
-					float which = (x - (int) x) * 6.0f;
-					float f = which - (int) which;
-					float p = z * (1.0f - y);
-					float q = z * (1.0f - y * f);
-					float t = z * (1.0f - (y * (1.0f - f)));
-
-					switch ((int) which) {
-						case 0:
-							calcR = z;
-							calcG = t;
-							calcB = p;
-							break;
-						case 1:
-							calcR = q;
-							calcG = z;
-							calcB = p;
-							break;
-						case 2:
-							calcR = p;
-							calcG = z;
-							calcB = t;
-							break;
-						case 3:
-							calcR = p;
-							calcG = q;
-							calcB = z;
-							break;
-						case 4:
-							calcR = t;
-							calcG = p;
-							calcB = z;
-							break;
-						case 5:
-							calcR = z;
-							calcG = p;
-							calcB = q;
-							break;
-					}
-				}
-				break;
-		}
-		calcRi = (int) (255 * calcR);
-		calcGi = (int) (255 * calcG);
-		calcBi = (int) (255 * calcB);
-		calcAi = (int) (255 * calcA);
-		calcColor = (calcAi << 24) | (calcRi << 16) | (calcGi << 8) | calcBi;
-		calcAlpha = (calcAi != 255);
-	}
-
-	private final void colorCalcARGB(int argb, float alpha) {
-		if (alpha == colorModeA) {
-			calcAi = (argb >> 24) & 0xff;
-			calcColor = argb;
-		} else {
-			calcAi = (int) (((argb >> 24) & 0xff) * MathUtils.instance.clamp(0, (alpha / colorModeA), 1));
-			calcColor = (calcAi << 24) | (argb & 0xFFFFFF);
-		}
-		calcRi = (argb >> 16) & 0xff;
-		calcGi = (argb >> 8) & 0xff;
-		calcBi = argb & 0xff;
-		calcA = calcAi / 255.0f;
-		calcR = calcRi / 255.0f;
-		calcG = calcGi / 255.0f;
-		calcB = calcBi / 255.0f;
-		calcAlpha = (calcAi != 255);
-	}
-
-	public final int color(int c) { // ignore
-		colorCalc(c);
-		return calcColor;
-	}
-
-	public final int color(float gray) { // ignore
-		colorCalc(gray);
-		return calcColor;
-	}
-
-	public final int color(double gray) { // ignore
-		colorCalc((float) gray);
-		return calcColor;
-	}
-
-	/**
-	 * @param c
-	 *            can be packed ARGB or a gray in this case
-	 */
-
-	public final int color(int c, int alpha) { // ignore
-		colorCalc(c, alpha);
-		return calcColor;
-	}
-
-	/**
-	 * @param c
-	 *            can be packed ARGB or a gray in this case
-	 */
-
-	public final int color(int c, float alpha) { // ignore
-		colorCalc(c, alpha);
-		return calcColor;
-	}
-
-	public final int color(float gray, float alpha) { // ignore
-		colorCalc(gray, alpha);
-		return calcColor;
-	}
-
-	public final int color(int v1, int v2, int v3) { // ignore
-		colorCalc(v1, v2, v3);
-		return calcColor;
-	}
-
-	public final int color(float v1, float v2, float v3) { // ignore
-		colorCalc(v1, v2, v3);
-		return calcColor;
-	}
-
-	public final int color(int v1, int v2, int v3, int a) { // ignore
-		colorCalc(v1, v2, v3, a);
-		return calcColor;
-	}
-
-	public final int color(float v1, float v2, float v3, float a) { // ignore
-		colorCalc(v1, v2, v3, a);
-		return calcColor;
-	}
-
-	public final float alpha(int rgb) {
-		float outgoing = (rgb >> 24) & 0xff;
-		if (colorModeA == 255) return outgoing;
-		return (outgoing / 255.0f) * colorModeA;
-	}
-
-	public final float red(int rgb) {
-		float c = (rgb >> 16) & 0xff;
-		if (colorModeDefault) return c;
-		return (c / 255.0f) * colorModeX;
-	}
-
-	public final float green(int rgb) {
-		float c = (rgb >> 8) & 0xff;
-		if (colorModeDefault) return c;
-		return (c / 255.0f) * colorModeY;
-	}
-
-	public final float blue(int rgb) {
-		float c = (rgb) & 0xff;
-		if (colorModeDefault) return c;
-		return (c / 255.0f) * colorModeZ;
-	}
-
-	public final float hue(int rgb) {
-		if (rgb != cacheHsbKey) {
-			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
-					rgb & 0xff, cacheHsbValue);
-			cacheHsbKey = rgb;
-		}
-		return cacheHsbValue[0] * colorModeX;
-	}
-
-	public final float saturation(int rgb) {
-		if (rgb != cacheHsbKey) {
-			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
-					rgb & 0xff, cacheHsbValue);
-			cacheHsbKey = rgb;
-		}
-		return cacheHsbValue[1] * colorModeY;
-	}
-
-	public final float brightness(int rgb) {
-		if (rgb != cacheHsbKey) {
-			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
-					rgb & 0xff, cacheHsbValue);
-			cacheHsbKey = rgb;
-		}
-		return cacheHsbValue[2] * colorModeZ;
-	}
-
-	public final int lerpColor(int c1, int c2, float amt) { // ignore
-		return lerpColor(c1, c2, amt, colorMode);
-	}
-
-	private static float[] lerpColorHSB1;
-	private static float[] lerpColorHSB2;
-
-	/**
-	 * @nowebref
-	 *           Interpolate between two colors. Like lerp(), but for the
-	 *           individual color components of a color supplied as an int value.
-	 */
-	public final static int lerpColor(int c1, int c2, float amt, int mode) {
-		if (amt < 0) amt = 0;
-		if (amt > 1) amt = 1;
-
-		if (mode == RGB) {
-			float a1 = ((c1 >> 24) & 0xff);
-			float r1 = (c1 >> 16) & 0xff;
-			float g1 = (c1 >> 8) & 0xff;
-			float b1 = c1 & 0xff;
-			float a2 = (c2 >> 24) & 0xff;
-			float r2 = (c2 >> 16) & 0xff;
-			float g2 = (c2 >> 8) & 0xff;
-			float b2 = c2 & 0xff;
-
-			return ((Math.round(a1 + (a2 - a1) * amt) << 24) |
-					(Math.round(r1 + (r2 - r1) * amt) << 16) |
-					(Math.round(g1 + (g2 - g1) * amt) << 8) |
-					(Math.round(b1 + (b2 - b1) * amt)));
-
-		} else if (mode == HSB) {
-			if (lerpColorHSB1 == null) {
-				lerpColorHSB1 = new float[3];
-				lerpColorHSB2 = new float[3];
-			}
-
-			float a1 = (c1 >> 24) & 0xff;
-			float a2 = (c2 >> 24) & 0xff;
-			int alfa = (Math.round(a1 + (a2 - a1) * amt)) << 24;
-
-			Color.RGBtoHSB((c1 >> 16) & 0xff, (c1 >> 8) & 0xff, c1 & 0xff,
-					lerpColorHSB1);
-			Color.RGBtoHSB((c2 >> 16) & 0xff, (c2 >> 8) & 0xff, c2 & 0xff,
-					lerpColorHSB2);
-
-			float ho = (float) lerpStatic(amt, lerpColorHSB1[0], lerpColorHSB2[0]);
-			float so = (float) lerpStatic(amt, lerpColorHSB1[1], lerpColorHSB2[1]);
-			float bo = (float) lerpStatic(amt, lerpColorHSB1[2], lerpColorHSB2[2]);
-
-			return alfa | (Color.HSBtoRGB(ho, so, bo) & 0xFFFFFF);
-		}
-		return 0;
-	}
-
-	public static double lerpStatic(double norm, double min, double max) {
-		return min + (max - min) * norm;
-	}
+	// IMAGE
 
 	/**
 	 * @param mode
 	 *            either CORNER, CORNERS, or CENTER
 	 */
-
+	@Override
 	public final void imageMode(int mode) {
 		if ((mode == CORNER) || (mode == CORNERS) || (mode == CENTER)) {
 			imageMode = mode;
@@ -1485,346 +1230,11 @@ public class SGraphics extends SImage {
 	}
 
 	/**
-	 * @param mode
-	 *            either CORNER, CORNERS, CENTER, or RADIUS
-	 */
-
-	public final void rectMode(int mode) {
-		rectMode = mode;
-	}
-
-	/**
-	 * @param mode
-	 *            either CENTER, RADIUS, CORNER, or CORNERS
-	 */
-
-	public final void ellipseMode(int mode) {
-		ellipseMode = mode;
-
-	}
-
-	/**
-	 * @param mode
-	 *            either CORNER, CORNERS, CENTER
-	 */
-
-	public final void shapeMode(int mode) {
-		this.shapeMode = mode;
-	}
-
-	/**
-	 * @param mode
-	 *            Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
-	 */
-
-	public final void colorMode(int mode) {
-		colorMode(mode, colorModeX, colorModeY, colorModeZ, colorModeA);
-	}
-
-	/**
-	 * @param max
-	 *            range for all color elements
-	 */
-
-	public final void colorMode(int mode, float max) {
-		colorMode(mode, max, max, max, max);
-	}
-
-	/**
-	 * @param max1
-	 *            range for the red or hue depending on the current color mode
-	 * @param max2
-	 *            range for the green or saturation depending on the current color mode
-	 * @param max3
-	 *            range for the blue or brightness depending on the current color mode
-	 */
-
-	public final void colorMode(int mode, float max1, float max2, float max3) {
-		colorMode(mode, max1, max2, max3, colorModeA);
-	}
-
-	/**
-	 * @param maxA
-	 *            range for the alpha
-	 */
-
-	public final void colorMode(int mode,
-			float max1, float max2, float max3, float maxA) {
-		colorMode = mode;
-
-		colorModeX = max1; // still needs to be set for hsb
-		colorModeY = max2;
-		colorModeZ = max3;
-		colorModeA = maxA;
-
-		// if color max values are all 1, then no need to scale
-		colorModeScale = ((maxA != 1) || (max1 != max2) || (max2 != max3) || (max3 != maxA));
-
-		// if color is rgb/0..255 this will make it easier for the
-		// red() green() etc functions
-		colorModeDefault = (colorMode == RGB) &&
-				(colorModeA == 255) && (colorModeX == 255) &&
-				(colorModeY == 255) && (colorModeZ == 255);
-	}
-
-	/**
-	 * @param size
-	 *            the size of the letters in units of pixels
-	 */
-
-	public final void textFont(Font which) {
-		if (which == null) {
-			throw new RuntimeException(ERROR_TEXTFONT_NULL_PFONT);
-		}
-		textFontImpl(which, which.getSize2D());
-	}
-
-	/**
-	 * @param size
-	 *            the size of the letters in units of pixels
-	 */
-
-	public final void textFont(Font which, float size) {
-		if (which == null) {
-			throw new RuntimeException(ERROR_TEXTFONT_NULL_PFONT);
-		}
-		// https://github.com/processing/processing/issues/3110
-		if (size <= 0) {
-			// Using System.err instead of showWarning to avoid running out of
-			// memory with a bunch of textSize() variants (cause of this bug is
-			// usually something done with map() or in a loop).
-			System.err.println("textFont: ignoring size " + size + " px:" +
-					"the text size must be larger than zero");
-			size = which.getSize2D();
-		}
-		textFontImpl(which, size);
-	}
-
-	public final void textLeading(float leading) {
-		textLeading = leading;
-	}
-
-	/**
-	 * @param alignX
-	 *            horizontal alignment, either LEFT, CENTER, or RIGHT
-	 * @param alignY
-	 *            vertical alignment, either TOP, BOTTOM, CENTER, or BASELINE
-	 */
-
-	public final void textAlign(int alignX, int alignY) {
-		textAlign = alignX;
-		textAlignY = alignY;
-	}
-
-	/**
-	 * @param mode
-	 *            either MODEL or SHAPE
-	 */
-
-	public final void textMode(int mode) {
-		// CENTER and MODEL overlap (they're both 3)
-		if ((mode == LEFT) || (mode == RIGHT)) {
-			Log.error("Since Processing 1.0 beta, textMode() is now textAlign().");
-			return;
-		}
-		if (mode == SCREEN) {
-			Log.error("textMode(SCREEN) has been removed from Processing 2.0.");
-			return;
-		}
-
-		if (textModeCheck(mode)) {
-			textMode = mode;
-		} else {
-			String modeStr = String.valueOf(mode);
-			switch (mode) {
-				case MODEL:
-					modeStr = "MODEL";
-					break;
-				case SHAPE:
-					modeStr = "SHAPE";
-					break;
-			}
-			Log.error("textMode(" + modeStr + ") is not supported by this renderer.");
-		}
-	}
-
-	private final boolean textModeCheck(int mode) {
-		return true;
-	}
-
-	private final void textFontImpl(Font which, float size) {
-		textFont = which;
-
-		textSize(size);
-	}
-
-	public final void textSize(float size) {
-		textSize = size;
-		textLeading = (textAscent() + textDescent()) * 1.275f;
-	}
-
-	public final float textAscent() {
-		if (textFont == null) textFont = createDefaultFont();
-
-		return ((float) graphics.getFontMetrics(textFont).getAscent() / textFont.getSize()) * textSize;
-	}
-
-	public final float textDescent() {
-		if (textFont == null) textFont = createDefaultFont();
-
-		return ((float) graphics.getFontMetrics(textFont).getDescent() / textFont.getSize()) * textSize;
-	}
-
-	protected final Font createDefaultFont() {
-		return new Font("Lucida Sans", Font.PLAIN, 12);
-	}
-
-	public final void string(String text, float x, float y) { text(text, x, y); }
-
-	public final void text(String text, float x, float y) {
-		if (textFont == null) textFont = createDefaultFont();
-
-		Font f = textFont.deriveFont(textSize);
-		FontMetrics fm = graphics.getFontMetrics(f);
-		FontRenderContext frc = fm.getFontRenderContext();
-		TextLayout tl = new TextLayout(text, f, frc);
-		Shape shape = tl.getOutline(null);
-
-		float w = (float) tl.getBounds().getWidth();
-		float h = (float) tl.getBounds().getHeight();
-
-		if (textAlign == CENTER) x -= w / 2;
-		else if (textAlign == RIGHT) x -= w;
-//		else if (textAlign == LEFT) {} // default
-
-		if (textAlignY == TOP) y += h;
-		else if (textAlignY == CENTER) y += h / 2;
-		else if (textAlignY == BOTTOM) y -= textDescent();
-//		 else if (textAlign == BASELINE) {} // default
-
-		pushMatrix();
-		translate(x, y);
-		strokeShape(shape);
-		fillShape(shape);
-		popMatrix();
-	}
-
-	public final void circle(float x, float y, float r) {
-		ellipse(x, y, r, r);
-	}
-
-	public final void ellipse(float x, float y, float r) {
-		ellipse(x, y, r, r);
-	}
-
-	public final void ellipse(float x, float y, float w, float h) {
-		if (ellipseMode == CORNERS) {
-			w = w - x;
-			h = h - y;
-		} else if (ellipseMode == RADIUS) {
-			x = x - w;
-			y = y - h;
-			w = w * 2;
-			h = h * 2;
-		} else if (ellipseMode == DIAMETER) {
-			x = x - w / 2f;
-			y = y - h / 2f;
-		}
-
-		if (w < 0) { // undo negative width
-			x += w;
-			w = -w;
-		}
-
-		if (h < 0) { // undo negative height
-			y += h;
-			h = -h;
-		}
-
-		ellipseImpl(x, y, w, h);
-	}
-
-	public final void square(float x, float y, float w) {
-		rect(x, y, w, w);
-	}
-
-	public final void rect(float x, float y, float w, float h) {
-		float hradius, vradius;
-		switch (rectMode) {
-			case CORNERS:
-				break;
-			case CORNER:
-				w += x;
-				h += y;
-				break;
-			case RADIUS:
-				hradius = w;
-				vradius = h;
-				w = x + hradius;
-				h = y + vradius;
-				x -= hradius;
-				y -= vradius;
-				break;
-			case CENTER:
-				hradius = w / 2.0f;
-				vradius = h / 2.0f;
-				w = x + hradius;
-				h = y + vradius;
-				x -= hradius;
-				y -= vradius;
-		}
-
-		if (x > w) {
-			float temp = x;
-			x = w;
-			w = temp;
-		}
-
-		if (y > h) {
-			float temp = y;
-			y = h;
-			h = temp;
-		}
-
-		rectImpl(x, y, w, h);
-	}
-
-	public final void point(float x, float y) {
-		if (stroke) {
-			line(x, y, x + EPSILON, y + EPSILON);
-		}
-	}
-
-	public final void line(float x1, float y1, float x2, float y2) {
-		line.setLine(x1, y1, x2, y2);
-		strokeShape(line);
-	}
-
-	public final void triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-		gpath = new GeneralPath();
-		gpath.moveTo(x1, y1);
-		gpath.lineTo(x2, y2);
-		gpath.lineTo(x3, y3);
-		gpath.closePath();
-		drawShape(gpath);
-	}
-
-	public final void quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-		GeneralPath gp = new GeneralPath();
-		gp.moveTo(x1, y1);
-		gp.lineTo(x2, y2);
-		gp.lineTo(x3, y3);
-		gp.lineTo(x4, y4);
-		gp.closePath();
-		drawShape(gp);
-
-	}
-
-	/**
 	 * @param img
 	 *            the specified image to be drawn. This method does
 	 *            nothing if <code>img</code> is null.
 	 */
+	@Override
 	public final void image(SImage img) { image(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height); }
 
 	/**
@@ -1832,6 +1242,7 @@ public class SGraphics extends SImage {
 	 *            the specified image to be drawn. This method does
 	 *            nothing if <code>img</code> is null.
 	 */
+	@Override
 	public final void image(Image img) { image(img, 0, 0, img.getWidth(null), img.getHeight(null), 0, 0, img.getWidth(null), img.getHeight(null)); }
 
 	/**
@@ -1845,6 +1256,7 @@ public class SGraphics extends SImage {
 	 *            the <i>y</i> coordinate of the first corner of the
 	 *            destination rectangle.
 	 */
+	@Override
 	public final void image(SImage img, float x, float y) {
 		if (img == null || img.width <= 0 || img.height <= 0) return;
 
@@ -1873,6 +1285,7 @@ public class SGraphics extends SImage {
 	 *            the <i>y</i> coordinate of the first corner of the
 	 *            destination rectangle.
 	 */
+	@Override
 	public final void image(Image img, float x, float y) {
 		if (img == null || img.getWidth(null) <= 0 || img.getHeight(null) <= 0) return;
 
@@ -1905,6 +1318,7 @@ public class SGraphics extends SImage {
 	 * @param h
 	 *            the <i>height</i> of the destination rectangle.
 	 */
+	@Override
 	public final void image(SImage img, float x, float y, float w, float h) {
 		image(img, x, y, w, h, 0, 0, img.width, img.height);
 	}
@@ -1924,6 +1338,7 @@ public class SGraphics extends SImage {
 	 * @param h
 	 *            the <i>height</i> of the destination rectangle.
 	 */
+	@Override
 	public final void image(Image img, float x, float y, float w, float h) {
 		image(img, x, y, w, h, 0, 0, img.getWidth(null), img.getHeight(null));
 	}
@@ -1955,6 +1370,7 @@ public class SGraphics extends SImage {
 	 *            the <i>y</i> coordinate of the second corner of the
 	 *            source rectangle.
 	 */
+	@Override
 	public final void image(SImage img,
 			float x, float y, float w, float h,
 			int u1, int v1, int u2, int v2) {
@@ -2030,6 +1446,7 @@ public class SGraphics extends SImage {
 	 *            the <i>y</i> coordinate of the second corner of the
 	 *            source rectangle.
 	 */
+	@Override
 	public final void image(Image img,
 			float x, float y, float w, float h,
 			int u1, int v1, int u2, int v2) {
@@ -2238,14 +1655,6 @@ public class SGraphics extends SImage {
 		graphics.drawImage(((ImageCache) getCache(img)).image,
 				(int) x1, (int) y1, (int) x2, (int) y2,
 				u1, v1, u2, v2, null);
-	}
-
-	public void setCache(Object key, Object val) { // ignore
-		cacheMap.put(key, val);
-	}
-
-	public Object getCache(Object key) { // ignore
-		return cacheMap.get(key);
 	}
 
 	static class ImageCache {
@@ -2602,46 +2011,18 @@ public class SGraphics extends SImage {
 		}
 	}
 
-	private final void rectImpl(float x1, float y1, float x2, float y2) {
-		rect.setFrame(x1, y1, x2 - x1, y2 - y1);
-		drawShape(rect);
-	}
+	//////////////////////////////////////////////////////////////
 
-	private final void ellipseImpl(float x, float y, float w, float h) {
-		ellipse.setFrame(x, y, w, h);
-		drawShape(ellipse);
-	}
+	// SHAPE
 
-	@SuppressWarnings("unused")
-	private final void arcImpl(float x, float y, float w, float h, float start, float stop, int mode) {
-		start = -start * RAD_TO_DEG;
-		stop = -stop * RAD_TO_DEG;
-		float sweep = stop - start;
+	/**
+	 * @param mode
+	 *            either CORNER, CORNERS, CENTER
+	 */
+	@Override
+	public final void shapeMode(int mode) { this.shapeMode = mode; }
 
-		int fillMode = Arc2D.PIE;
-		int strokeMode = Arc2D.OPEN;
-
-		if (mode == OPEN) {
-			fillMode = Arc2D.OPEN;
-
-		} else if (mode == PIE) {
-			strokeMode = Arc2D.PIE;
-
-		} else if (mode == CHORD) {
-			fillMode = Arc2D.CHORD;
-			strokeMode = Arc2D.CHORD;
-		}
-
-		if (fill) {
-			arc.setArc(x, y, w, h, start, sweep, fillMode);
-			fillShape(arc);
-		}
-		if (stroke) {
-			arc.setArc(x, y, w, h, start, sweep, strokeMode);
-			strokeShape(arc);
-		}
-	}
-
+	@Override
 	public final void fillShape(Shape s) {
 		if (fillGradient) {
 			graphics.setPaint(fillGradientObject);
@@ -2652,6 +2033,7 @@ public class SGraphics extends SImage {
 		}
 	}
 
+	@Override
 	public final void strokeShape(Shape s) {
 		if (strokeGradient) {
 			graphics.setPaint(strokeGradientObject);
@@ -2662,6 +2044,7 @@ public class SGraphics extends SImage {
 		}
 	}
 
+	@Override
 	public final void drawShape(Shape s) {
 		if (fillGradient) {
 			graphics.setPaint(fillGradientObject);
@@ -2679,30 +2062,1429 @@ public class SGraphics extends SImage {
 		}
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// TEXT/FONTS
+
+	protected SFont createDefaultFont(float size) {
+//		return new Font("Lucida Sans", Font.PLAIN, (int) size);
+		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
+		return createFont(baseFont, size, true, null, false);
+	}
+
+	protected SFont createFont(String name, float size,
+			boolean smooth, char[] charset) {
+		String lowerName = name.toLowerCase();
+		Font baseFont = null;
+
+		try {
+			InputStream stream = null;
+			if (lowerName.endsWith(".otf") || lowerName.endsWith(".ttf")) {
+				stream = parent.createInput(name);
+				if (stream == null) {
+					System.err.println("The font \"" + name + "\" " +
+							"is missing or inaccessible, make sure " +
+							"the URL is valid or that the file has been " +
+							"added to your sketch and is readable.");
+					return null;
+				}
+				baseFont = Font.createFont(Font.TRUETYPE_FONT, parent.createInput(name));
+
+			} else {
+				baseFont = SFont.findFont(name);
+			}
+			return createFont(baseFont, size, smooth, charset, stream != null);
+
+		} catch (Exception e) {
+			System.err.println("Problem with createFont(\"" + name + "\")");
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private SFont createFont(Font baseFont, float size,
+			boolean smooth, char[] charset, boolean stream) {
+		return new SFont(baseFont.deriveFont(size * parent.pixelDensity),
+				smooth, charset, stream,
+				parent.pixelDensity);
+	}
+
+	public void textAlign(int alignX) { textAlign(alignX, BASELINE); }
+
+	/**
+	 * @param alignX
+	 *            horizontal alignment, either LEFT, CENTER, or RIGHT
+	 * @param alignY
+	 *            vertical alignment, either TOP, BOTTOM, CENTER, or BASELINE
+	 */
+	@Override
+	public void textAlign(int alignX, int alignY) {
+		textAlign = alignX;
+		textAlignY = alignY;
+	}
+
+	@Override
+	public float textAscent() {
+		if (textFont == null) defaultFontOrDeath("textAscent");
+
+		Font font = (Font) textFont.getNative();
+		if (font != null) return graphics.getFontMetrics(font).getAscent();
+		return textFont.ascent() * textSize;
+
+//		return graphics.getFontMetrics(textFont).getAscent();		
+//		return ((float) graphics.getFontMetrics(textFont).getAscent() / textFont.getSize()) * textSize;
+	}
+
+	@Override
+	public float textDescent() {
+		if (textFont == null) defaultFontOrDeath("textDescent");
+
+		Font font = (Font) textFont.getNative();
+		if (font != null) return graphics.getFontMetrics(font).getDescent();
+		return textFont.descent() * textSize;
+
+//		return graphics.getFontMetrics(textFont).getDescent();
+//		return ((float) graphics.getFontMetrics(textFont).getDescent() / textFont.getSize()) * textSize;
+	}
+
+	@Override
+	public void textFont(SFont which) {
+		if (which == null) {
+			throw new RuntimeException(ERROR_TEXTFONT_NULL_FONT);
+		}
+//		textFontImpl(which, which.getSize2D());
+		textFontImpl(which, which.getDefaultSize());
+	}
+
+	/**
+	 * @param size
+	 *            the size of the letters in units of pixels
+	 */
+
+	@Override
+	public void textFont(SFont which, float size) {
+		if (which == null) {
+			throw new RuntimeException(ERROR_TEXTFONT_NULL_FONT);
+		}
+		textFontImpl(which, size);
+	}
+
+	protected void textFontImpl(SFont which, float size) {
+		textFont = which;
+
+//		textSize(size);
+		handleTextSize(size);
+	}
+
+	@Override
+	public void textLeading(float leading) { textLeading = leading; }
+
+	/**
+	 * @param mode
+	 *            either MODEL or SHAPE
+	 */
+	@Override
+	public void textMode(int mode) {
+		// CENTER and MODEL overlap (they're both 3)
+		if ((mode == LEFT) || (mode == RIGHT)) {
+			Log.error("Since Processing 1.0 beta, textMode() is now textAlign().");
+			return;
+		}
+		if (mode == SCREEN) {
+			Log.error("textMode(SCREEN) has been removed from Processing 2.0.");
+			return;
+		}
+
+		if (textModeCheck(mode)) {
+			textMode = mode;
+		} else {
+			String modeStr = String.valueOf(mode);
+			switch (mode) {
+				case MODEL:
+					modeStr = "MODEL";
+					break;
+				case SHAPE:
+					modeStr = "SHAPE";
+					break;
+			}
+			Log.error("textMode(" + modeStr + ") is not supported by this renderer.");
+		}
+	}
+
+	protected boolean textModeCheck(int mode) { return mode == MODEL; }
+
+	@Override
+	public final void textSize(float size) {
+		// https://github.com/processing/processing/issues/3110
+		if (size <= 0) {
+			// Using System.err instead of showWarning to avoid running out of
+			// memory with a bunch of textSize() variants (cause of this bug is
+			// usually something done with map() or in a loop).
+			System.err.println("textSize(" + size + ") ignored: " +
+					"the text size must be larger than zero");
+			return;
+		}
+		if (textFont == null) {
+			defaultFontOrDeath("textSize", size);
+		}
+		textSizeImpl(size);
+	}
+
+	protected void textSizeImpl(float size) {
+		handleTextSize(size);
+	}
+
+	protected void handleTextSize(float size) {
+//		Font font = textFont;
+		Font font = (Font) textFont.getNative();
+
+		// don't derive again if the font size has not changed
+		if (font != null) {
+			if (font.getSize2D() != size) {
+				Map<TextAttribute, Object> map = new HashMap<>();
+				map.put(TextAttribute.SIZE, size);
+				map.put(TextAttribute.KERNING,
+						TextAttribute.KERNING_ON);
+//	     	 	map.put(TextAttribute.TRACKING,
+//	              	 	TextAttribute.TRACKING_TIGHT);
+				font = font.deriveFont(map);
+			}
+			graphics.setFont(font);
+			textFont.setNative(font);
+			fontObject = font;
+
+			/*
+			 * Map<TextAttribute, ?> attrs = font.getAttributes();
+			 * for (TextAttribute ta : attrs.keySet()) {
+			 * System.out.println(ta + " -> " + attrs.get(ta));
+			 * }
+			 */
+		}
+
+		textSize = size;
+		textLeading = (textAscent() + textDescent()) * 1.275f;
+	}
+
+	/**
+	 * @param c
+	 *            the character to measure
+	 */
+	public float textWidth(char c) {
+		textWidthBuffer[0] = c;
+		return textWidthImpl(textWidthBuffer, 0, 1);
+	}
+
+	/**
+	 * @param str
+	 *            the String of characters to measure
+	 */
+	public float textWidth(String str) {
+		if (textFont == null) {
+			defaultFontOrDeath("textWidth");
+		}
+
+		int length = str.length();
+		if (length > textWidthBuffer.length) {
+			textWidthBuffer = new char[length + 10];
+		}
+		str.getChars(0, length, textWidthBuffer, 0);
+
+		float wide = 0;
+		int index = 0;
+		int start = 0;
+
+		while (index < length) {
+			if (textWidthBuffer[index] == '\n') {
+				wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
+				start = index + 1;
+			}
+			index++;
+		}
+		if (start < length) {
+			wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
+		}
+		return wide;
+	}
+
+	public float textWidth(char[] chars, int start, int length) {
+		return textWidthImpl(chars, start, start + length);
+	}
+
+	/**
+	 * @return the text width of the chars [start, stop) in the buffer.
+	 */
+	protected float textWidthImpl(char buffer[], int start, int stop) {
+		if (textFont == null) defaultFontOrDeath("textWidth");
+
+		// Avoid "Zero length string passed to TextLayout constructor" error
+		if (start == stop) return 0;
+
+		Font font = (Font) textFont.getNative();
+		if (font != null) {
+			FontMetrics metrics = graphics.getFontMetrics(font);
+			return (float) metrics.getStringBounds(buffer, start, stop, graphics).getWidth();
+		}
+
+		float wide = 0;
+		for (int i = start; i < stop; i++) {
+			// could add kerning here, but it just ain't implemented
+			wide += textFont.width(buffer[i]) * textSize;
+		}
+		return wide;
+	}
+
+	// ........................................................
+
+	@Override
+	public void string(String text, float x, float y) { text(text, x, y); }
+
+	public void text(char c, float x, float y) {
+		if (textFont == null) defaultFontOrDeath("text");
+
+		if (textAlignY == CENTER) y += textAscent() / 2;
+		else if (textAlignY == TOP) y += textAscent();
+		else if (textAlignY == BOTTOM) y -= textDescent();
+
+		textBuffer[0] = c;
+		textLineAlignImpl(textBuffer, 0, 1, x, y);
+	}
+
+	/**
+	 * <h3>Advanced</h3>
+	 * Draw a chunk of text.
+	 * Newlines that are \n (Unix newline or linefeed char, ascii 10)
+	 * are honored, but \r (carriage return, Windows and Mac OS) are
+	 * ignored.
+	 */
+	@Override
+	public void text(String str, float x, float y) {
+		if (textFont == null) defaultFontOrDeath("text");
+
+		int length = str.length();
+		if (length > textBuffer.length) textBuffer = new char[length + 10];
+
+		str.getChars(0, length, textBuffer, 0);
+		text(textBuffer, 0, length, x, y);
+	}
+
+	/**
+	 * <h3>Advanced</h3>
+	 * Method to draw text from an array of chars. This method will usually be
+	 * more efficient than drawing from a String object, because the String will
+	 * not be converted to a char array before drawing.
+	 * 
+	 * @param chars
+	 *            the alphanumberic symbols to be displayed
+	 * @param start
+	 *            array index at which to start writing characters
+	 * @param stop
+	 *            array index at which to stop writing characters
+	 */
+	public void text(char[] chars, int start, int stop, float x, float y) {
+		// If multiple lines, sum the height of the additional lines
+		float high = 0; // -textAscent();
+		for (int i = start; i < stop; i++) {
+			if (chars[i] == '\n') {
+				high += textLeading;
+			}
+		}
+		if (textAlignY == CENTER) {
+			// for a single line, this adds half the textAscent to y
+			// for multiple lines, subtract half the additional height
+			// y += (textAscent() - textDescent() - high)/2;
+			y += (textAscent() - high) / 2;
+		} else if (textAlignY == TOP) {
+			// for a single line, need to add textAscent to y
+			// for multiple lines, no different
+			y += textAscent();
+		} else if (textAlignY == BOTTOM) {
+			// for a single line, this is just offset by the descent
+			// for multiple lines, subtract leading for each line
+			y -= textDescent() + high;
+			// } else if (textAlignY == BASELINE) {
+			// do nothing
+		}
+
+//	    int start = 0;
+		int index = 0;
+		while (index < stop) { // length) {
+			if (chars[index] == '\n') {
+				textLineAlignImpl(chars, start, index, x, y);
+				start = index + 1;
+				y += textLeading;
+			}
+			index++;
+		}
+		if (start < stop) { // length) {
+			textLineAlignImpl(chars, start, index, x, y);
+		}
+	}
+
+	protected void textLineAlignImpl(char buffer[], int start, int stop,
+			float x, float y) {
+		if (textAlign == CENTER) {
+			x -= textWidthImpl(buffer, start, stop) / 2f;
+
+		} else if (textAlign == RIGHT) {
+			x -= textWidthImpl(buffer, start, stop);
+		}
+
+		textLineImpl(buffer, start, stop, x, y);
+	}
+
+	/**
+	 * Implementation of actual drawing for a line of text.
+	 */
+	protected void textLineImpl(char buffer[], int start, int stop,
+			float x, float y) {
+		Font font = (Font) textFont.getNative();
+//	    if (font != null && (textFont.isStream() || hints[ENABLE_NATIVE_FONTS])) {
+		if (font != null) {
+			/*
+			 * // save the current setting for text smoothing. note that this is
+			 * // different from the smooth() function, because the font smoothing
+			 * // is controlled when the font is created, not now as it's drawn.
+			 * // fixed a bug in 0116 that handled this incorrectly.
+			 * Object textAntialias =
+			 * g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+			 * // override the current text smoothing setting based on the font
+			 * // (don't change the global smoothing settings)
+			 * g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+			 * textFont.smooth ?
+			 * RenderingHints.VALUE_ANTIALIAS_ON :
+			 * RenderingHints.VALUE_ANTIALIAS_OFF);
+			 */
+			Object antialias = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+			if (antialias == null) {
+				// if smooth() and noSmooth() not called, this will be null (0120)
+				antialias = RenderingHints.VALUE_ANTIALIAS_DEFAULT;
+			}
+
+			// override the current smoothing setting based on the font
+			// also changes global setting for antialiasing, but this is because it's
+			// not possible to enable/disable them independently in some situations.
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+					textFont.isSmooth() ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+
+			graphics.setColor(fillColorObject);
+
+			int length = stop - start;
+			if (length != 0) {
+				graphics.drawChars(buffer, start, length, (int) (x + 0.5f), (int) (y + 0.5f));
+				// better to use round here? also, drawChars now just calls drawString
+//	      g2.drawString(new String(buffer, start, stop - start), Math.round(x), Math.round(y));
+
+				// better to use drawString() with floats? (nope, draws the same)
+				// g2.drawString(new String(buffer, start, length), x, y);
+
+				// this didn't seem to help the scaling issue, and creates garbage
+				// because of a fairly heavyweight new temporary object
+//	      java.awt.font.GlyphVector gv =
+//	        font.createGlyphVector(g2.getFontRenderContext(), new String(buffer, start, stop - start));
+//	      g2.drawGlyphVector(gv, x, y);
+			}
+
+			// return to previous smoothing state if it was changed
+			// g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textAntialias);
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialias);
+
+		} else { // otherwise just do the default
+			for (int index = start; index < stop; index++) {
+				textCharImpl(buffer[index], x, y);
+
+				// this doesn't account for kerning
+				x += textWidth(buffer[index]);
+			}
+		}
+	}
+
+	private static String hex(int value, int digits) {
+		String stuff = Integer.toHexString(value).toUpperCase();
+		if (digits > 8) {
+			digits = 8;
+		}
+
+		int length = stuff.length();
+		if (length > digits) {
+			return stuff.substring(length - digits);
+
+		} else if (length < digits) {
+			return "00000000".substring(8 - (digits - length)) + stuff;
+		}
+		return stuff;
+	}
+
+	protected void textCharImpl(char ch, float x, float y) {
+		SFont.Glyph glyph = textFont.getGlyph(ch);
+
+		if (glyph != null) {
+			if (textMode == MODEL) {
+				float high = glyph.height / (float) textFont.getSize();
+				float bwidth = glyph.width / (float) textFont.getSize();
+				float lextent = glyph.leftExtent / (float) textFont.getSize();
+				float textent = glyph.topExtent / (float) textFont.getSize();
+
+				float x1 = x + lextent * textSize;
+				float y1 = y - textent * textSize;
+				float x2 = x1 + bwidth * textSize;
+				float y2 = y1 + high * textSize;
+
+				textCharModelImpl(glyph.image,
+						x1, y1, x2, y2,
+						glyph.width, glyph.height);
+			}
+		} else if (ch != ' ' && ch != 127) {
+//			showWarning("No glyph found for the " + ch + " (\\u" + GameBase.hex(ch, 4) + ") character");
+			showWarning("No glyph found for the " + ch + " (\\u" + hex(ch, 4) + ") character");
+		}
+	}
+
+	protected void textCharModelImpl(SImage glyph,
+			float x1, float y1, // float z1,
+			float x2, float y2, // float z2,
+			int u2, int v2) {
+		boolean savedTint = tint;
+		int savedTintColor = tintColor;
+		float savedTintR = tintR;
+		float savedTintG = tintG;
+		float savedTintB = tintB;
+		float savedTintA = tintA;
+		boolean savedTintAlpha = tintAlpha;
+
+		tint = true;
+		tintColor = fillColor;
+		tintR = fillR;
+		tintG = fillG;
+		tintB = fillB;
+		tintA = fillA;
+		tintAlpha = fillAlpha;
+
+		imageImpl(glyph, x1, y1, x2, y2, 0, 0, u2, v2);
+
+		tint = savedTint;
+		tintColor = savedTintColor;
+		tintR = savedTintR;
+		tintG = savedTintG;
+		tintB = savedTintB;
+		tintA = savedTintA;
+		tintAlpha = savedTintAlpha;
+	}
+
+//	@Override
+//	public void text(String text, float x, float y) {
+//		if (textFont == null) textFont = createDefaultFont(12);
+//
+//		Font f = textFont.deriveFont(textSize);
+//		FontMetrics fm = graphics.getFontMetrics(f);
+//		FontRenderContext frc = fm.getFontRenderContext();
+//		TextLayout tl = new TextLayout(text, f, frc);
+//		Shape shape = tl.getOutline(null);
+//
+//		float w = (float) tl.getBounds().getWidth();
+//		float h = (float) tl.getBounds().getHeight();
+//
+//		if (textAlign == CENTER) x -= w / 2;
+//		else if (textAlign == RIGHT) x -= w;
+////		else if (textAlign == LEFT) {} // default
+//
+//		if (textAlignY == TOP) y += h;
+//		else if (textAlignY == CENTER) y += h / 2;
+//		else if (textAlignY == BOTTOM) y -= textDescent();
+////		 else if (textAlign == BASELINE) {} // default
+//
+//		pushMatrix();
+//		translate(x, y);
+//		strokeShape(shape);
+//		fillShape(shape);
+//		popMatrix();
+//	}
+
+	/////////////////////////////////
+
+	/**
+	 * Same as below, but defaults to a 12 point font, just as MacWrite intended.
+	 */
+	protected void defaultFontOrDeath(String method) { defaultFontOrDeath(method, 12); }
+
+	/**
+	 * First try to create a default font, but if that's not possible, throw
+	 * an exception that halts the program because textFont() has not been used
+	 * prior to the specified method.
+	 */
+	protected void defaultFontOrDeath(String method, float size) {
+		if (parent != null) {
+			textFont = createDefaultFont(size);
+		} else {
+			throw new RuntimeException("Use textFont() before " + method + "()");
+		}
+	}
+
+	@Override
+	public final void strokeCap(int cap) {
+		strokeCap = cap;
+		strokeImpl();
+	}
+
+	@Override
+	public final void strokeJoin(int join) {
+		strokeJoin = join;
+		strokeImpl();
+	}
+
+	@Override
+	public final void strokeWeight(float weight) {
+		strokeWeight = weight;
+		strokeImpl();
+	}
+
+	private final void strokeImpl() {
+		int cap = BasicStroke.CAP_BUTT;
+		if (strokeCap == ROUND) {
+			cap = BasicStroke.CAP_ROUND;
+		} else if (strokeCap == PROJECT) {
+			cap = BasicStroke.CAP_SQUARE;
+		}
+
+		int join = BasicStroke.JOIN_BEVEL;
+		if (strokeJoin == MITER) {
+			join = BasicStroke.JOIN_MITER;
+		} else if (strokeJoin == ROUND) {
+			join = BasicStroke.JOIN_ROUND;
+		}
+
+		strokeObject = new BasicStroke(strokeWeight, cap, join);
+		graphics.setStroke(strokeObject);
+	}
+
+	@Override
+	public final void noFill() {
+		fill = false;
+	}
+
+	/**
+	 * @param rgb
+	 *            color value in hexadecimal notation
+	 */
+
+	@Override
+	public final void fill(int rgb) {
+		colorCalc(rgb);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param alpha
+	 *            opacity of the fill
+	 */
+
+	@Override
+	public final void fill(int rgb, float alpha) {
+		colorCalc(rgb, alpha);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param gray
+	 *            number specifying value between white and black
+	 */
+
+	@Override
+	public final void fill(float gray) {
+		colorCalc(gray);
+		fillFromCalc();
+	}
+
+	@Override
+	public final void fill(float gray, float alpha) {
+		colorCalc(gray, alpha);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param v1
+	 *            red or hue value (depending on current color mode)
+	 * @param v2
+	 *            green or saturation value (depending on current color mode)
+	 * @param v3
+	 *            blue or brightness value (depending on current color mode)
+	 */
+
+	@Override
+	public final void fill(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		fillFromCalc();
+	}
+
+	@Override
+	public final void fill(float v1, float v2, float v3, float alpha) {
+		colorCalc(v1, v2, v3, alpha);
+		fillFromCalc();
+	}
+
+	private final void fillFromCalc() {
+		fill = true;
+		fillR = calcR;
+		fillG = calcG;
+		fillB = calcB;
+		fillA = calcA;
+		fillRi = calcRi;
+		fillGi = calcGi;
+		fillBi = calcBi;
+		fillAi = calcAi;
+		fillColor = calcColor;
+		fillAlpha = calcAlpha;
+
+		fillColorObject = new Color(fillColor, true);
+		fillGradient = false;
+	}
+
+	@Override
+	public final void noStroke() {
+		stroke = false;
+	}
+
+	/**
+	 * @param rgb
+	 *            color value in hexadecimal notation
+	 */
+
+	@Override
+	public final void stroke(int rgb) {
+		colorCalc(rgb);
+		strokeFromCalc();
+	}
+
+	/**
+	 * @param alpha
+	 *            opacity of the stroke
+	 */
+
+	@Override
+	public final void stroke(int rgb, float alpha) {
+		colorCalc(rgb, alpha);
+		strokeFromCalc();
+	}
+
+	/**
+	 * @param gray
+	 *            specifies a value between white and black
+	 */
+
+	@Override
+	public final void stroke(float gray) {
+		colorCalc(gray);
+		strokeFromCalc();
+	}
+
+	@Override
+	public final void stroke(float gray, float alpha) {
+		colorCalc(gray, alpha);
+		strokeFromCalc();
+	}
+
+	/**
+	 * @param v1
+	 *            red or hue value (depending on current color mode)
+	 * @param v2
+	 *            green or saturation value (depending on current color mode)
+	 * @param v3
+	 *            blue or brightness value (depending on current color mode)
+	 * @webref color:setting
+	 */
+
+	@Override
+	public final void stroke(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		strokeFromCalc();
+	}
+
+	@Override
+	public final void stroke(float v1, float v2, float v3, float alpha) {
+		colorCalc(v1, v2, v3, alpha);
+		strokeFromCalc();
+	}
+
+	/**
+	 * ( begin auto-generated from noTint.xml )
+	 *
+	 * Removes the current fill value for displaying images and reverts to
+	 * displaying images with their original hues.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref image:loading_displaying
+	 * @usage web_application
+	 * @see PGraphics#tint(float, float, float, float)
+	 * @see PGraphics#image(PImage, float, float, float, float)
+	 */
+	@Override
+	public void noTint() {
+		tint = false;
+	}
+
+	@Override
+	public void tint(int rgb) {
+		colorCalc(rgb);
+		tintFromCalc();
+	}
+
+	/**
+	 * @param alpha
+	 *            opacity of the image
+	 */
+	@Override
+	public void tint(int rgb, float alpha) {
+		colorCalc(rgb, alpha);
+		tintFromCalc();
+	}
+
+	/**
+	 * @param gray
+	 *            specifies a value between white and black
+	 */
+	@Override
+	public void tint(float gray) {
+		colorCalc(gray);
+		tintFromCalc();
+	}
+
+	@Override
+	public void tint(float gray, float alpha) {
+		colorCalc(gray, alpha);
+		tintFromCalc();
+	}
+
+	/**
+	 * @param v1
+	 *            red or hue value (depending on current color mode)
+	 * @param v2
+	 *            green or saturation value (depending on current color mode)
+	 * @param v3
+	 *            blue or brightness value (depending on current color mode)
+	 */
+	@Override
+	public void tint(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		tintFromCalc();
+	}
+
+	@Override
+	public void tint(float v1, float v2, float v3, float alpha) {
+		colorCalc(v1, v2, v3, alpha);
+		tintFromCalc();
+	}
+
+	protected void tintFromCalc() {
+		tint = true;
+		tintR = calcR;
+		tintG = calcG;
+		tintB = calcB;
+		tintA = calcA;
+		tintRi = calcRi;
+		tintGi = calcGi;
+		tintBi = calcBi;
+		tintAi = calcAi;
+		tintColor = calcColor;
+		tintAlpha = calcAlpha;
+	}
+
+	private final void strokeFromCalc() {
+		stroke = true;
+		strokeR = calcR;
+		strokeG = calcG;
+		strokeB = calcB;
+		strokeA = calcA;
+		strokeRi = calcRi;
+		strokeGi = calcGi;
+		strokeBi = calcBi;
+		strokeAi = calcAi;
+		strokeColor = calcColor;
+		strokeAlpha = calcAlpha;
+
+		strokeColorObject = new Color(strokeColor, true);
+		strokeGradient = false;
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// BACKGROUND
+
+	/**
+	 * @param rgb
+	 *            color value in hexadecimal notation
+	 */
+	@Override
+	public final void background(int rgb) {
+		colorCalc(rgb);
+		backgroundFromCalc();
+	}
+
+	/**
+	 * @param alpha
+	 *            opacity of the background
+	 */
+	@Override
+	public final void background(int rgb, float alpha) {
+		colorCalc(rgb, alpha);
+		backgroundFromCalc();
+	}
+
+	/**
+	 * @param gray
+	 *            specifies a value between white and black
+	 */
+	@Override
+	public final void background(float gray) {
+		colorCalc(gray);
+		backgroundFromCalc();
+	}
+
+	@Override
+	public final void background(float gray, float alpha) {
+		if (format == RGB) {
+			background(gray); // ignore alpha for main drawing surface
+
+		} else {
+			colorCalc(gray, alpha);
+			backgroundFromCalc();
+		}
+	}
+
+	/**
+	 * @param v1
+	 *            red or hue value (depending on the current color mode)
+	 * @param v2
+	 *            green or saturation value (depending on the current color mode)
+	 * @param v3
+	 *            blue or brightness value (depending on the current color mode)
+	 */
+	@Override
+	public final void background(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		backgroundFromCalc();
+	}
+
+	@Override
+	public final void background(float v1, float v2, float v3, float alpha) {
+		colorCalc(v1, v2, v3, alpha);
+		backgroundFromCalc();
+	}
+
+	@Override
+	public final void clear() { background(0, 0, 0, 0); }
+
+	int[] clearPixels;
+
+	protected void clearPixels(int color) {
+		// On a hi-res display, image may be larger than width/height
+		int imageWidth = image.getWidth(null);
+		int imageHeight = image.getHeight(null);
+
+		// Create a small array that can be used to set the pixels several times.
+		// Using a single-pixel line of length 'width' is a tradeoff between
+		// speed (setting each pixel individually is too slow) and memory
+		// (an array for width*height would waste lots of memory if it stayed
+		// resident, and would terrify the gc if it were re-created on each trip
+		// to background().
+//	    WritableRaster raster = ((BufferedImage) image).getRaster();
+//	    WritableRaster raster = image.getRaster();
+		WritableRaster raster = getRaster();
+		if ((clearPixels == null) || (clearPixels.length < imageWidth)) {
+			clearPixels = new int[imageWidth];
+		}
+		Arrays.fill(clearPixels, 0, imageWidth, backgroundColor);
+		for (int i = 0; i < imageHeight; i++) {
+			raster.setDataElements(0, i, imageWidth, 1, clearPixels);
+		}
+	}
+
+	protected final void backgroundFromCalc() {
+		backgroundR = calcR;
+		backgroundG = calcG;
+		backgroundB = calcB;
+		// backgroundA = (format == RGB) ? colorModeA : calcA;
+		// If drawing surface is opaque, this maxes out at 1.0. [fry 150513]
+		backgroundA = (format == RGB) ? 1 : calcA;
+		backgroundRi = calcRi;
+		backgroundGi = calcGi;
+		backgroundBi = calcBi;
+		backgroundAi = (format == RGB) ? 255 : calcAi;
+		backgroundAlpha = (format == RGB) ? false : calcAlpha;
+		backgroundColor = calcColor;
+
+		backgroundImpl();
+	}
+
+	private final void backgroundImpl() {
+		if (backgroundAlpha) {
+			clearPixels(backgroundColor);
+		} else {
+//			Color bgColor = new Color(backgroundColor);
+			Color bgColor = new Color(backgroundColor, calcAlpha);
+			// seems to fire an additional event that causes flickering,
+			// like an extra background erase on OS X
+//	      if (canvas != null) {
+//	        canvas.setBackground(bgColor);
+//	      }
+			// new Exception().printStackTrace(System.out);
+			// in case people do transformations before background(),
+			// need to handle this with a push/reset/pop
+
+//			Composite oldComposite = graphics.getComposite();
+//			graphics.setComposite(defaultComposite);
+//			AffineTransform at = graphics.getTransform();
+
+			pushMatrix();
+			resetMatrix();
+			graphics.setColor(bgColor); // , backgroundAlpha));
+//	      	g2.fillRect(0, 0, width, height);
+			// On a hi-res display, image may be larger than width/height
+			if (image != null) {
+				// image will be null in subclasses (i.e. PDF)
+				graphics.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
+			} else {
+				// hope for the best if image is null
+				graphics.fillRect(0, 0, width, height);
+			}
+			popMatrix();
+
+//			graphics.setTransform(at);
+//			graphics.setComposite(oldComposite);
+		}
+	}
+
+	private final void colorCalc(int rgb) {
+		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) {
+			colorCalc((float) rgb);
+
+		} else {
+			colorCalcARGB(rgb, colorModeA);
+		}
+	}
+
+	private final void colorCalc(int rgb, float alpha) {
+		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) { // see above
+			colorCalc((float) rgb, alpha);
+
+		} else {
+			colorCalcARGB(rgb, alpha);
+		}
+	}
+
+	private final void colorCalc(float gray) {
+		colorCalc(gray, colorModeA);
+	}
+
+	private final void colorCalc(float gray, float alpha) {
+		if (gray > colorModeX) gray = colorModeX;
+		if (alpha > colorModeA) alpha = colorModeA;
+
+		if (gray < 0) gray = 0;
+		if (alpha < 0) alpha = 0;
+
+		calcR = colorModeScale ? (gray / colorModeX) : gray;
+		calcG = calcR;
+		calcB = calcR;
+		calcA = colorModeScale ? (alpha / colorModeA) : alpha;
+
+		calcRi = (int) (calcR * 255);
+		calcGi = (int) (calcG * 255);
+		calcBi = (int) (calcB * 255);
+		calcAi = (int) (calcA * 255);
+		calcColor = (calcAi << 24) | (calcRi << 16) | (calcGi << 8) | calcBi;
+		calcAlpha = (calcAi != 255);
+	}
+
+	private final void colorCalc(float x, float y, float z) {
+		colorCalc(x, y, z, colorModeA);
+	}
+
+	private final void colorCalc(float x, float y, float z, float a) {
+		if (x > colorModeX) x = colorModeX;
+		if (y > colorModeY) y = colorModeY;
+		if (z > colorModeZ) z = colorModeZ;
+		if (a > colorModeA) a = colorModeA;
+
+		if (x < 0) x = 0;
+		if (y < 0) y = 0;
+		if (z < 0) z = 0;
+		if (a < 0) a = 0;
+
+		switch (colorMode) {
+			case RGB:
+				if (colorModeScale) {
+					calcR = x / colorModeX;
+					calcG = y / colorModeY;
+					calcB = z / colorModeZ;
+					calcA = a / colorModeA;
+				} else {
+					calcR = x;
+					calcG = y;
+					calcB = z;
+					calcA = a;
+				}
+				break;
+
+			case HSB:
+				x /= colorModeX; // h
+				y /= colorModeY; // s
+				z /= colorModeZ; // b
+
+				calcA = colorModeScale ? (a / colorModeA) : a;
+
+				if (y == 0) { // saturation == 0
+					calcR = calcG = calcB = z;
+
+				} else {
+					float which = (x - (int) x) * 6.0f;
+					float f = which - (int) which;
+					float p = z * (1.0f - y);
+					float q = z * (1.0f - y * f);
+					float t = z * (1.0f - (y * (1.0f - f)));
+
+					switch ((int) which) {
+						case 0:
+							calcR = z;
+							calcG = t;
+							calcB = p;
+							break;
+						case 1:
+							calcR = q;
+							calcG = z;
+							calcB = p;
+							break;
+						case 2:
+							calcR = p;
+							calcG = z;
+							calcB = t;
+							break;
+						case 3:
+							calcR = p;
+							calcG = q;
+							calcB = z;
+							break;
+						case 4:
+							calcR = t;
+							calcG = p;
+							calcB = z;
+							break;
+						case 5:
+							calcR = z;
+							calcG = p;
+							calcB = q;
+							break;
+					}
+				}
+				break;
+		}
+		calcRi = (int) (255 * calcR);
+		calcGi = (int) (255 * calcG);
+		calcBi = (int) (255 * calcB);
+		calcAi = (int) (255 * calcA);
+		calcColor = (calcAi << 24) | (calcRi << 16) | (calcGi << 8) | calcBi;
+		calcAlpha = (calcAi != 255);
+	}
+
+	private final void colorCalcARGB(int argb, float alpha) {
+		if (alpha == colorModeA) {
+			calcAi = (argb >> 24) & 0xff;
+			calcColor = argb;
+		} else {
+			calcAi = (int) (((argb >> 24) & 0xff) * MathUtils.instance.clamp(0, (alpha / colorModeA), 1));
+			calcColor = (calcAi << 24) | (argb & 0xFFFFFF);
+		}
+		calcRi = (argb >> 16) & 0xff;
+		calcGi = (argb >> 8) & 0xff;
+		calcBi = argb & 0xff;
+		calcA = calcAi / 255.0f;
+		calcR = calcRi / 255.0f;
+		calcG = calcGi / 255.0f;
+		calcB = calcBi / 255.0f;
+		calcAlpha = (calcAi != 255);
+	}
+
+	@Override
+	public final int color(int c) {
+		colorCalc(c);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(float gray) {
+		colorCalc(gray);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(double gray) {
+		colorCalc((float) gray);
+		return calcColor;
+	}
+
+	/**
+	 * @param c
+	 *            can be packed ARGB or a gray in this case
+	 */
+
+	@Override
+	public final int color(int c, int alpha) {
+		colorCalc(c, alpha);
+		return calcColor;
+	}
+
+	/**
+	 * @param c
+	 *            can be packed ARGB or a gray in this case
+	 */
+
+	@Override
+	public final int color(int c, float alpha) {
+		colorCalc(c, alpha);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(float gray, float alpha) {
+		colorCalc(gray, alpha);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(int v1, int v2, int v3) {
+		colorCalc(v1, v2, v3);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(int v1, int v2, int v3, int a) {
+		colorCalc(v1, v2, v3, a);
+		return calcColor;
+	}
+
+	@Override
+	public final int color(float v1, float v2, float v3, float a) {
+		colorCalc(v1, v2, v3, a);
+		return calcColor;
+	}
+
+	@Override
+	public final float alpha(int rgb) {
+		float outgoing = (rgb >> 24) & 0xff;
+		if (colorModeA == 255) return outgoing;
+		return (outgoing / 255.0f) * colorModeA;
+	}
+
+	@Override
+	public final float red(int rgb) {
+		float c = (rgb >> 16) & 0xff;
+		if (colorModeDefault) return c;
+		return (c / 255.0f) * colorModeX;
+	}
+
+	@Override
+	public final float green(int rgb) {
+		float c = (rgb >> 8) & 0xff;
+		if (colorModeDefault) return c;
+		return (c / 255.0f) * colorModeY;
+	}
+
+	@Override
+	public final float blue(int rgb) {
+		float c = (rgb) & 0xff;
+		if (colorModeDefault) return c;
+		return (c / 255.0f) * colorModeZ;
+	}
+
+	@Override
+	public final float hue(int rgb) {
+		if (rgb != cacheHsbKey) {
+			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
+					rgb & 0xff, cacheHsbValue);
+			cacheHsbKey = rgb;
+		}
+		return cacheHsbValue[0] * colorModeX;
+	}
+
+	@Override
+	public final float saturation(int rgb) {
+		if (rgb != cacheHsbKey) {
+			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
+					rgb & 0xff, cacheHsbValue);
+			cacheHsbKey = rgb;
+		}
+		return cacheHsbValue[1] * colorModeY;
+	}
+
+	@Override
+	public final float brightness(int rgb) {
+		if (rgb != cacheHsbKey) {
+			Color.RGBtoHSB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff,
+					rgb & 0xff, cacheHsbValue);
+			cacheHsbKey = rgb;
+		}
+		return cacheHsbValue[2] * colorModeZ;
+	}
+
+	@Override
+	public final int lerpColor(int c1, int c2, float amt) {
+		return lerpColor(c1, c2, amt, colorMode);
+	}
+
+	private static float[] lerpColorHSB1;
+	private static float[] lerpColorHSB2;
+
+	/**
+	 * @nowebref
+	 *           Interpolate between two colors. Like lerp(), but for the
+	 *           individual color components of a color supplied as an int value.
+	 */
+	public final static int lerpColor(int c1, int c2, float amt, int mode) {
+		if (amt < 0) amt = 0;
+		if (amt > 1) amt = 1;
+
+		if (mode == RGB) {
+			float a1 = ((c1 >> 24) & 0xff);
+			float r1 = (c1 >> 16) & 0xff;
+			float g1 = (c1 >> 8) & 0xff;
+			float b1 = c1 & 0xff;
+			float a2 = (c2 >> 24) & 0xff;
+			float r2 = (c2 >> 16) & 0xff;
+			float g2 = (c2 >> 8) & 0xff;
+			float b2 = c2 & 0xff;
+
+			return ((Math.round(a1 + (a2 - a1) * amt) << 24) |
+					(Math.round(r1 + (r2 - r1) * amt) << 16) |
+					(Math.round(g1 + (g2 - g1) * amt) << 8) |
+					(Math.round(b1 + (b2 - b1) * amt)));
+
+		} else if (mode == HSB) {
+			if (lerpColorHSB1 == null) {
+				lerpColorHSB1 = new float[3];
+				lerpColorHSB2 = new float[3];
+			}
+
+			float a1 = (c1 >> 24) & 0xff;
+			float a2 = (c2 >> 24) & 0xff;
+			int alfa = (Math.round(a1 + (a2 - a1) * amt)) << 24;
+
+			Color.RGBtoHSB((c1 >> 16) & 0xff, (c1 >> 8) & 0xff, c1 & 0xff,
+					lerpColorHSB1);
+			Color.RGBtoHSB((c2 >> 16) & 0xff, (c2 >> 8) & 0xff, c2 & 0xff,
+					lerpColorHSB2);
+
+			float ho = (float) lerpStatic(amt, lerpColorHSB1[0], lerpColorHSB2[0]);
+			float so = (float) lerpStatic(amt, lerpColorHSB1[1], lerpColorHSB2[1]);
+			float bo = (float) lerpStatic(amt, lerpColorHSB1[2], lerpColorHSB2[2]);
+
+			return alfa | (Color.HSBtoRGB(ho, so, bo) & 0xFFFFFF);
+		}
+		return 0;
+	}
+
+	public static double lerpStatic(double norm, double min, double max) {
+		return min + (max - min) * norm;
+	}
+
+	/**
+	 * @param mode
+	 *            Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
+	 */
+	@Override
+	public final void colorMode(int mode) {
+		colorMode(mode, colorModeX, colorModeY, colorModeZ, colorModeA);
+	}
+
+	/**
+	 * @param max
+	 *            range for all color elements
+	 */
+	@Override
+	public final void colorMode(int mode, float max) {
+		colorMode(mode, max, max, max, max);
+	}
+
+	/**
+	 * @param max1
+	 *            range for the red or hue depending on the current color mode
+	 * @param max2
+	 *            range for the green or saturation depending on the current color mode
+	 * @param max3
+	 *            range for the blue or brightness depending on the current color mode
+	 */
+	@Override
+	public final void colorMode(int mode, float max1, float max2, float max3) {
+		colorMode(mode, max1, max2, max3, colorModeA);
+	}
+
+	/**
+	 * @param maxA
+	 *            range for the alpha
+	 */
+	@Override
+	public final void colorMode(int mode,
+			float max1, float max2, float max3, float maxA) {
+		colorMode = mode;
+
+		colorModeX = max1; // still needs to be set for hsb
+		colorModeY = max2;
+		colorModeZ = max3;
+		colorModeA = maxA;
+
+		// if color max values are all 1, then no need to scale
+		colorModeScale = ((maxA != 1) || (max1 != max2) || (max2 != max3) || (max3 != maxA));
+
+		// if color is rgb/0..255 this will make it easier for the
+		// red() green() etc functions
+		colorModeDefault = (colorMode == RGB) &&
+				(colorModeA == 255) && (colorModeX == 255) &&
+				(colorModeY == 255) && (colorModeZ == 255);
+	}
+
+	/**
+	 * @param size
+	 *            the size of the letters in units of pixels
+	 */
+
+	@Override
 	public final void translate(double x, double y) { graphics.translate(x, y); }
 
+	@Override
 	public final void rotate(double theta) { graphics.rotate(theta); }
 
+	@Override
 	public final void rotate(double theta, double x, double y) { graphics.rotate(theta, x, y); }
 
+	@Override
 	public final void scale(double xy) { graphics.scale(xy, xy); };
 
+	@Override
 	public final void scale(double x, double y) { graphics.scale(x, y); };
 
+	@Override
 	public final void shear(double x, double y) { graphics.shear(x, y); };
 
+	@Override
 	public final void transform(AffineTransform affineTransform) { graphics.transform(affineTransform); };
 
+	@Override
 	public final void push() {
 		pushStyle();
 		pushMatrix();
 	}
 
+	@Override
 	public final void pop() {
 		popStyle();
 		popMatrix();
 	}
 
+	@Override
 	public final void pushStyle() {
 		if (styleStackDepth == styleStack.length) {
 			throw new RuntimeException("pushStyle() cannot use push more than " +
@@ -2712,6 +3494,7 @@ public class SGraphics extends SImage {
 		styleStackDepth++;
 	}
 
+	@Override
 	public final void popStyle() {
 		if (styleStackDepth == 0) {
 			throw new RuntimeException("Too many popStyle() without enough pushStyle()");
@@ -2720,6 +3503,7 @@ public class SGraphics extends SImage {
 		style(styleStack[styleStackDepth]);
 	}
 
+	@Override
 	public void pushMatrix() {
 		if (transformCount == transformStack.length) {
 			throw new RuntimeException("pushMatrix() cannot use push more than " +
@@ -2729,6 +3513,7 @@ public class SGraphics extends SImage {
 		transformCount++;
 	}
 
+	@Override
 	public void popMatrix() {
 		if (transformCount == 0) {
 			throw new RuntimeException("missing a pushMatrix() " +
@@ -2738,14 +3523,17 @@ public class SGraphics extends SImage {
 		graphics.setTransform(transformStack[transformCount]);
 	}
 
+	@Override
 	public void resetMatrix() {
 		graphics.setTransform(new AffineTransform());
 		graphics.scale(1, 1);
 	}
 
+	@Override
 	public final Style getStyle() { return getStyle(null); }
 
-	public final Style getStyle(Style s) { // ignore
+	@Override
+	public final Style getStyle(Style s) {
 		if (s == null) s = new Style();
 
 		s.smooth = smooth;
@@ -2783,6 +3571,7 @@ public class SGraphics extends SImage {
 		return s;
 	}
 
+	@Override
 	public final void style(Style s) {
 		smooth(s.smooth);
 
@@ -2901,7 +3690,7 @@ public class SGraphics extends SImage {
 
 	static protected Map<String, Object> warnings;
 
-	static public void showWarning(String msg) { // ignore
+	static public void showWarning(String msg) {
 		if (warnings == null) {
 			warnings = new HashMap<>();
 		}
@@ -2910,6 +3699,8 @@ public class SGraphics extends SImage {
 			warnings.put(msg, new Object());
 		}
 	}
+
+	static public void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
 
 	//////////////////////////////////////////////////////////////
 
@@ -2972,6 +3763,18 @@ public class SGraphics extends SImage {
 		}
 	}
 
+	public void pixel(int x, int y) { pixel(x, y, strokeColor); }
+
+	@Override
+	public void pixel(int x, int y, int argb) {
+		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
+//	    ((BufferedImage) image).setRGB(x, y, argb);
+		getset[0] = argb;
+//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
+//	    WritableRaster raster = image.getRaster();
+		getRaster().setDataElements(x, y, getset);
+	}
+
 	@Override
 	public void set(int x, int y, int argb) {
 		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
@@ -3006,7 +3809,7 @@ public class SGraphics extends SImage {
 		}
 	}
 
-	static public void showException(String msg) { // ignore
+	static public void showException(String msg) {
 		throw new RuntimeException(msg);
 	}
 	//////////////////////////////////////////////////////////////
@@ -3014,7 +3817,7 @@ public class SGraphics extends SImage {
 	// ASYNC IMAGE SAVING
 
 	@Override
-	public boolean save(String filename) { // ignore
+	public boolean save(String filename) {
 //		if (hints[DISABLE_ASYNC_SAVEFRAME]) {
 		return super.save(filename);
 //		}

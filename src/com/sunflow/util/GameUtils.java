@@ -47,116 +47,6 @@ public interface GameUtils {
 
 	default DVector createDVector(double x, double y, double z) { return new DVector(x, y, z); }
 
-	default SImage createImage(int width, int height) { return new SImage(width, height); }
-
-	default SImage createImage(int width, int height, int format) { return new SImage(width, height, format); }
-
-	default SImage createImage(Image bi) { return new SImage(bi); }
-
-	default SGraphics createGraphics(int width, int height) { return createGraphics(width, height, SConstants.JAVA2D); }
-
-	default SGraphics createGraphics(int width, int height, String renderer) { return createGraphics(width, height, renderer, null); }
-
-	default SGraphics createGraphics(int width, int height, String renderer, String path) { return makeGraphics(width, height, renderer, path, false); }
-
-	default SGraphics makeGraphics(int width, int height, String renderer, String path, boolean primary) {
-//		if (!primary && !g.isGL()) {
-//			if (renderer.equals(P2D)) {
-//				throw new RuntimeException("createGraphics() with P2D requires size() to use P2D or P3D");
-//			} else if (renderer.equals(P3D)) {
-//				throw new RuntimeException("createGraphics() with P3D or OPENGL requires size() to use P2D or P3D");
-//			}
-//		}
-
-		try {
-			Class<?> rendererClass = Thread.currentThread().getContextClassLoader().loadClass(renderer);
-
-			Constructor<?> constructor = rendererClass.getConstructor(new Class[] {});
-			SGraphics pg = (SGraphics) constructor.newInstance();
-
-//			pg.setParent(this);
-			pg.setPrimary(primary);
-			if (path != null) {
-				pg.setPath(savePath(path));
-			}
-//		      pg.setQuality(sketchQuality());
-//		      if (!primary) {
-//		        surface.initImage(pg, w, h);
-//		      }
-			pg.setSize(width, height);
-
-			// everything worked, return it
-			return pg;
-
-		} catch (InvocationTargetException ite) {
-			String msg = ite.getTargetException().getMessage();
-			if ((msg != null) &&
-					(msg.indexOf("no jogl in java.library.path") != -1)) {
-				// Is this true anymore, since the JARs contain the native libs?
-				throw new RuntimeException("The jogl library folder needs to be " +
-						"specified with -Djava.library.path=/path/to/jogl");
-
-			} else {
-				printStackTrace(ite.getTargetException());
-				Throwable target = ite.getTargetException();
-				/*
-				 * // removing for 3.2, we'll see
-				 * if (platform == MACOSX) {
-				 * target.printStackTrace(System.out); // OS X bug (still true?)
-				 * }
-				 */
-				throw new RuntimeException(target.getMessage());
-			}
-
-		} catch (ClassNotFoundException cnfe) {
-//		      if (cnfe.getMessage().indexOf("processing.opengl.PGraphicsOpenGL") != -1) {
-//		        throw new RuntimeException(openglError +
-//		                                   " (The library .jar file is missing.)");
-//		      } else {
-			if (external()) {
-				throw new RuntimeException("You need to use \"Import Library\" " +
-						"to add " + renderer + " to your sketch.");
-			} else {
-				throw new RuntimeException("The " + renderer +
-						" renderer is not in the class path.");
-			}
-
-		} catch (Exception e) {
-			if ((e instanceof IllegalArgumentException) ||
-					(e instanceof NoSuchMethodException) ||
-					(e instanceof IllegalAccessException)) {
-				if (e.getMessage().contains("cannot be <= 0")) {
-					// IllegalArgumentException will be thrown if w/h is <= 0
-					// http://code.google.com/p/processing/issues/detail?id=983
-					throw new RuntimeException(e);
-
-				} else {
-					printStackTrace(e);
-					String msg = renderer + " needs to be updated " +
-							"for the current release of Processing.";
-					throw new RuntimeException(msg);
-				}
-			} else {
-				/*
-				 * if (platform == MACOSX) {
-				 * e.printStackTrace(System.out); // OS X bug (still true?)
-				 * }
-				 */
-				printStackTrace(e);
-				throw new RuntimeException(e.getMessage());
-			}
-		}
-
-//		SGraphics sg = new SGraphics();
-//		sg.setPrimary(false);
-//		if (path != null) {
-//			sg.setPath(savePath(path));
-//		}
-//		sg.setSize(width, height);
-	}
-
-//	default SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
-
 	default void printStackTrace(Throwable e) { e.printStackTrace(); }
 
 	default boolean external() { return false; }
@@ -312,13 +202,114 @@ public interface GameUtils {
 		return strs.toArray(new String[0]);
 	}
 
-	default SImage loadSImage(String fileName) {
-		return new SImage(loadImage(fileName));
+	default SGraphics createGraphics(int width, int height) { return createGraphics(width, height, SConstants.JAVA2D); }
+
+	default SGraphics createGraphics(int width, int height, String renderer) { return createGraphics(width, height, renderer, null); }
+
+	default SGraphics createGraphics(int width, int height, String renderer, String path) { return makeGraphics(width, height, renderer, path, false); }
+
+	default SGraphics makeGraphics(int width, int height, String renderer, String path, boolean primary) {
+//		if (!primary && !g.isGL()) {
+//			if (renderer.equals(P2D)) {
+//				throw new RuntimeException("createGraphics() with P2D requires size() to use P2D or P3D");
+//			} else if (renderer.equals(P3D)) {
+//				throw new RuntimeException("createGraphics() with P3D or OPENGL requires size() to use P2D or P3D");
+//			}
+//		}
+
+		try {
+			Class<?> rendererClass = Thread.currentThread().getContextClassLoader().loadClass(renderer);
+
+			Constructor<?> constructor = rendererClass.getConstructor(new Class[] {});
+			SGraphics pg = (SGraphics) constructor.newInstance();
+
+			pg.setPrimary(primary);
+			if (path != null) {
+				pg.setPath(savePath(path));
+			}
+//		      pg.setQuality(sketchQuality());
+//		      if (!primary) {
+//		        surface.initImage(pg, w, h);
+//		      }
+			pg.setSize(width, height);
+
+			// everything worked, return it
+			return pg;
+
+		} catch (InvocationTargetException ite) {
+			String msg = ite.getTargetException().getMessage();
+			if ((msg != null) &&
+					(msg.indexOf("no jogl in java.library.path") != -1)) {
+				// Is this true anymore, since the JARs contain the native libs?
+				throw new RuntimeException("The jogl library folder needs to be " +
+						"specified with -Djava.library.path=/path/to/jogl");
+
+			} else {
+				printStackTrace(ite.getTargetException());
+				Throwable target = ite.getTargetException();
+				/*
+				 * // removing for 3.2, we'll see
+				 * if (platform == MACOSX) {
+				 * target.printStackTrace(System.out); // OS X bug (still true?)
+				 * }
+				 */
+				throw new RuntimeException(target.getMessage());
+			}
+
+		} catch (ClassNotFoundException cnfe) {
+//		      if (cnfe.getMessage().indexOf("processing.opengl.PGraphicsOpenGL") != -1) {
+//		        throw new RuntimeException(openglError +
+//		                                   " (The library .jar file is missing.)");
+//		      } else {
+			if (external()) {
+				throw new RuntimeException("You need to use \"Import Library\" " +
+						"to add " + renderer + " to your sketch.");
+			} else {
+				throw new RuntimeException("The " + renderer +
+						" renderer is not in the class path.");
+			}
+
+		} catch (Exception e) {
+			if ((e instanceof IllegalArgumentException) ||
+					(e instanceof NoSuchMethodException) ||
+					(e instanceof IllegalAccessException)) {
+				if (e.getMessage().contains("cannot be <= 0")) {
+					// IllegalArgumentException will be thrown if w/h is <= 0
+					// http://code.google.com/p/processing/issues/detail?id=983
+					throw new RuntimeException(e);
+
+				} else {
+					printStackTrace(e);
+					String msg = renderer + " needs to be updated " +
+							"for the current release of Processing.";
+					throw new RuntimeException(msg);
+				}
+			} else {
+				/*
+				 * if (platform == MACOSX) {
+				 * e.printStackTrace(System.out); // OS X bug (still true?)
+				 * }
+				 */
+				printStackTrace(e);
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+
+//		SGraphics sg = new SGraphics();
+//		sg.setPrimary(false);
+//		if (path != null) {
+//			sg.setPath(savePath(path));
+//		}
+//		sg.setSize(width, height);
 	}
 
-//	default SImage loadSImage(String fileName, int format) {
-//		return new SImage(loadImage(fileName, format));
-//	}
+	default SImage createImage(int width, int height) { return new SImage(width, height); }
+
+	default SImage createImage(int width, int height, int format) { return new SImage(width, height, format); }
+
+	default SImage createImage(Image bi) { return new SImage(bi); }
+
+	default SImage loadSImage(String fileName) { return new SImage(loadImage(fileName)); }
 
 	default BufferedImage loadImage(String fileName) {
 		BufferedImage img = null;

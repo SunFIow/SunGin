@@ -2,6 +2,7 @@ package com.sunflow.game;
 
 import java.awt.AWTException;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Robot;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -17,6 +18,7 @@ import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,9 +26,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.net.HttpURLConnection;
+import java.net.JarURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.GZIPInputStream;
 
 import com.sunflow.Settings;
 import com.sunflow.engine.Mouse;
@@ -54,6 +64,7 @@ import com.sunflow.engine.screen.Screen;
 import com.sunflow.engine.screen.ScreenJava;
 import com.sunflow.engine.screen.ScreenOpenGL;
 import com.sunflow.gfx.SGraphics;
+import com.sunflow.gfx.SImage;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
 import com.sunflow.logging.Log;
@@ -214,6 +225,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	public void createCanvas(float width, float height, float scaleW, float scaleH) {
 		screen.createCanvas(width, height, scaleW, scaleH);
 
+		setParent(this);
 		setPrimary(true);
 		setSize(width(), height());
 		graphics = checkImage();
@@ -224,10 +236,6 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 		this.width = width;
 		this.height = height;
-	}
-
-	protected SGraphics createPrimaryGraphics() {
-		return makeGraphics(width(), height(), renderer, outputPath, true);
 	}
 
 	@Override
@@ -827,4 +835,301 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		Log.log(Log.FATAL, "Uncaught Exception", e);
 		System.exit(1);
 	}
+
+	public InputStream createInput(String filename) {
+		InputStream input = createInputRaw(filename);
+		if (input != null) {
+			// if it's gzip-encoded, automatically decode
+			final String lower = filename.toLowerCase();
+			if (lower.endsWith(".gz") || lower.endsWith(".svgz")) {
+				try {
+					// buffered has to go *around* the GZ, otherwise 25x slower
+					return new BufferedInputStream(new GZIPInputStream(input));
+
+				} catch (IOException e) {
+					printStackTrace(e);
+				}
+			} else {
+				return new BufferedInputStream(input);
+			}
+		}
+		return null;
+	}
+
+	public InputStream createInputRaw(String filename) {
+		if (filename == null) return null;
+
+		if (sketchPath == null) {
+			System.err.println("The sketch path is not set.");
+			throw new RuntimeException("Files must be loaded inside setup() or after it has been called.");
+		}
+
+		if (filename.length() == 0) {
+			// an error will be called by the parent function
+			// System.err.println("The filename passed to openStream() was empty.");
+			return null;
+		}
+
+		// First check whether this looks like a URL
+		if (filename.contains(":")) { // at least smells like URL
+			try {
+				URL url = new URL(filename);
+				URLConnection conn = url.openConnection();
+
+				if (conn instanceof HttpURLConnection) {
+					HttpURLConnection httpConn = (HttpURLConnection) conn;
+					// Will not handle a protocol change (see below)
+					httpConn.setInstanceFollowRedirects(true);
+					int response = httpConn.getResponseCode();
+					// Default won't follow HTTP -> HTTPS redirects for security reasons
+					// http://stackoverflow.com/a/1884427
+					if (response >= 300 && response < 400) {
+						String newLocation = httpConn.getHeaderField("Location");
+						return createInputRaw(newLocation);
+					}
+					return conn.getInputStream();
+				} else if (conn instanceof JarURLConnection) {
+					return url.openStream();
+				}
+			} catch (MalformedURLException mfue) {
+				// not a url, that's fine
+
+			} catch (FileNotFoundException fnfe) {
+				// Added in 0119 b/c Java 1.5 throws FNFE when URL not available.
+				// http://dev.processing.org/bugs/show_bug.cgi?id=403
+
+			} catch (IOException e) {
+				// changed for 0117, shouldn't be throwing exception
+				printStackTrace(e);
+				// System.err.println("Error downloading from URL " + filename);
+				return null;
+				// throw new RuntimeException("Error downloading from URL " + filename);
+			}
+		}
+
+		InputStream stream = null;
+
+		// Moved this earlier than the getResourceAsStream() checks, because
+		// calling getResourceAsStream() on a directory lists its contents.
+		// http://dev.processing.org/bugs/show_bug.cgi?id=716
+		try {
+			// First see if it's in a data folder. This may fail by throwing
+			// a SecurityException. If so, this whole block will be skipped.
+			File file = new File(dataPath(filename));
+			if (!file.exists()) {
+				// next see if it's just in the sketch folder
+				file = sketchFile(filename);
+			}
+
+			if (file.isDirectory()) {
+				return null;
+			}
+			if (file.exists()) {
+				try {
+					// handle case sensitivity check
+					String filePath = file.getCanonicalPath();
+					String filenameActual = new File(filePath).getName();
+					// make sure there isn't a subfolder prepended to the name
+					String filenameShort = new File(filename).getName();
+					// if the actual filename is the same, but capitalized
+					// differently, warn the user.
+					// if (filenameActual.equalsIgnoreCase(filenameShort) &&
+					// !filenameActual.equals(filenameShort)) {
+					if (!filenameActual.equals(filenameShort)) {
+						throw new RuntimeException("This file is named " +
+								filenameActual + " not " +
+								filename + ". Rename the file " +
+								"or change your code.");
+					}
+				} catch (IOException e) {}
+			}
+
+			// if this file is ok, may as well just load it
+			stream = new FileInputStream(file);
+			if (stream != null) return stream;
+
+			// have to break these out because a general Exception might
+			// catch the RuntimeException being thrown above
+		} catch (IOException ioe) {} catch (SecurityException se) {}
+
+		// Using getClassLoader() prevents java from converting dots
+		// to slashes or requiring a slash at the beginning.
+		// (a slash as a prefix means that it'll load from the root of
+		// the jar, rather than trying to dig into the package location)
+		ClassLoader cl = getClass().getClassLoader();
+
+		// by default, data files are exported to the root path of the jar.
+		// (not the data folder) so check there first.
+		stream = cl.getResourceAsStream("data/" + filename);
+		if (stream != null) {
+			String cn = stream.getClass().getName();
+			// this is an irritation of sun's java plug-in, which will return
+			// a non-null stream for an object that doesn't exist. like all good
+			// things, this is probably introduced in java 1.5. awesome!
+			// http://dev.processing.org/bugs/show_bug.cgi?id=359
+			if (!cn.equals("sun.plugin.cache.EmptyInputStream")) {
+				return stream;
+			}
+		}
+
+		// When used with an online script, also need to check without the
+		// data folder, in case it's not in a subfolder called 'data'.
+		// http://dev.processing.org/bugs/show_bug.cgi?id=389
+		stream = cl.getResourceAsStream(filename);
+		if (stream != null) {
+			String cn = stream.getClass().getName();
+			if (!cn.equals("sun.plugin.cache.EmptyInputStream")) {
+				return stream;
+			}
+		}
+
+		try {
+			// attempt to load from a local file, used when running as
+			// an application, or as a signed applet
+			try { // first try to catch any security exceptions
+				try {
+					stream = new FileInputStream(dataPath(filename));
+					if (stream != null) return stream;
+				} catch (IOException e2) {}
+
+				try {
+					stream = new FileInputStream(sketchPath(filename));
+					if (stream != null) return stream;
+				} catch (Exception e) {} // ignored
+
+				try {
+					stream = new FileInputStream(filename);
+					if (stream != null) return stream;
+				} catch (IOException e1) {}
+
+			} catch (SecurityException se) {} // online, whups
+
+		} catch (Exception e) {
+			printStackTrace(e);
+		}
+
+		return null;
+	}
+
+	public File sketchFile(String where) {
+		return new File(sketchPath(where));
+	}
+
+	/**
+	 * <b>This function almost certainly does not do the thing you want it to.</b>
+	 * The data path is handled differently on each platform, and should not be
+	 * considered a location to write files. It should also not be assumed that
+	 * this location can be read from or listed. This function is used internally
+	 * as a possible location for reading files. It's still "public" as a
+	 * holdover from earlier code.
+	 * <p>
+	 * Libraries should use createInput() to get an InputStream or createOutput()
+	 * to get an OutputStream. sketchPath() can be used to get a location
+	 * relative to the sketch. Again, <b>do not</b> use this to get relative
+	 * locations of files. You'll be disappointed when your app runs on different
+	 * platforms.
+	 */
+	public String dataPath(String where) {
+		return dataFile(where).getAbsolutePath();
+	}
+
+	/**
+	 * Return a full path to an item in the data folder as a File object.
+	 * See the dataPath() method for more information.
+	 */
+	public File dataFile(String where) {
+		// isAbsolute() could throw an access exception, but so will writing
+		// to the local disk using the sketch path, so this is safe here.
+		File why = new File(where);
+		if (why.isAbsolute()) return why;
+
+		URL jarURL = getClass().getProtectionDomain().getCodeSource().getLocation();
+		// Decode URL
+		String jarPath;
+		try {
+			jarPath = jarURL.toURI().getPath();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
+		if (jarPath.contains("Contents/Java/")) {
+			File containingFolder = new File(jarPath).getParentFile();
+			File dataFolder = new File(containingFolder, "data");
+			return new File(dataFolder, where);
+		}
+		// Windows, Linux, or when not using a Mac OS X .app file
+		File workingDirItem = new File(sketchPath + File.separator + "data" + File.separator + where);
+//		    if (workingDirItem.exists()) {
+		return workingDirItem;
+//		    }
+//		    // In some cases, the current working directory won't be set properly.
+	}
+
+	public static Object subset(Object list, int start, int count) {
+		Class<?> type = list.getClass().getComponentType();
+		Object outgoing = Array.newInstance(type, count);
+		System.arraycopy(list, start, outgoing, 0, count);
+		return outgoing;
+	}
+
+	static public int[] expand(int list[]) {
+		return expand(list, list.length > 0 ? list.length << 1 : 1);
+	}
+
+	static public int[] expand(int list[], int newSize) {
+		int temp[] = new int[newSize];
+		System.arraycopy(list, 0, temp, 0, Math.min(newSize, list.length));
+		return temp;
+	}
+
+	static public float[] expand(float list[]) {
+		return expand(list, list.length > 0 ? list.length << 1 : 1);
+	}
+
+	static public float[] expand(float list[], int newSize) {
+		float temp[] = new float[newSize];
+		System.arraycopy(list, 0, temp, 0, Math.min(newSize, list.length));
+		return temp;
+	}
+
+	public static Object expand(Object array) {
+		int len = Array.getLength(array);
+		return expand(array, len > 0 ? len << 1 : 1);
+	}
+
+	static public Object expand(Object list, int newSize) {
+		Class<?> type = list.getClass().getComponentType();
+		Object temp = Array.newInstance(type, newSize);
+		System.arraycopy(list, 0, temp, 0,
+				Math.min(Array.getLength(list), newSize));
+		return temp;
+	}
+
+	@Override
+	public SGraphics makeGraphics(int width, int height, String renderer, String path, boolean primary) {
+		SGraphics sg = GameUtils.super.makeGraphics(width, height, renderer, path, primary);
+		sg.setParent(this);
+		return sg;
+	}
+
+	protected SGraphics createPrimaryGraphics() { return makeGraphics(width(), height(), renderer, outputPath, true); }
+
+//	protected SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
+
+	@Override
+	public SImage createImage(int width, int height) { SImage img = GameUtils.super.createImage(width, height); img.parent = this; return img; }
+
+	@Override
+	public SImage createImage(int width, int height, int format) { SImage img = GameUtils.super.createImage(width, height, format); img.parent = this; return img; }
+
+	@Override
+	public SImage createImage(Image bi) { SImage img = GameUtils.super.createImage(bi); img.parent = this; return img; }
+
+	@Override
+	public SImage loadSImage(String fileName) { SImage img = GameUtils.super.loadSImage(fileName); img.parent = this; return img; }
+
+//	protected SImage loadSImage(String fileName, int format) {
+//		return new SImage(loadImage(fileName, format));
+//	}
+
 }
