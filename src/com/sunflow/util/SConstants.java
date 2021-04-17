@@ -170,7 +170,6 @@ public interface SConstants {
 //  static final int CMYK  = 5;  // image & color (someday)
 
 	// image file types
-	// TODO: implement for export
 
 	static final int TIFF = 0;
 	static final int TARGA = 1;
@@ -190,7 +189,6 @@ public interface SConstants {
 
 	// blend mode keyword definitions
 	// @see processing.core.PImage#blendColor(int,int,int)
-	// TODO: implement
 
 	final static int REPLACE = 0;
 	final static int BLEND = 1 << 0;
@@ -410,44 +408,44 @@ public interface SConstants {
 
 	// hints - hint values are positive for the alternate version,
 	// negative of the same value returns to the normal/default state
-	// TODO: implement?
-//	@Deprecated
-//	static final int ENABLE_NATIVE_FONTS = 1;
-//	@Deprecated
-//	static final int DISABLE_NATIVE_FONTS = -1;
-//
-//	static final int DISABLE_DEPTH_TEST = 2;
-//	static final int ENABLE_DEPTH_TEST = -2;
-//
-//	static final int ENABLE_DEPTH_SORT = 3;
-//	static final int DISABLE_DEPTH_SORT = -3;
-//
-//	static final int DISABLE_OPENGL_ERRORS = 4;
-//	static final int ENABLE_OPENGL_ERRORS = -4;
-//
-//	static final int DISABLE_DEPTH_MASK = 5;
-//	static final int ENABLE_DEPTH_MASK = -5;
-//
-//	static final int DISABLE_OPTIMIZED_STROKE = 6;
-//	static final int ENABLE_OPTIMIZED_STROKE = -6;
-//
-//	static final int ENABLE_STROKE_PERSPECTIVE = 7;
-//	static final int DISABLE_STROKE_PERSPECTIVE = -7;
-//
-//	static final int DISABLE_TEXTURE_MIPMAPS = 8;
-//	static final int ENABLE_TEXTURE_MIPMAPS = -8;
-//
-//	static final int ENABLE_STROKE_PURE = 9;
-//	static final int DISABLE_STROKE_PURE = -9;
-//
-//	static final int ENABLE_BUFFER_READING = 10;
-//	static final int DISABLE_BUFFER_READING = -10;
-//
-//	static final int DISABLE_KEY_REPEAT = 11;
-//	static final int ENABLE_KEY_REPEAT = -11;
-//
-//	static final int DISABLE_ASYNC_SAVEFRAME = 12;
-//	static final int ENABLE_ASYNC_SAVEFRAME = -12;
-//
-//	static final int HINT_COUNT = 13;
+
+	@Deprecated
+	static final int ENABLE_NATIVE_FONTS = 1;
+	@Deprecated
+	static final int DISABLE_NATIVE_FONTS = -1;
+
+	static final int DISABLE_DEPTH_TEST = 2;
+	static final int ENABLE_DEPTH_TEST = -2;
+
+	static final int ENABLE_DEPTH_SORT = 3;
+	static final int DISABLE_DEPTH_SORT = -3;
+
+	static final int DISABLE_OPENGL_ERRORS = 4;
+	static final int ENABLE_OPENGL_ERRORS = -4;
+
+	static final int DISABLE_DEPTH_MASK = 5;
+	static final int ENABLE_DEPTH_MASK = -5;
+
+	static final int DISABLE_OPTIMIZED_STROKE = 6;
+	static final int ENABLE_OPTIMIZED_STROKE = -6;
+
+	static final int ENABLE_STROKE_PERSPECTIVE = 7;
+	static final int DISABLE_STROKE_PERSPECTIVE = -7;
+
+	static final int DISABLE_TEXTURE_MIPMAPS = 8;
+	static final int ENABLE_TEXTURE_MIPMAPS = -8;
+
+	static final int ENABLE_STROKE_PURE = 9;
+	static final int DISABLE_STROKE_PURE = -9;
+
+	static final int ENABLE_BUFFER_READING = 10;
+	static final int DISABLE_BUFFER_READING = -10;
+
+	static final int DISABLE_KEY_REPEAT = 11;
+	static final int ENABLE_KEY_REPEAT = -11;
+
+	static final int DISABLE_ASYNC_SAVEFRAME = 12;
+	static final int ENABLE_ASYNC_SAVEFRAME = -12;
+
+	static final int HINT_COUNT = 13;
 }

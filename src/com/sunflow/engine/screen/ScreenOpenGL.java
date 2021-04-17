@@ -4,12 +4,9 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
+import java.util.EventListener;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
@@ -29,6 +26,7 @@ import com.sunflow.engine.eventsystem.events.MouseInputEvent.MouseReleasedEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
 import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
@@ -236,7 +234,7 @@ public class ScreenOpenGL extends Screen {
 				height = scaledHeight / scaleHeight;
 				frameWidth = w;
 				frameHeight = h;
-				game.resize(width, height);
+				game.resize((int) width, (int) height);
 			}
 		});
 
@@ -360,16 +358,16 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	public boolean addKeyListener(KeyListener listener) { return false; }
+	public boolean addListener(EventListener listener) { return false; }
 
 	@Override
-	public boolean addMouseListener(MouseListener listener) { return false; }
+	public boolean removeListener(EventListener listener) { return false; }
 
 	@Override
-	public boolean addMouseWheelListener(MouseWheelListener listener) { return false; }
+	public boolean addListener(SEventListener listener) { return EventManager.addEventListener(listener); }
 
 	@Override
-	public boolean addMouseMotionListener(MouseMotionListener listener) { return false; }
+	public boolean removeListener(SEventListener listener) { return EventManager.removeEventListener(listener); }
 
 	@Override
 	public void setCursor(Cursor cursor) { window.setCursor(cursor); }

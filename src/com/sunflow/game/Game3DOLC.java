@@ -88,11 +88,9 @@ public class Game3DOLC extends GameBase {
 	public void createCanvas(float width, float height, float scaleW, float scaleH) {
 		super.createCanvas(width, height, scaleW, scaleH);
 
-		screen.addKeyListener(new Game3DKeyListeners());
+		screen.addListener(new Game3DKeyListeners());
 		Game3DMouseListeners ml = new Game3DMouseListeners();
-		screen.addMouseListener(ml);
-		screen.addMouseWheelListener(ml);
-		screen.addMouseMotionListener(ml);
+		addListener(ml);
 
 //		if (isCameraActivated) invisibleMouse();
 		showCrosshair(true);
@@ -407,6 +405,7 @@ public class Game3DOLC extends GameBase {
 		public void mouseMoved(MouseEvent e) { updateMousePosition(e.getX(), e.getY()); }
 	}
 
+	@Override
 	final void updateMousePosition(float x, float y) {
 		if (!screen.hasFocus()) return;
 		if (!isCameraActivated) return;

@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.zip.GZIPOutputStream;
@@ -73,6 +74,40 @@ public interface GameUtils {
 	default String nf(float num, int digits) { return String.format("%0" + digits + "f", num); }
 
 	default String nf(double num, int digits) { return String.format("%0" + digits + "d", num); }
+
+	//////////////////////////////////////////////////////////////
+
+	// FLOAT NUMBER FORMATTING
+
+	NumberFormat float_nf = NumberFormat.getInstance();
+	int[] float_nf_left = new int[1], float_nf_right = new int[1];
+	boolean[] float_nf_commas = new boolean[1];
+
+	default String nf(float num, int left, int right) {
+//		if ((float_nf != null) &&
+		if ((float_nf_left[0] == left) &&
+				(float_nf_right[0] == right) &&
+				!float_nf_commas[0]) {
+			return float_nf.format(num);
+		}
+
+//		float_nf = NumberFormat.getInstance();
+		float_nf.setGroupingUsed(false);
+		float_nf_commas[0] = false;
+
+		if (left != 0) float_nf.setMinimumIntegerDigits(left);
+		if (right != 0) {
+			float_nf.setMinimumFractionDigits(right);
+			float_nf.setMaximumFractionDigits(right);
+		}
+		float_nf_left[0] = left;
+		float_nf_right[0] = right;
+		return float_nf.format(num);
+	}
+
+	default String nfs(float num, int left, int right) {
+		return (num < 0) ? nf(num, left, right) : (' ' + nf(num, left, right));
+	}
 
 	default float[] convert(double[] arr) {
 		float[] newArr = new float[arr.length];

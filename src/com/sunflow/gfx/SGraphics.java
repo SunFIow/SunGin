@@ -24,15 +24,26 @@ import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import com.sunflow.game.GameBase;
 import com.sunflow.logging.Log;
+import com.sunflow.math.SMatrix2D;
+import com.sunflow.util.GameUtils;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.Style;
 
@@ -46,7 +57,7 @@ public class SGraphics extends SImage implements SGFX {
 	public BufferedImage image;
 
 	/** Screen object that we're talking to */
-	protected PScreen screen;
+	protected SScreen screen;
 
 	public Graphics2D graphics;
 
@@ -71,6 +82,22 @@ public class SGraphics extends SImage implements SGFX {
 	 * False for offscreen buffers retrieved via createGraphics().
 	 */
 	protected boolean primaryGraphics;
+
+	// ........................................................
+
+	/**
+	 * Array of hint[] items. These are hacks to get around various
+	 * temporary workarounds inside the environment.
+	 * <p/>
+	 * Note that this array cannot be static, as a hint() may result in a
+	 * runtime change specific to a renderer. For instance, calling
+	 * hint(DISABLE_DEPTH_TEST) has to call glDisable() right away on an
+	 * instance of PGraphicsOpenGL.
+	 * <p/>
+	 * The hints[] array is allocated early on because it might
+	 * be used inside beginDraw(), allocate(), etc.
+	 */
+	protected boolean[] hints = new boolean[HINT_COUNT];
 
 	// ........................................................
 
@@ -355,6 +382,10 @@ public class SGraphics extends SImage implements SGFX {
 	protected char[] textBuffer = new char[8 * 1024];
 	protected char[] textWidthBuffer = new char[8 * 1024];
 
+	protected int textBreakCount;
+	protected int[] textBreakStart;
+	protected int[] textBreakStop;
+
 	private Composite defaultComposite;
 
 //	public SGraphics() {
@@ -426,8 +457,8 @@ public class SGraphics extends SImage implements SGFX {
 		cacheMap.remove(key);
 	}
 
-	public PScreen createScreen() {
-		return screen = new PScreenAWT(this);
+	public SScreen createScreen() {
+		return screen = new SScreenAWT(this);
 	}
 
 	/**
@@ -1566,10 +1597,10 @@ public class SGraphics extends SImage implements SGFX {
 			img.setModified(false);
 		}
 
-//	    u1 *= who.pixelDensity;
-//	    v1 *= who.pixelDensity;
-//	    u2 *= who.pixelDensity;
-//	    v2 *= who.pixelDensity;
+		u1 *= img.pixelDensity;
+		v1 *= img.pixelDensity;
+		u2 *= img.pixelDensity;
+		v2 *= img.pixelDensity;
 
 		graphics.drawImage(((ImageCache) getCache(img)).image,
 				(int) x, (int) y, (int) w, (int) h,
@@ -2420,6 +2451,262 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
+	/**
+	 * <h3>Advanced</h3>
+	 * Draw text in a box that is constrained to a particular size.
+	 * The current rectMode() determines what the coordinates mean
+	 * (whether x1/y1/x2/y2 or x/y/w/h).
+	 * <P/>
+	 * Note that the x,y coords of the start of the box
+	 * will align with the *ascent* of the text, not the baseline,
+	 * as is the case for the other text() functions.
+	 * <P/>
+	 * Newlines that are \n (Unix newline or linefeed char, ascii 10)
+	 * are honored, and \r (carriage return, Windows and Mac OS) are
+	 * ignored.
+	 *
+	 * @param x1
+	 *            by default, the x-coordinate of text, see rectMode() for more info
+	 * @param y1
+	 *            by default, the y-coordinate of text, see rectMode() for more info
+	 * @param x2
+	 *            by default, the width of the text box, see rectMode() for more info
+	 * @param y2
+	 *            by default, the height of the text box, see rectMode() for more info
+	 */
+	public void text(String str, float x1, float y1, float x2, float y2) {
+		if (textFont == null) {
+			defaultFontOrDeath("text");
+		}
+
+		float hradius, vradius;
+		switch (rectMode) {
+			case CORNER:
+				x2 += x1;
+				y2 += y1;
+				break;
+			case RADIUS:
+				hradius = x2;
+				vradius = y2;
+				x2 = x1 + hradius;
+				y2 = y1 + vradius;
+				x1 -= hradius;
+				y1 -= vradius;
+				break;
+			case CENTER:
+				hradius = x2 / 2.0f;
+				vradius = y2 / 2.0f;
+				x2 = x1 + hradius;
+				y2 = y1 + vradius;
+				x1 -= hradius;
+				y1 -= vradius;
+		}
+		if (x2 < x1) {
+			float temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}
+		if (y2 < y1) {
+			float temp = y1;
+			y1 = y2;
+			y2 = temp;
+		}
+
+//	    float currentY = y1;
+		float boxWidth = x2 - x1;
+
+//	    // ala illustrator, the text itself must fit inside the box
+//	    currentY += textAscent(); //ascent() * textSize;
+//	    // if the box is already too small, tell em to f off
+//	    if (currentY > y2) return;
+
+		float spaceWidth = textWidth(' ');
+
+		if (textBreakStart == null) {
+			textBreakStart = new int[20];
+			textBreakStop = new int[20];
+		}
+		textBreakCount = 0;
+
+		int length = str.length();
+		if (length + 1 > textBuffer.length) {
+			textBuffer = new char[length + 1];
+		}
+		str.getChars(0, length, textBuffer, 0);
+		// add a fake newline to simplify calculations
+		textBuffer[length++] = '\n';
+
+		int sentenceStart = 0;
+		for (int i = 0; i < length; i++) {
+			if (textBuffer[i] == '\n') {
+//	        currentY = textSentence(textBuffer, sentenceStart, i,
+//	                                lineX, boxWidth, currentY, y2, spaceWidth);
+				boolean legit = textSentence(textBuffer, sentenceStart, i, boxWidth, spaceWidth);
+				if (!legit) break;
+//	      if (Float.isNaN(currentY)) break;  // word too big (or error)
+//	      if (currentY > y2) break;  // past the box
+				sentenceStart = i + 1;
+			}
+		}
+
+		// lineX is the position where the text starts, which is adjusted
+		// to left/center/right based on the current textAlign
+		float lineX = x1; // boxX1;
+		if (textAlign == CENTER) {
+			lineX = lineX + boxWidth / 2f;
+		} else if (textAlign == RIGHT) {
+			lineX = x2; // boxX2;
+		}
+
+		float boxHeight = y2 - y1;
+		// int lineFitCount = 1 + PApplet.floor((boxHeight - textAscent()) / textLeading);
+		// incorporate textAscent() for the top (baseline will be y1 + ascent)
+		// and textDescent() for the bottom, so that lower parts of letters aren't
+		// outside the box. [0151]
+		float topAndBottom = textAscent() + textDescent();
+		int lineFitCount = 1 + MathUtils.instance.floor((boxHeight - topAndBottom) / textLeading);
+		int lineCount = Math.min(textBreakCount, lineFitCount);
+
+		if (textAlignY == CENTER) {
+			float lineHigh = textAscent() + textLeading * (lineCount - 1);
+			float y = y1 + textAscent() + (boxHeight - lineHigh) / 2;
+			for (int i = 0; i < lineCount; i++) {
+				textLineAlignImpl(textBuffer, textBreakStart[i], textBreakStop[i], lineX, y);
+				y += textLeading;
+			}
+
+		} else if (textAlignY == BOTTOM) {
+			float y = y2 - textDescent() - textLeading * (lineCount - 1);
+			for (int i = 0; i < lineCount; i++) {
+				textLineAlignImpl(textBuffer, textBreakStart[i], textBreakStop[i], lineX, y);
+				y += textLeading;
+			}
+
+		} else { // TOP or BASELINE just go to the default
+			float y = y1 + textAscent();
+			for (int i = 0; i < lineCount; i++) {
+				textLineAlignImpl(textBuffer, textBreakStart[i], textBreakStop[i], lineX, y);
+				y += textLeading;
+			}
+		}
+	}
+
+	/**
+	 * Emit a sentence of text, defined as a chunk of text without any newlines.
+	 * 
+	 * @param stop
+	 *            non-inclusive, the end of the text in question
+	 * @return false if cannot fit
+	 */
+	protected boolean textSentence(char[] buffer, int start, int stop,
+			float boxWidth, float spaceWidth) {
+		float runningX = 0;
+
+		// Keep track of this separately from index, since we'll need to back up
+		// from index when breaking words that are too long to fit.
+		int lineStart = start;
+		int wordStart = start;
+		int index = start;
+		while (index <= stop) {
+			// boundary of a word or end of this sentence
+			if ((buffer[index] == ' ') || (index == stop)) {
+//	        System.out.println((index == stop) + " " + wordStart + " " + index);
+				float wordWidth = 0;
+				if (index > wordStart) {
+					// we have a non-empty word, measure it
+					wordWidth = textWidthImpl(buffer, wordStart, index);
+				}
+
+				if (runningX + wordWidth >= boxWidth) {
+					if (runningX != 0) {
+						// Next word is too big, output the current line and advance
+						index = wordStart;
+						textSentenceBreak(lineStart, index);
+						// Eat whitespace before the first word on the next line.
+						while ((index < stop) && (buffer[index] == ' ')) {
+							index++;
+						}
+					} else { // (runningX == 0)
+						// If this is the first word on the line, and its width is greater
+						// than the width of the text box, then break the word where at the
+						// max width, and send the rest of the word to the next line.
+						if (index - wordStart < 25) {
+							do {
+								index--;
+								if (index == wordStart) {
+									// Not a single char will fit on this line. screw 'em.
+									return false;
+								}
+								wordWidth = textWidthImpl(buffer, wordStart, index);
+							} while (wordWidth > boxWidth);
+						} else {
+							// This word is more than 25 characters long, might be faster to
+							// start from the beginning of the text rather than shaving from
+							// the end of it, which is super slow if it's 1000s of letters.
+							// https://github.com/processing/processing/issues/211
+							int lastIndex = index;
+							index = wordStart + 1;
+							// walk to the right while things fit
+							while ((wordWidth = textWidthImpl(buffer, wordStart, index)) < boxWidth) {
+								index++;
+								if (index > lastIndex) { // Unreachable?
+									break;
+								}
+							}
+							index--;
+							if (index == wordStart) {
+								return false; // nothing fits
+							}
+						}
+
+						// textLineImpl(buffer, lineStart, index, x, y);
+						textSentenceBreak(lineStart, index);
+					}
+					lineStart = index;
+					wordStart = index;
+					runningX = 0;
+
+				} else if (index == stop) {
+					// last line in the block, time to unload
+					// textLineImpl(buffer, lineStart, index, x, y);
+					textSentenceBreak(lineStart, index);
+//	          y += textLeading;
+					index++;
+
+				} else { // this word will fit, just add it to the line
+					runningX += wordWidth;
+					wordStart = index; // move on to the next word including the space before the word
+					index++;
+				}
+			} else { // not a space or the last character
+				index++; // this is just another letter
+			}
+		}
+//	    return y;
+		return true;
+	}
+
+	protected void textSentenceBreak(int start, int stop) {
+		if (textBreakCount == textBreakStart.length) {
+			textBreakStart = GameBase.expand(textBreakStart);
+			textBreakStop = GameBase.expand(textBreakStop);
+		}
+		textBreakStart[textBreakCount] = start;
+		textBreakStop[textBreakCount] = stop;
+		textBreakCount++;
+	}
+
+	public void text(int num, float x, float y) { text(String.valueOf(num), x, y); }
+
+	public void text(float num, float x, float y) { text(GameUtils.instance.nfs(num, 0, 3), x, y); }
+
+	//////////////////////////////////////////////////////////////
+
+	// TEXT IMPL
+
+	// These are most likely to be overridden by subclasses, since the other
+	// (public) functions handle generic features like setting alignment.
+
 	protected void textLineAlignImpl(char buffer[], int start, int stop,
 			float x, float y) {
 		if (textAlign == CENTER) {
@@ -2599,29 +2886,248 @@ public class SGraphics extends SImage implements SGFX {
 //		popMatrix();
 //	}
 
-	/////////////////////////////////
+	//////////////////////////////////////////////////////////////
 
-	/**
-	 * Same as below, but defaults to a 12 point font, just as MacWrite intended.
-	 */
-	protected void defaultFontOrDeath(String method) { defaultFontOrDeath(method, 12); }
+	// MATRIX STACK
 
-	/**
-	 * First try to create a default font, but if that's not possible, throw
-	 * an exception that halts the program because textFont() has not been used
-	 * prior to the specified method.
-	 */
-	protected void defaultFontOrDeath(String method, float size) {
-		if (parent != null) {
-			textFont = createDefaultFont(size);
-		} else {
-			throw new RuntimeException("Use textFont() before " + method + "()");
-		}
+	@Override
+	public final void push() {
+		pushStyle();
+		pushMatrix();
 	}
 
 	@Override
-	public final void strokeCap(int cap) {
-		strokeCap = cap;
+	public final void pop() {
+		popStyle();
+		popMatrix();
+	}
+
+	@Override
+	public void pushMatrix() {
+		if (transformCount == transformStack.length) {
+			throw new RuntimeException("pushMatrix() cannot use push more than " +
+					transformStack.length + " times");
+		}
+		transformStack[transformCount] = graphics.getTransform();
+		transformCount++;
+	}
+
+	@Override
+	public void popMatrix() {
+		if (transformCount == 0) {
+			throw new RuntimeException("missing a pushMatrix() " +
+					"to go with that popMatrix()");
+		}
+		transformCount--;
+		graphics.setTransform(transformStack[transformCount]);
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// MATRIX TRANSFORMS
+
+	@Override
+	public final void translate(double x, double y) { graphics.translate(x, y); }
+
+	@Override
+	public final void rotate(double theta) { graphics.rotate(theta); }
+
+	@Override
+	public final void rotate(double theta, double x, double y) { graphics.rotate(theta, x, y); }
+
+	@Override
+	public final void scale(double xy) { graphics.scale(xy, xy); };
+
+	@Override
+	public final void scale(double x, double y) { graphics.scale(x, y); };
+
+	@Override
+	public final void shear(double x, double y) { graphics.shear(x, y); };
+
+	public void shearX(float angle) { shear(Math.tan(angle), 0); }
+
+	public void shearY(float angle) { shear(0, Math.tan(angle)); }
+
+	@Override
+	public final void transform(AffineTransform affineTransform) { graphics.transform(affineTransform); };
+
+	//////////////////////////////////////////////////////////////
+
+	// MATRIX MORE
+
+	@Override
+	public void resetMatrix() {
+		graphics.setTransform(new AffineTransform());
+		graphics.scale(pixelDensity, pixelDensity);
+	}
+
+	public void applyMatrix(SMatrix2D source) {
+		applyMatrix(source.m00, source.m01, source.m02,
+				source.m10, source.m11, source.m12);
+	}
+
+	public void applyMatrix(float n00, float n01, float n02,
+			float n10, float n11, float n12) {
+		graphics.transform(new AffineTransform(n00, n10, n01, n11, n02, n12));
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// MATRIX GET/SET
+
+	public SMatrix2D getMatrix() { return getMatrix((SMatrix2D) null); }
+
+	double[] transform = new double[6];
+
+	public SMatrix2D getMatrix(SMatrix2D target) {
+		if (target == null) {
+			target = new SMatrix2D();
+		}
+		graphics.getTransform().getMatrix(transform);
+		target.set((float) transform[0], (float) transform[2], (float) transform[4],
+				(float) transform[1], (float) transform[3], (float) transform[5]);
+		return target;
+	}
+
+	public void setMatrix(SMatrix2D source) {
+		graphics.setTransform(new AffineTransform(source.m00, source.m10,
+				source.m01, source.m11,
+				source.m02, source.m12));
+	}
+
+	public void printMatrix() {
+		getMatrix((SMatrix2D) null).print();
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SCREEN and MODEL transforms
+
+	public float screenX(float x, float y) {
+		graphics.getTransform().getMatrix(transform);
+		return (float) transform[0] * x + (float) transform[2] * y + (float) transform[4];
+	}
+
+	public float screenY(float x, float y) {
+		graphics.getTransform().getMatrix(transform);
+		return (float) transform[1] * x + (float) transform[3] * y + (float) transform[5];
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// STYLE
+
+	@Override
+	public final void pushStyle() {
+		if (styleStackDepth == styleStack.length) {
+			throw new RuntimeException("pushStyle() cannot use push more than " +
+					styleStack.length + " times");
+		}
+		styleStack[styleStackDepth] = getStyle();
+		styleStackDepth++;
+	}
+
+	@Override
+	public final void popStyle() {
+		if (styleStackDepth == 0) {
+			throw new RuntimeException("Too many popStyle() without enough pushStyle()");
+		}
+		styleStackDepth--;
+		style(styleStack[styleStackDepth]);
+	}
+
+	@Override
+	public final Style getStyle() { return getStyle(null); }
+
+	@Override
+	public final Style getStyle(Style s) {
+		if (s == null) s = new Style();
+
+		s.smooth = smooth;
+
+		s.imageMode = imageMode;
+		s.rectMode = rectMode;
+		s.ellipseMode = ellipseMode;
+		s.shapeMode = shapeMode;
+
+		s.blendMode = blendMode;
+
+		s.colorMode = colorMode;
+		s.colorModeX = colorModeX;
+		s.colorModeY = colorModeY;
+		s.colorModeZ = colorModeZ;
+		s.colorModeA = colorModeA;
+
+		s.tint = tint;
+		s.tintColor = tintColor;
+		s.fill = fill;
+		s.fillColor = fillColor;
+		s.stroke = stroke;
+		s.strokeColor = strokeColor;
+		s.strokeWeight = strokeWeight;
+		s.strokeCap = strokeCap;
+		s.strokeJoin = strokeJoin;
+
+		s.textFont = textFont;
+		s.textAlign = textAlign;
+		s.textAlignY = textAlignY;
+		s.textMode = textMode;
+		s.textSize = textSize;
+		s.textLeading = textLeading;
+
+		return s;
+	}
+
+	@Override
+	public final void style(Style s) {
+		smooth(s.smooth);
+
+		imageMode(s.imageMode);
+		rectMode(s.rectMode);
+		ellipseMode(s.ellipseMode);
+		shapeMode(s.shapeMode);
+
+		if (blendMode != s.blendMode) {
+			blendMode(s.blendMode);
+		}
+
+		if (s.tint) {
+			tint(s.tintColor);
+		} else {
+			noTint();
+		}
+		if (s.fill) {
+			fill(s.fillColor);
+		} else {
+			noFill();
+		}
+		if (s.stroke) {
+			stroke(s.strokeColor);
+		} else {
+			noStroke();
+		}
+		strokeWeight(s.strokeWeight);
+		strokeCap(s.strokeCap);
+		strokeJoin(s.strokeJoin);
+
+		colorMode(s.colorMode,
+				s.colorModeX, s.colorModeY, s.colorModeZ, s.colorModeA);
+
+		if (s.textFont != null) {
+			textFont(s.textFont, s.textSize);
+			textLeading(s.textLeading);
+		}
+		textAlign(s.textAlign, s.textAlignY);
+		textMode(s.textMode);
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// STROKE CAP/JOIN/WEIGHT
+
+	@Override
+	public final void strokeWeight(float weight) {
+		strokeWeight = weight;
 		strokeImpl();
 	}
 
@@ -2632,12 +3138,12 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	@Override
-	public final void strokeWeight(float weight) {
-		strokeWeight = weight;
+	public final void strokeCap(int cap) {
+		strokeCap = cap;
 		strokeImpl();
 	}
 
-	private final void strokeImpl() {
+	protected final void strokeImpl() {
 		int cap = BasicStroke.CAP_BUTT;
 		if (strokeCap == ROUND) {
 			cap = BasicStroke.CAP_ROUND;
@@ -2656,98 +3162,17 @@ public class SGraphics extends SImage implements SGFX {
 		graphics.setStroke(strokeObject);
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// STROKE COLOR
+
 	@Override
-	public final void noFill() {
-		fill = false;
-	}
+	public final void noStroke() { stroke = false; }
 
 	/**
 	 * @param rgb
 	 *            color value in hexadecimal notation
 	 */
-
-	@Override
-	public final void fill(int rgb) {
-		colorCalc(rgb);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param alpha
-	 *            opacity of the fill
-	 */
-
-	@Override
-	public final void fill(int rgb, float alpha) {
-		colorCalc(rgb, alpha);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param gray
-	 *            number specifying value between white and black
-	 */
-
-	@Override
-	public final void fill(float gray) {
-		colorCalc(gray);
-		fillFromCalc();
-	}
-
-	@Override
-	public final void fill(float gray, float alpha) {
-		colorCalc(gray, alpha);
-		fillFromCalc();
-	}
-
-	/**
-	 * @param v1
-	 *            red or hue value (depending on current color mode)
-	 * @param v2
-	 *            green or saturation value (depending on current color mode)
-	 * @param v3
-	 *            blue or brightness value (depending on current color mode)
-	 */
-
-	@Override
-	public final void fill(float v1, float v2, float v3) {
-		colorCalc(v1, v2, v3);
-		fillFromCalc();
-	}
-
-	@Override
-	public final void fill(float v1, float v2, float v3, float alpha) {
-		colorCalc(v1, v2, v3, alpha);
-		fillFromCalc();
-	}
-
-	private final void fillFromCalc() {
-		fill = true;
-		fillR = calcR;
-		fillG = calcG;
-		fillB = calcB;
-		fillA = calcA;
-		fillRi = calcRi;
-		fillGi = calcGi;
-		fillBi = calcBi;
-		fillAi = calcAi;
-		fillColor = calcColor;
-		fillAlpha = calcAlpha;
-
-		fillColorObject = new Color(fillColor, true);
-		fillGradient = false;
-	}
-
-	@Override
-	public final void noStroke() {
-		stroke = false;
-	}
-
-	/**
-	 * @param rgb
-	 *            color value in hexadecimal notation
-	 */
-
 	@Override
 	public final void stroke(int rgb) {
 		colorCalc(rgb);
@@ -2758,7 +3183,6 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param alpha
 	 *            opacity of the stroke
 	 */
-
 	@Override
 	public final void stroke(int rgb, float alpha) {
 		colorCalc(rgb, alpha);
@@ -2769,7 +3193,6 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param gray
 	 *            specifies a value between white and black
 	 */
-
 	@Override
 	public final void stroke(float gray) {
 		colorCalc(gray);
@@ -2791,7 +3214,6 @@ public class SGraphics extends SImage implements SGFX {
 	 *            blue or brightness value (depending on current color mode)
 	 * @webref color:setting
 	 */
-
 	@Override
 	public final void stroke(float v1, float v2, float v3) {
 		colorCalc(v1, v2, v3);
@@ -2803,6 +3225,27 @@ public class SGraphics extends SImage implements SGFX {
 		colorCalc(v1, v2, v3, alpha);
 		strokeFromCalc();
 	}
+
+	private final void strokeFromCalc() {
+		stroke = true;
+		strokeR = calcR;
+		strokeG = calcG;
+		strokeB = calcB;
+		strokeA = calcA;
+		strokeRi = calcRi;
+		strokeGi = calcGi;
+		strokeBi = calcBi;
+		strokeAi = calcAi;
+		strokeColor = calcColor;
+		strokeAlpha = calcAlpha;
+
+		strokeColorObject = new Color(strokeColor, true);
+		strokeGradient = false;
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// TINT COLOR
 
 	/**
 	 * ( begin auto-generated from noTint.xml )
@@ -2886,29 +3329,95 @@ public class SGraphics extends SImage implements SGFX {
 		tintAi = calcAi;
 		tintColor = calcColor;
 		tintAlpha = calcAlpha;
+
+		tintColorObject = new Color(tintColor, true);
 	}
 
-	private final void strokeFromCalc() {
-		stroke = true;
-		strokeR = calcR;
-		strokeG = calcG;
-		strokeB = calcB;
-		strokeA = calcA;
-		strokeRi = calcRi;
-		strokeGi = calcGi;
-		strokeBi = calcBi;
-		strokeAi = calcAi;
-		strokeColor = calcColor;
-		strokeAlpha = calcAlpha;
+	//////////////////////////////////////////////////////////////
 
-		strokeColorObject = new Color(strokeColor, true);
-		strokeGradient = false;
+	// FILL COLOR
+
+	@Override
+	public final void noFill() {
+		fill = false;
+	}
+
+	/**
+	 * @param rgb
+	 *            color value in hexadecimal notation
+	 */
+	@Override
+	public final void fill(int rgb) {
+		colorCalc(rgb);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param alpha
+	 *            opacity of the fill
+	 */
+	@Override
+	public final void fill(int rgb, float alpha) {
+		colorCalc(rgb, alpha);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param gray
+	 *            number specifying value between white and black
+	 */
+	@Override
+	public final void fill(float gray) {
+		colorCalc(gray);
+		fillFromCalc();
+	}
+
+	@Override
+	public final void fill(float gray, float alpha) {
+		colorCalc(gray, alpha);
+		fillFromCalc();
+	}
+
+	/**
+	 * @param v1
+	 *            red or hue value (depending on current color mode)
+	 * @param v2
+	 *            green or saturation value (depending on current color mode)
+	 * @param v3
+	 *            blue or brightness value (depending on current color mode)
+	 */
+	@Override
+	public final void fill(float v1, float v2, float v3) {
+		colorCalc(v1, v2, v3);
+		fillFromCalc();
+	}
+
+	@Override
+	public final void fill(float v1, float v2, float v3, float alpha) {
+		colorCalc(v1, v2, v3, alpha);
+		fillFromCalc();
+	}
+
+	private final void fillFromCalc() {
+		fill = true;
+		fillR = calcR;
+		fillG = calcG;
+		fillB = calcB;
+		fillA = calcA;
+		fillRi = calcRi;
+		fillGi = calcGi;
+		fillBi = calcBi;
+		fillAi = calcAi;
+		fillColor = calcColor;
+		fillAlpha = calcAlpha;
+
+		fillColorObject = new Color(fillColor, true);
+		fillGradient = false;
 	}
 
 	//////////////////////////////////////////////////////////////
 
 	// BACKGROUND
-
 	/**
 	 * @param rgb
 	 *            color value in hexadecimal notation
@@ -2973,6 +3482,99 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public final void clear() { background(0, 0, 0, 0); }
 
+	protected final void backgroundFromCalc() {
+		backgroundR = calcR;
+		backgroundG = calcG;
+		backgroundB = calcB;
+		// backgroundA = (format == RGB) ? colorModeA : calcA;
+		// If drawing surface is opaque, this maxes out at 1.0. [fry 150513]
+		backgroundA = (format == RGB) ? 1 : calcA;
+		backgroundRi = calcRi;
+		backgroundGi = calcGi;
+		backgroundBi = calcBi;
+		backgroundAi = (format == RGB) ? 255 : calcAi;
+		backgroundAlpha = (format == RGB) ? false : calcAlpha;
+		backgroundColor = calcColor;
+
+		backgroundImpl();
+	}
+
+	private static final String ERROR_BACKGROUND_IMAGE_SIZE = "background image must be the same size as your application";
+	private static final String ERROR_BACKGROUND_IMAGE_FORMAT = "background images should be RGB or ARGB";
+
+	/**
+	 * Takes an RGB or ARGB image and sets it as the background.
+	 * The width and height of the image must be the same size as the sketch.
+	 * Use image.resize(width, height) to make short work of such a task.<br/>
+	 * <br/>
+	 * Note that even if the image is set as RGB, the high 8 bits of each pixel
+	 * should be set opaque (0xFF000000) because the image data will be copied
+	 * directly to the screen, and non-opaque background images may have strange
+	 * behavior. Use image.filter(OPAQUE) to handle this easily.<br/>
+	 * <br/>
+	 * When using 3D, this will also clear the zbuffer (if it exists).
+	 *
+	 * @param image
+	 *            SImage to set as background (must be same size as the sketch window)
+	 */
+	public void background(SImage image) {
+		if ((image.pixelWidth != pixelWidth) || (image.pixelHeight != pixelHeight)) {
+			throw new RuntimeException(ERROR_BACKGROUND_IMAGE_SIZE);
+		}
+		if ((image.format != RGB) && (image.format != ARGB)) {
+			throw new RuntimeException(ERROR_BACKGROUND_IMAGE_FORMAT);
+		}
+		backgroundColor = 0; // just zero it out for images
+		backgroundImpl(image);
+	}
+
+	/**
+	 * Actually set the background image. This is separated from the error
+	 * handling and other semantic goofiness that is shared across renderers.
+	 */
+	protected void backgroundImpl(SImage image) {
+		// blit image to the screen
+		set(0, 0, image);
+	}
+
+	private final void backgroundImpl() {
+		if (backgroundAlpha) {
+			clearPixels(backgroundColor);
+		} else {
+//			Color bgColor = new Color(backgroundColor);
+			Color bgColor = new Color(backgroundColor, calcAlpha);
+			// seems to fire an additional event that causes flickering,
+			// like an extra background erase on OS X
+//	      if (canvas != null) {
+//	        canvas.setBackground(bgColor);
+//	      }
+			// new Exception().printStackTrace(System.out);
+			// in case people do transformations before background(),
+			// need to handle this with a push/reset/pop
+
+			Composite oldComposite = graphics.getComposite();
+			graphics.setComposite(defaultComposite);
+//			AffineTransform at = graphics.getTransform();
+
+			pushMatrix();
+			resetMatrix();
+			graphics.setColor(bgColor); // , backgroundAlpha));
+//	      	g2.fillRect(0, 0, width, height);
+			// On a hi-res display, image may be larger than width/height
+			if (image != null) {
+				// image will be null in subclasses (i.e. PDF)
+				graphics.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
+			} else {
+				// hope for the best if image is null
+				graphics.fillRect(0, 0, width, height);
+			}
+			popMatrix();
+
+//			graphics.setTransform(at);
+			graphics.setComposite(oldComposite);
+		}
+	}
+
 	int[] clearPixels;
 
 	protected void clearPixels(int color) {
@@ -2998,65 +3600,82 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	protected final void backgroundFromCalc() {
-		backgroundR = calcR;
-		backgroundG = calcG;
-		backgroundB = calcB;
-		// backgroundA = (format == RGB) ? colorModeA : calcA;
-		// If drawing surface is opaque, this maxes out at 1.0. [fry 150513]
-		backgroundA = (format == RGB) ? 1 : calcA;
-		backgroundRi = calcRi;
-		backgroundGi = calcGi;
-		backgroundBi = calcBi;
-		backgroundAi = (format == RGB) ? 255 : calcAi;
-		backgroundAlpha = (format == RGB) ? false : calcAlpha;
-		backgroundColor = calcColor;
+	//////////////////////////////////////////////////////////////
 
-		backgroundImpl();
+	// COLOR MODE
+
+	/**
+	 * @param mode
+	 *            Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
+	 */
+	@Override
+	public final void colorMode(int mode) {
+		colorMode(mode, colorModeX, colorModeY, colorModeZ, colorModeA);
 	}
 
-	private final void backgroundImpl() {
-		if (backgroundAlpha) {
-			clearPixels(backgroundColor);
-		} else {
-//			Color bgColor = new Color(backgroundColor);
-			Color bgColor = new Color(backgroundColor, calcAlpha);
-			// seems to fire an additional event that causes flickering,
-			// like an extra background erase on OS X
-//	      if (canvas != null) {
-//	        canvas.setBackground(bgColor);
-//	      }
-			// new Exception().printStackTrace(System.out);
-			// in case people do transformations before background(),
-			// need to handle this with a push/reset/pop
-
-//			Composite oldComposite = graphics.getComposite();
-//			graphics.setComposite(defaultComposite);
-//			AffineTransform at = graphics.getTransform();
-
-			pushMatrix();
-			resetMatrix();
-			graphics.setColor(bgColor); // , backgroundAlpha));
-//	      	g2.fillRect(0, 0, width, height);
-			// On a hi-res display, image may be larger than width/height
-			if (image != null) {
-				// image will be null in subclasses (i.e. PDF)
-				graphics.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
-			} else {
-				// hope for the best if image is null
-				graphics.fillRect(0, 0, width, height);
-			}
-			popMatrix();
-
-//			graphics.setTransform(at);
-//			graphics.setComposite(oldComposite);
-		}
+	/**
+	 * @param max
+	 *            range for all color elements
+	 */
+	@Override
+	public final void colorMode(int mode, float max) {
+		colorMode(mode, max, max, max, max);
 	}
+
+	/**
+	 * @param max1
+	 *            range for the red or hue depending on the current color mode
+	 * @param max2
+	 *            range for the green or saturation depending on the current color mode
+	 * @param max3
+	 *            range for the blue or brightness depending on the current color mode
+	 */
+	@Override
+	public final void colorMode(int mode, float max1, float max2, float max3) {
+		colorMode(mode, max1, max2, max3, colorModeA);
+	}
+
+	/**
+	 * @param maxA
+	 *            range for the alpha
+	 */
+	@Override
+	public final void colorMode(int mode,
+			float max1, float max2, float max3, float maxA) {
+		colorMode = mode;
+
+		colorModeX = max1; // still needs to be set for hsb
+		colorModeY = max2;
+		colorModeZ = max3;
+		colorModeA = maxA;
+
+		// if color max values are all 1, then no need to scale
+		colorModeScale = ((maxA != 1) || (max1 != max2) || (max2 != max3) || (max3 != maxA));
+
+		// if color is rgb/0..255 this will make it easier for the
+		// red() green() etc functions
+		colorModeDefault = (colorMode == RGB) &&
+				(colorModeA == 255) && (colorModeX == 255) &&
+				(colorModeY == 255) && (colorModeZ == 255);
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// COLOR CALCULATIONS
+
+	// Given input values for coloring, these functions will fill the calcXxxx
+	// variables with values that have been properly filtered through the
+	// current colorMode settings.
+
+	// Renderers that need to subclass any drawing properties such as fill or
+	// stroke will usally want to override methods like fillFromCalc (or the
+	// same for stroke, ambient, etc.) That way the color calcuations are
+	// covered by this based PGraphics class, leaving only a single function
+	// to override/implement in the subclass.
 
 	private final void colorCalc(int rgb) {
 		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) {
 			colorCalc((float) rgb);
-
 		} else {
 			colorCalcARGB(rgb, colorModeA);
 		}
@@ -3065,7 +3684,6 @@ public class SGraphics extends SImage implements SGFX {
 	private final void colorCalc(int rgb, float alpha) {
 		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) { // see above
 			colorCalc((float) rgb, alpha);
-
 		} else {
 			colorCalcARGB(rgb, alpha);
 		}
@@ -3203,6 +3821,10 @@ public class SGraphics extends SImage implements SGFX {
 		calcAlpha = (calcAi != 255);
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// COLOR DATATYPE STUFFING
+
 	@Override
 	public final int color(int c) {
 		colorCalc(c);
@@ -3273,6 +3895,10 @@ public class SGraphics extends SImage implements SGFX {
 		return calcColor;
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// COLOR DATATYPE EXTRACTION
+
 	@Override
 	public final float alpha(int rgb) {
 		float outgoing = (rgb >> 24) & 0xff;
@@ -3331,13 +3957,17 @@ public class SGraphics extends SImage implements SGFX {
 		return cacheHsbValue[2] * colorModeZ;
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// COLOR DATATYPE INTERPOLATION
+
 	@Override
 	public final int lerpColor(int c1, int c2, float amt) {
 		return lerpColor(c1, c2, amt, colorMode);
 	}
 
-	private static float[] lerpColorHSB1;
-	private static float[] lerpColorHSB2;
+	static float[] lerpColorHSB1;
+	static float[] lerpColorHSB2;
 
 	/**
 	 * @nowebref
@@ -3378,245 +4008,60 @@ public class SGraphics extends SImage implements SGFX {
 			Color.RGBtoHSB((c2 >> 16) & 0xff, (c2 >> 8) & 0xff, c2 & 0xff,
 					lerpColorHSB2);
 
-			float ho = (float) lerpStatic(amt, lerpColorHSB1[0], lerpColorHSB2[0]);
-			float so = (float) lerpStatic(amt, lerpColorHSB1[1], lerpColorHSB2[1]);
-			float bo = (float) lerpStatic(amt, lerpColorHSB1[2], lerpColorHSB2[2]);
+			float ho = MathUtils.instance.lerp(amt, lerpColorHSB1[0], lerpColorHSB2[0]);
+			float so = MathUtils.instance.lerp(amt, lerpColorHSB1[1], lerpColorHSB2[1]);
+			float bo = MathUtils.instance.lerp(amt, lerpColorHSB1[2], lerpColorHSB2[2]);
 
 			return alfa | (Color.HSBtoRGB(ho, so, bo) & 0xFFFFFF);
 		}
 		return 0;
 	}
 
-	public static double lerpStatic(double norm, double min, double max) {
-		return min + (max - min) * norm;
+	//////////////////////////////////////////////////////////////
+
+	// WARNINGS and EXCEPTIONS
+
+	static protected Map<String, Object> warnings;
+
+	static public void showWarning(String msg) {
+		if (warnings == null) {
+			warnings = new HashMap<>();
+		}
+		if (!warnings.containsKey(msg)) {
+			System.err.println(msg);
+			warnings.put(msg, new Object());
+		}
 	}
+
+	static public void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
+
+	static public void showException(String msg) { throw new RuntimeException(msg); }
 
 	/**
-	 * @param mode
-	 *            Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
+	 * Same as below, but defaults to a 12 point font, just as MacWrite intended.
 	 */
-	@Override
-	public final void colorMode(int mode) {
-		colorMode(mode, colorModeX, colorModeY, colorModeZ, colorModeA);
-	}
+	protected void defaultFontOrDeath(String method) { defaultFontOrDeath(method, 12); }
 
 	/**
-	 * @param max
-	 *            range for all color elements
+	 * First try to create a default font, but if that's not possible, throw
+	 * an exception that halts the program because textFont() has not been used
+	 * prior to the specified method.
 	 */
-	@Override
-	public final void colorMode(int mode, float max) {
-		colorMode(mode, max, max, max, max);
-	}
-
-	/**
-	 * @param max1
-	 *            range for the red or hue depending on the current color mode
-	 * @param max2
-	 *            range for the green or saturation depending on the current color mode
-	 * @param max3
-	 *            range for the blue or brightness depending on the current color mode
-	 */
-	@Override
-	public final void colorMode(int mode, float max1, float max2, float max3) {
-		colorMode(mode, max1, max2, max3, colorModeA);
-	}
-
-	/**
-	 * @param maxA
-	 *            range for the alpha
-	 */
-	@Override
-	public final void colorMode(int mode,
-			float max1, float max2, float max3, float maxA) {
-		colorMode = mode;
-
-		colorModeX = max1; // still needs to be set for hsb
-		colorModeY = max2;
-		colorModeZ = max3;
-		colorModeA = maxA;
-
-		// if color max values are all 1, then no need to scale
-		colorModeScale = ((maxA != 1) || (max1 != max2) || (max2 != max3) || (max3 != maxA));
-
-		// if color is rgb/0..255 this will make it easier for the
-		// red() green() etc functions
-		colorModeDefault = (colorMode == RGB) &&
-				(colorModeA == 255) && (colorModeX == 255) &&
-				(colorModeY == 255) && (colorModeZ == 255);
-	}
-
-	/**
-	 * @param size
-	 *            the size of the letters in units of pixels
-	 */
-
-	@Override
-	public final void translate(double x, double y) { graphics.translate(x, y); }
-
-	@Override
-	public final void rotate(double theta) { graphics.rotate(theta); }
-
-	@Override
-	public final void rotate(double theta, double x, double y) { graphics.rotate(theta, x, y); }
-
-	@Override
-	public final void scale(double xy) { graphics.scale(xy, xy); };
-
-	@Override
-	public final void scale(double x, double y) { graphics.scale(x, y); };
-
-	@Override
-	public final void shear(double x, double y) { graphics.shear(x, y); };
-
-	@Override
-	public final void transform(AffineTransform affineTransform) { graphics.transform(affineTransform); };
-
-	@Override
-	public final void push() {
-		pushStyle();
-		pushMatrix();
-	}
-
-	@Override
-	public final void pop() {
-		popStyle();
-		popMatrix();
-	}
-
-	@Override
-	public final void pushStyle() {
-		if (styleStackDepth == styleStack.length) {
-			throw new RuntimeException("pushStyle() cannot use push more than " +
-					styleStack.length + " times");
-		}
-		styleStack[styleStackDepth] = getStyle();
-		styleStackDepth++;
-	}
-
-	@Override
-	public final void popStyle() {
-		if (styleStackDepth == 0) {
-			throw new RuntimeException("Too many popStyle() without enough pushStyle()");
-		}
-		styleStackDepth--;
-		style(styleStack[styleStackDepth]);
-	}
-
-	@Override
-	public void pushMatrix() {
-		if (transformCount == transformStack.length) {
-			throw new RuntimeException("pushMatrix() cannot use push more than " +
-					transformStack.length + " times");
-		}
-		transformStack[transformCount] = graphics.getTransform();
-		transformCount++;
-	}
-
-	@Override
-	public void popMatrix() {
-		if (transformCount == 0) {
-			throw new RuntimeException("missing a pushMatrix() " +
-					"to go with that popMatrix()");
-		}
-		transformCount--;
-		graphics.setTransform(transformStack[transformCount]);
-	}
-
-	@Override
-	public void resetMatrix() {
-		graphics.setTransform(new AffineTransform());
-		graphics.scale(1, 1);
-	}
-
-	@Override
-	public final Style getStyle() { return getStyle(null); }
-
-	@Override
-	public final Style getStyle(Style s) {
-		if (s == null) s = new Style();
-
-		s.smooth = smooth;
-
-		s.imageMode = imageMode;
-		s.rectMode = rectMode;
-		s.ellipseMode = ellipseMode;
-		s.shapeMode = shapeMode;
-
-		s.blendMode = blendMode;
-
-		s.colorMode = colorMode;
-		s.colorModeX = colorModeX;
-		s.colorModeY = colorModeY;
-		s.colorModeZ = colorModeZ;
-		s.colorModeA = colorModeA;
-
-		s.tint = tint;
-		s.tintColor = tintColor;
-		s.fill = fill;
-		s.fillColor = fillColor;
-		s.stroke = stroke;
-		s.strokeColor = strokeColor;
-		s.strokeWeight = strokeWeight;
-		s.strokeCap = strokeCap;
-		s.strokeJoin = strokeJoin;
-
-		s.textFont = textFont;
-		s.textAlign = textAlign;
-		s.textAlignY = textAlignY;
-		s.textMode = textMode;
-		s.textSize = textSize;
-		s.textLeading = textLeading;
-
-		return s;
-	}
-
-	@Override
-	public final void style(Style s) {
-		smooth(s.smooth);
-
-		imageMode(s.imageMode);
-		rectMode(s.rectMode);
-		ellipseMode(s.ellipseMode);
-		shapeMode(s.shapeMode);
-
-		if (blendMode != s.blendMode) {
-			blendMode(s.blendMode);
-		}
-
-		if (s.tint) {
-			tint(s.tintColor);
+	protected void defaultFontOrDeath(String method, float size) {
+		if (parent != null) {
+			textFont = createDefaultFont(size);
 		} else {
-			noTint();
+			throw new RuntimeException("Use textFont() before " + method + "()");
 		}
-		if (s.fill) {
-			fill(s.fillColor);
-		} else {
-			noFill();
-		}
-		if (s.stroke) {
-			stroke(s.strokeColor);
-		} else {
-			noStroke();
-		}
-		strokeWeight(s.strokeWeight);
-		strokeCap(s.strokeCap);
-		strokeJoin(s.strokeJoin);
-
-		colorMode(s.colorMode,
-				s.colorModeX, s.colorModeY, s.colorModeZ, s.colorModeA);
-
-		if (s.textFont != null) {
-			textFont(s.textFont, s.textSize);
-			textLeading(s.textLeading);
-		}
-		textAlign(s.textAlign, s.textAlignY);
-		textMode(s.textMode);
 	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SIMAGE METHODS
 
 	protected WritableRaster getRaster() {
 		WritableRaster raster = null;
-//		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ? 
+//		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
 //			/*
 //			 * // 'offscreen' will probably be removed in the next release
 //			 * if (useOffscreen) {
@@ -3687,20 +4132,6 @@ public class SGraphics extends SImage implements SGFX {
 		}
 		modified = true;
 	}
-
-	static protected Map<String, Object> warnings;
-
-	static public void showWarning(String msg) {
-		if (warnings == null) {
-			warnings = new HashMap<>();
-		}
-		if (!warnings.containsKey(msg)) {
-			System.err.println(msg);
-			warnings.put(msg, new Object());
-		}
-	}
-
-	static public void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
 
 	//////////////////////////////////////////////////////////////
 
@@ -3809,8 +4240,28 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	static public void showException(String msg) {
-		throw new RuntimeException(msg);
+	//////////////////////////////////////////////////////////////
+
+	// COPY
+
+	public void copy(int sx, int sy, int sw, int sh,
+			int dx, int dy, int dw, int dh) {
+		if ((sw != dw) || (sh != dh)) {
+			graphics.drawImage(image, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, null);
+
+		} else {
+			dx = dx - sx; // java2d's "dx" is the delta, not dest
+			dy = dy - sy;
+			graphics.copyArea(sx, sy, sw, sh, dx, dy);
+		}
+	}
+
+	public void copy(SImage src,
+			int sx, int sy, int sw, int sh,
+			int dx, int dy, int dw, int dh) {
+		graphics.drawImage((Image) src.getNative(),
+				dx, dy, dx + dw, dy + dh,
+				sx, sy, sx + sw, sy + sh, null);
 	}
 	//////////////////////////////////////////////////////////////
 
@@ -3818,23 +4269,173 @@ public class SGraphics extends SImage implements SGFX {
 
 	@Override
 	public boolean save(String filename) {
-//		if (hints[DISABLE_ASYNC_SAVEFRAME]) {
-		return super.save(filename);
-//		}
+		if (hints[DISABLE_ASYNC_SAVEFRAME]) {
+			return super.save(filename);
+		}
 
-//		if (asyncImageSaver == null) {
-//			asyncImageSaver = new AsyncImageSaver();
-//		}
-//
-//		if (!loaded) loadPixels();
-//		PImage target = asyncImageSaver.getAvailableTarget(pixelWidth, pixelHeight,
-//				format);
-//		if (target == null) return false;
-//		int count = PApplet.min(pixels.length, target.pixels.length);
-//		System.arraycopy(pixels, 0, target.pixels, 0, count);
-//		asyncImageSaver.saveTargetAsync(this, target, parent.sketchFile(filename));
-//
-//		return true;
+		if (asyncImageSaver == null) {
+			asyncImageSaver = new AsyncImageSaver();
+		}
+
+		if (!loaded) loadPixels();
+		SImage target = asyncImageSaver.getAvailableTarget(pixelWidth, pixelHeight,
+				format);
+		if (target == null) return false;
+		int count = MathUtils.instance.min(pixels.length, target.pixels.length);
+		System.arraycopy(pixels, 0, target.pixels, 0, count);
+		asyncImageSaver.saveTargetAsync(this, target, parent.sketchFile(filename));
+
+		return true;
+	}
+
+	protected void processImageBeforeAsyncSave(SImage image) {}
+
+	/**
+	 * If there is running async save task for this file, blocks until it completes.
+	 * Has to be called on main thread because OpenGL overrides this and calls GL.
+	 * 
+	 * @param filename
+	 */
+	protected void awaitAsyncSaveCompletion(String filename) {
+		if (asyncImageSaver != null) {
+			asyncImageSaver.awaitAsyncSaveCompletion(parent.sketchFile(filename));
+		}
+	}
+
+	protected static AsyncImageSaver asyncImageSaver;
+
+	protected static class AsyncImageSaver {
+
+		static final int TARGET_COUNT = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+
+		BlockingQueue<SImage> targetPool = new ArrayBlockingQueue<>(TARGET_COUNT);
+		ExecutorService saveExecutor = Executors.newFixedThreadPool(TARGET_COUNT);
+
+		int targetsCreated = 0;
+
+		Map<File, Future<?>> runningTasks = new HashMap<>();
+		final Object runningTasksLock = new Object();
+
+		static final int TIME_AVG_FACTOR = 32;
+
+		volatile long avgNanos = 0;
+		long lastTime = 0;
+		int lastFrameCount = 0;
+
+		public AsyncImageSaver() {} // ignore
+
+		public void dispose() { // ignore
+			saveExecutor.shutdown();
+			try {
+				saveExecutor.awaitTermination(5000, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {}
+		}
+
+		public boolean hasAvailableTarget() { // ignore
+			return targetsCreated < TARGET_COUNT || targetPool.isEmpty();
+		}
+
+		/**
+		 * After taking a target, you must call saveTargetAsync() or
+		 * returnUnusedTarget(), otherwise one thread won't be able to run
+		 */
+		public SImage getAvailableTarget(int requestedWidth, int requestedHeight, // ignore
+				int format) {
+			try {
+				SImage target;
+				if (targetsCreated < TARGET_COUNT && targetPool.isEmpty()) {
+					target = new SImage(requestedWidth, requestedHeight);
+					targetsCreated++;
+				} else {
+					target = targetPool.take();
+					if (target.pixelWidth != requestedWidth ||
+							target.pixelHeight != requestedHeight) {
+						// TODO: this kills performance when saving different sizes
+						target = new SImage(requestedWidth, requestedHeight);
+					}
+				}
+				target.format = format;
+				return target;
+			} catch (InterruptedException e) {
+				return null;
+			}
+		}
+
+		public void returnUnusedTarget(SImage target) { // ignore
+			targetPool.offer(target);
+		}
+
+		public void saveTargetAsync(final SGraphics renderer, final SImage target, // ignore
+				final File file) {
+			target.parent = renderer.parent;
+
+			// if running every frame, smooth the framerate
+			if (target.parent.frameCount - 1 == lastFrameCount && TARGET_COUNT > 1) {
+
+				// count with one less thread to reduce jitter
+				// 2 cores - 1 save thread - no wait
+				// 4 cores - 3 save threads - wait 1/2 of save time
+				// 8 cores - 7 save threads - wait 1/6 of save time
+				long avgTimePerFrame = avgNanos / (Math.max(1, TARGET_COUNT - 1));
+				long now = System.nanoTime();
+				long delay = MathUtils.instance.round((lastTime + avgTimePerFrame - now) / 1e6f);
+				try {
+					if (delay > 0) Thread.sleep(delay);
+				} catch (InterruptedException e) {}
+			}
+
+			lastFrameCount = target.parent.frameCount;
+			lastTime = System.nanoTime();
+
+			awaitAsyncSaveCompletion(file);
+
+			// Explicit lock, because submitting a task and putting it into map
+			// has to be atomic (and happen before task tries to remove itself)
+			synchronized (runningTasksLock) {
+				try {
+					Future<?> task = saveExecutor.submit(() -> {
+						try {
+							long startTime = System.nanoTime();
+							renderer.processImageBeforeAsyncSave(target);
+							target.save(file.getAbsolutePath());
+							long saveNanos = System.nanoTime() - startTime;
+							synchronized (AsyncImageSaver.this) {
+								if (avgNanos == 0) {
+									avgNanos = saveNanos;
+								} else if (saveNanos < avgNanos) {
+									avgNanos = (avgNanos * (TIME_AVG_FACTOR - 1) + saveNanos) /
+											(TIME_AVG_FACTOR);
+								} else {
+									avgNanos = saveNanos;
+								}
+							}
+						} finally {
+							targetPool.offer(target);
+							synchronized (runningTasksLock) {
+								runningTasks.remove(file);
+							}
+						}
+					});
+					runningTasks.put(file, task);
+				} catch (RejectedExecutionException e) {
+					// the executor service was probably shut down, no more saving for us
+				}
+			}
+		}
+
+		public void awaitAsyncSaveCompletion(final File file) { // ignore
+			Future<?> taskWithSameFilename;
+			synchronized (runningTasksLock) {
+				taskWithSameFilename = runningTasks.get(file);
+			}
+
+			if (taskWithSameFilename != null) {
+				try {
+					taskWithSameFilename.get();
+				} catch (InterruptedException | ExecutionException e) {}
+			}
+		}
+
 	}
 
 }

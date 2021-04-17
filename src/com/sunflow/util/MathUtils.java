@@ -21,6 +21,10 @@ public interface MathUtils {
 
 	default double abs(double a) { return Math.abs(a); }
 
+	default int floor(float a) { return (int) Math.floor(a); }
+
+	default long floor(double a) { return (long) Math.floor(a); }
+
 	default int round(float a) { return Math.round(a); }
 
 	default long round(double a) { return Math.round(a); }
@@ -62,7 +66,7 @@ public interface MathUtils {
 	default double tan(double angle) { return Math.tan(angle); }
 
 	default float norm(float value, float min, float max) {
-		return (float) norm((double) value, min, max);
+		return (value - min) / (max - min);
 	}
 
 	default double norm(double value, double min, double max) {
@@ -70,7 +74,7 @@ public interface MathUtils {
 	}
 
 	default float lerp(float norm, float min, float max) {
-		return (float) lerp((double) norm, min, max);
+		return min + (max - min) * norm;
 	}
 
 	default double lerp(double norm, double min, double max) {
@@ -78,19 +82,19 @@ public interface MathUtils {
 	}
 
 	default float map(float value, float sourceMin, float sourceMax, float destMin, float destMax) {
-		return (float) map((double) value, sourceMin, sourceMax, destMin, destMax);
+		return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
 	}
 
 	default double map(double value, double sourceMin, double sourceMax, double destMin, double destMax) {
 		return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
 	}
 
-	default float dot(float a, float b) { return (float) dot((double) a, b); }
+	default float dot(float a, float b) { return (a * a + b * b); }
 
 	default double dot(double a, double b) { return (a * a + b * b); }
 
 	default float dist(float x1, float y1, float x2, float y2) {
-		return (float) dist((double) x1, y1, x2, y2);
+		return sqrt(sq(x2 - x1) + sq(y2 - y1));
 	}
 
 	default double dist(double x1, double y1, double x2, double y2) {
@@ -151,9 +155,7 @@ public interface MathUtils {
 	 * between the min and max values.
 	 */
 	default int clamp(int min, int value, int max) {
-		if (value < min) return min;
-		if (value > max) return max;
-		return value;
+		return (value < min) ? min : ((value > max) ? max : value);
 	}
 
 	/**
@@ -161,9 +163,7 @@ public interface MathUtils {
 	 * between the min and max values.
 	 */
 	default float clamp(float min, float value, float max) {
-		if (value < min) return min;
-		if (value > max) return max;
-		return value;
+		return (value < min) ? min : ((value > max) ? max : value);
 	}
 
 	/**
@@ -171,9 +171,7 @@ public interface MathUtils {
 	 * between the min and max values.
 	 */
 	default double clamp(double min, double value, double max) {
-		if (value < min) return min;
-		if (value > max) return max;
-		return value;
+		return (value < min) ? min : ((value > max) ? max : value);
 	}
 
 	/**

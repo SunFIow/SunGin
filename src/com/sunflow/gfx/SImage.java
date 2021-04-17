@@ -338,8 +338,6 @@ public class SImage implements Cloneable, SConstants {
 //		}
 //	}
 
-	final public void resize(float width, float height) { resize((int) width, (int) height); }
-
 	final public void resize(int w, int h) {
 		if (w <= 0 && h <= 0) {
 			throw new IllegalArgumentException("width or height must be > 0 for resize");

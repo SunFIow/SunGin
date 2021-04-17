@@ -34,13 +34,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import com.sunflow.Settings;
 import com.sunflow.engine.Mouse;
-import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyReleasedEvent;
@@ -54,9 +54,9 @@ import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
 import com.sunflow.engine.eventsystem.events.ScrollEvent;
 import com.sunflow.engine.eventsystem.events.WindowMoveEvent;
 import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
-import com.sunflow.engine.eventsystem.listeners.EventListener;
 import com.sunflow.engine.eventsystem.listeners.KeyInputListener;
 import com.sunflow.engine.eventsystem.listeners.MouseInputListener;
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.engine.eventsystem.listeners.ScrollListener;
 import com.sunflow.engine.eventsystem.listeners.WindowMoveListener;
 import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
@@ -107,8 +107,8 @@ public abstract class GameBase extends SGraphics implements Runnable,
 
 	protected int fps, tps;
 
-	protected int frameRate, tickRate;
-	protected long frameCount, tickCount;
+	public int frameRate, tickRate;
+	public int frameCount, tickCount;
 	int frames, ticks;
 
 	private float timePerTickNano, timePerTickMilli;
@@ -270,8 +270,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		mouseX = mouse.x;
 		mouseY = mouse.y;
 
-		for (GameLoopListener gll : gameLoopListeners) gll.update();
+		for (GameLoopListener gll : gameLoopListeners) gll.preUpdate();
 		update();
+		for (GameLoopListener gll : gameLoopListeners) gll.postUpdate();
 
 		ticks++;
 		tickCount++;
@@ -300,8 +301,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		super.beginDraw();
 //		graphics = checkImage();
 //		handleSmooth();
-		for (FrameLoopListener fll : frameLoopListeners) fll.update();
+		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
 		screen.preDraw();
+		for (FrameLoopListener fll : frameLoopListeners) fll.postDraw();
 	}
 
 	protected void postDraw() { super.endDraw(); screen.postDraw(); }
@@ -442,18 +444,22 @@ public abstract class GameBase extends SGraphics implements Runnable,
 	 */
 	public final void syncMode(byte mode) { this.syncMode = mode; }
 
-	public final void addListener(EventListener l) {
-		if (l instanceof GameLoopListener) gameLoopListeners.add((GameLoopListener) l);
-		if (l instanceof FrameLoopListener) frameLoopListeners.add((FrameLoopListener) l);
-		EventManager.addEventListener(l);
+	public final boolean addListener(SEventListener listener) {
+		if (listener instanceof GameLoopListener) gameLoopListeners.add((GameLoopListener) listener);
+		if (listener instanceof FrameLoopListener) frameLoopListeners.add((FrameLoopListener) listener);
+		return screen.addListener(listener);
 
 	}
 
-	public final void removeListener(EventListener l) {
-		if (l instanceof GameLoopListener) gameLoopListeners.remove(l);
-		if (l instanceof FrameLoopListener) frameLoopListeners.remove(l);
-		EventManager.removeEventListener(l);
+	public final boolean removeListener(SEventListener listener) {
+		if (listener instanceof GameLoopListener) gameLoopListeners.remove(listener);
+		if (listener instanceof FrameLoopListener) frameLoopListeners.remove(listener);
+		return screen.addListener(listener);
 	}
+
+	public final boolean addListener(EventListener listener) { return screen.addListener(listener); }
+
+	public final boolean removeListener(EventListener listener) { return screen.removeListener(listener); }
 
 	public final void showOverlay(boolean show) { screen.showOverlay(show); }
 

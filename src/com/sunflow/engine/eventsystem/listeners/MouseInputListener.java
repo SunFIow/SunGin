@@ -4,7 +4,7 @@ import com.sunflow.engine.eventsystem.events.MouseInputEvent;
 import com.sunflow.engine.eventsystem.events.MouseInputEvent.MousePressedEvent;
 import com.sunflow.engine.eventsystem.events.MouseInputEvent.MouseReleasedEvent;
 
-public interface MouseInputListener extends EventListener {
+public interface MouseInputListener extends SEventListener {
 	void onMouseInput(MouseInputEvent event);
 
 	void onMousePressed(MousePressedEvent event);

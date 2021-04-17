@@ -5,10 +5,7 @@ import java.awt.Cursor;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
+import java.util.EventListener;
 
 import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
@@ -188,13 +185,13 @@ public abstract class Screen {
 
 //	public abstract void updateMousePosition(float x, float y);
 
-	public abstract boolean addKeyListener(KeyListener listener);
+	public abstract boolean addListener(EventListener listener);
 
-	public abstract boolean addMouseListener(MouseListener listener);
+	public abstract boolean removeListener(EventListener listener);
 
-	public abstract boolean addMouseWheelListener(MouseWheelListener listener);
+	public abstract boolean addListener(com.sunflow.engine.eventsystem.listeners.SEventListener listener);
 
-	public abstract boolean addMouseMotionListener(MouseMotionListener listener);
+	public abstract boolean removeListener(com.sunflow.engine.eventsystem.listeners.SEventListener listener);
 
 	public abstract void setCursor(Cursor cursor);
 

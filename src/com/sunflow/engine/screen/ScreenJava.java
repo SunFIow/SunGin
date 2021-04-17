@@ -17,10 +17,12 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferStrategy;
+import java.util.EventListener;
 
 import javax.swing.JFrame;
 
 import com.sunflow.engine.Mouse;
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.S_Shape;
@@ -211,7 +213,7 @@ public class ScreenJava extends Screen {
 				scaledHeight = h;
 				width = scaledWidth / scaleWidth;
 				height = scaledHeight / scaleHeight;
-				game.resize(width, height);
+				game.resize((int) width, (int) height);
 			}
 		});
 
@@ -343,28 +345,54 @@ public class ScreenJava extends Screen {
 	}
 
 	@Override
-	public boolean addKeyListener(KeyListener listener) {
-		canvas.addKeyListener(listener);
-		return true;
+	public boolean addListener(EventListener listener) {
+		boolean added = false;
+		if (listener instanceof KeyListener) {
+			canvas.addKeyListener((KeyListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseListener) {
+			canvas.addMouseListener((MouseListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseMotionListener) {
+			canvas.addMouseMotionListener((MouseMotionListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseWheelListener) {
+			canvas.addMouseWheelListener((MouseWheelListener) listener);
+			added = true;
+		}
+		return added;
 	}
 
 	@Override
-	public boolean addMouseListener(MouseListener listener) {
-		canvas.addMouseListener(listener);
-		return true;
+	public boolean removeListener(EventListener listener) {
+		boolean removed = false;
+		if (listener instanceof KeyListener) {
+			canvas.removeKeyListener((KeyListener) listener);
+			removed = true;
+		}
+		if (listener instanceof MouseListener) {
+			canvas.removeMouseListener((MouseListener) listener);
+			removed = true;
+		}
+		if (listener instanceof MouseMotionListener) {
+			canvas.removeMouseMotionListener((MouseMotionListener) listener);
+			removed = true;
+		}
+		if (listener instanceof MouseWheelListener) {
+			canvas.removeMouseWheelListener((MouseWheelListener) listener);
+			removed = true;
+		}
+		return removed;
 	}
 
 	@Override
-	public boolean addMouseWheelListener(MouseWheelListener listener) {
-		canvas.addMouseWheelListener(listener);
-		return true;
-	}
+	public boolean addListener(SEventListener listener) { return false; }
 
 	@Override
-	public boolean addMouseMotionListener(MouseMotionListener listener) {
-		canvas.addMouseMotionListener(listener);
-		return true;
-	}
+	public boolean removeListener(SEventListener listener) { return false; }
 
 	@Override
 	public void setCursor(Cursor cursor) { canvas.setCursor(cursor); }

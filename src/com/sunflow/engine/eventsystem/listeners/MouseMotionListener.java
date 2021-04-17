@@ -4,7 +4,7 @@ import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseDraggedEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
 
-public interface MouseMotionListener extends EventListener {
+public interface MouseMotionListener extends SEventListener {
 	void onMouseMotion(MouseMotionEvent event);
 
 	void onMouseMoved(MouseMovedEvent event);

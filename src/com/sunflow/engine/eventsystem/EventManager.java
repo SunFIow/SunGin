@@ -25,11 +25,11 @@ import com.sunflow.engine.eventsystem.events.MouseOnScreenEvent.MouseExitedEvent
 import com.sunflow.engine.eventsystem.events.ScrollEvent;
 import com.sunflow.engine.eventsystem.events.WindowMoveEvent;
 import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
-import com.sunflow.engine.eventsystem.listeners.EventListener;
 import com.sunflow.engine.eventsystem.listeners.KeyInputListener;
 import com.sunflow.engine.eventsystem.listeners.MouseInputListener;
 import com.sunflow.engine.eventsystem.listeners.MouseMotionListener;
 import com.sunflow.engine.eventsystem.listeners.MouseOnScreenListener;
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.engine.eventsystem.listeners.ScrollListener;
 import com.sunflow.engine.eventsystem.listeners.WindowMoveListener;
 import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
@@ -66,14 +66,37 @@ public class EventManager {
 
 	static public List<Event> getAllEvents() { return events; }
 
-	static public void addEventListener(EventListener listener) {
-		if (listener instanceof KeyInputListener) keyInputListeners.add((KeyInputListener) listener);
-		if (listener instanceof MouseInputListener) mouseInputListeners.add((MouseInputListener) listener);
-		if (listener instanceof MouseMotionListener) mouseMotionListeners.add((MouseMotionListener) listener);
-		if (listener instanceof MouseOnScreenListener) mouseOnScreenListeners.add((MouseOnScreenListener) listener);
-		if (listener instanceof ScrollListener) scrollListeners.add((ScrollListener) listener);
-		if (listener instanceof WindowResizeListener) windowResizeListeners.add((WindowResizeListener) listener);
-		if (listener instanceof WindowMoveListener) windowMoveListeners.add((WindowMoveListener) listener);
+	static public boolean addEventListener(SEventListener listener) {
+		boolean added = false;
+		if (listener instanceof KeyInputListener) {
+			keyInputListeners.add((KeyInputListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseInputListener) {
+			mouseInputListeners.add((MouseInputListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseMotionListener) {
+			mouseMotionListeners.add((MouseMotionListener) listener);
+			added = true;
+		}
+		if (listener instanceof MouseOnScreenListener) {
+			mouseOnScreenListeners.add((MouseOnScreenListener) listener);
+			added = true;
+		}
+		if (listener instanceof ScrollListener) {
+			scrollListeners.add((ScrollListener) listener);
+			added = true;
+		}
+		if (listener instanceof WindowResizeListener) {
+			windowResizeListeners.add((WindowResizeListener) listener);
+			added = true;
+		}
+		if (listener instanceof WindowMoveListener) {
+			windowMoveListeners.add((WindowMoveListener) listener);
+			added = true;
+		}
+		return added;
 	}
 
 	static public void addKeyInputListener(KeyInputListener listener) { keyInputListeners.add(listener); }
@@ -90,14 +113,37 @@ public class EventManager {
 
 	static public void addWindowMoveListener(WindowMoveListener listener) { windowMoveListeners.add(listener); }
 
-	static public void removeEventListener(EventListener listener) {
-		if (listener instanceof KeyInputListener) keyInputListeners.remove(listener);
-		if (listener instanceof MouseInputListener) mouseInputListeners.remove(listener);
-		if (listener instanceof MouseMotionListener) mouseMotionListeners.remove(listener);
-		if (listener instanceof MouseOnScreenListener) mouseOnScreenListeners.remove(listener);
-		if (listener instanceof ScrollListener) scrollListeners.remove(listener);
-		if (listener instanceof WindowResizeListener) windowResizeListeners.remove(listener);
-		if (listener instanceof WindowMoveListener) windowMoveListeners.remove(listener);
+	static public boolean removeEventListener(SEventListener listener) {
+		boolean removed = false;
+		if (listener instanceof KeyInputListener) {
+			keyInputListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof MouseInputListener) {
+			mouseInputListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof MouseMotionListener) {
+			mouseMotionListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof MouseOnScreenListener) {
+			mouseOnScreenListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof ScrollListener) {
+			scrollListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof WindowResizeListener) {
+			windowResizeListeners.remove(listener);
+			removed = true;
+		}
+		if (listener instanceof WindowMoveListener) {
+			windowMoveListeners.remove(listener);
+			removed = true;
+		}
+		return removed;
 	}
 
 	static public void removeKeyInputListener(KeyInputListener listener) { keyInputListeners.remove(listener); }

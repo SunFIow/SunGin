@@ -1,5 +1,5 @@
 package com.sunflow.gfx;
 
-public interface PScreen {
+public interface SScreen {
 
 }

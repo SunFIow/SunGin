@@ -1,7 +1,9 @@
 package com.sunflow.interfaces;
 
-import com.sunflow.engine.eventsystem.listeners.EventListener;
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 
-public interface GameLoopListener extends EventListener {
-	void update();
+public interface GameLoopListener extends SEventListener {
+	void preUpdate();
+
+	void postUpdate();
 }
