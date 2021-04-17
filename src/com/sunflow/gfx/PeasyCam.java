@@ -2,7 +2,9 @@ package com.sunflow.gfx;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.EventListener;
 
+import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.game.Game3D;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.util.MathUtils;
@@ -19,7 +21,9 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 
 	public PeasyCam(Game3D game) {
 		this.game = game;
-		game.addListener(this);
+//		game.addListener(this);
+		game.addListener((SEventListener) this);
+		game.addListener((EventListener) this);
 	}
 
 	public void flip() {
@@ -36,13 +40,16 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 	}
 
 	@Override
-	public void update() {
+	public void preDraw() {
 		game.rotateXTo(xr);
 		game.rotateYTo(yr);
 		game.rotateZTo(zr);
 		game.updateView();
 //		zr += 0.01f;
 	}
+
+//	@Override
+//	public void postDraw() {}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {

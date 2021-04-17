@@ -303,10 +303,9 @@ public abstract class GameBase extends SGraphics implements Runnable,
 //		handleSmooth();
 		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
 		screen.preDraw();
-		for (FrameLoopListener fll : frameLoopListeners) fll.postDraw();
 	}
 
-	protected void postDraw() { super.endDraw(); screen.postDraw(); }
+	protected void postDraw() { super.endDraw(); screen.postDraw(); for (FrameLoopListener fll : frameLoopListeners) fll.postDraw(); }
 
 	protected void draw() {}
 

@@ -1,5 +1,6 @@
 package com.sunflow.gfx;
 
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
@@ -11,9 +12,9 @@ import com.sunflow.util.Transform;
 
 public abstract class S_Shape {
 
-	public static boolean tempShape = false;
+//	public static boolean tempShape = false;
 
-	public GeneralPath path;
+	public Shape path;
 	public Style style;
 	public AffineTransform transform;
 
@@ -28,13 +29,13 @@ public abstract class S_Shape {
 	}
 
 	public static void endShape(SGFX screen) {
-		if (tempShape) return;
+//		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
 		else if (screen instanceof SGraphics) Shape2D.endShape(screen);
 	}
 
 	public static void beginShape(SGFX screen) {
-		if (tempShape) return;
+//		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.beginShape((Game3D) screen);
 		else if (screen instanceof SGraphics) Shape2D.beginShape(screen);
 	}
@@ -47,10 +48,15 @@ public abstract class S_Shape {
 		public Transform m_transform;
 
 		public static void drawAll(Game3D screen) {
-			if (shapes.size() < 1) return;
-			int[] order = shapes.get(0).getOrder(screen);
+//			boolean b = true;
+//			if (b) return;
+//			System.out.println(shapes.size());
+			if (shapes.isEmpty()) return;
+			int[] order = Shape3D.getOrder(screen);
 			for (int i = 0; i < order.length; i++) {
 				Shape3D shape = shapes.get(order[i]);
+//				System.out.println(shape.dist(screen.vCameraPos));
+//				System.out.println(screen.vCameraPos);
 
 //				if (shape.path != null) {
 				screen.push();
@@ -60,17 +66,19 @@ public abstract class S_Shape {
 				screen.drawShape(shape.path);
 				screen.pop();
 //				}
+//				System.out.print(order[i] + ", ");
 			}
+			System.out.println();
 			shapes.clear();
 		}
 
-		private final int[] getOrder(Game3D screen) {
+		private final static int[] getOrder(Game3D screen) {
 			int size = shapes.size();
 			float[] dists = new float[size];
 			int[] order = new int[size];
 
 			for (int i = 0; i < size; i++) {
-				dists[i] = shapes.get(i).dist(screen.vCameraPos);
+				dists[i] = shapes.get(i).dist(screen);
 				order[i] = i;
 			}
 
@@ -93,16 +101,26 @@ public abstract class S_Shape {
 			return order;
 		}
 
-		public float dist(SVector cam) { return dist(cam.x, cam.y, cam.z); }
+		static GraphicsMatrix gm = new GraphicsMatrix();
 
-		public float dist(float x, float y, float z) {
+//		public float dist(SVector cam) { return dist(cam.x, cam.y, cam.z); }
+
+//		public float dist(float x, float y, float z) {
+
+		public float dist(Game3D screen) {
+			gm.transform(m_transform);
+			SVector cam_Raw = screen.vCameraPos;
+			SVector cam = gm.apply(cam_Raw);
 			float total = 0;
 			for (int i = 0; i < vertices.size(); i++) {
-				SVector v = vertices.get(i);
+				SVector v_raw = vertices.get(i);
 
-				total += Math.sqrt((x - v.x) * (x - v.x)
-						+ (y - v.y) * (y - v.y)
-						+ (z - v.z) * (z - v.z));
+				SVector v = gm.apply(v_raw);
+
+//				total += Math.sqrt((x - v.x) * (x - v.x)
+//						+ (y - v.y) * (y - v.y)
+//						+ (z - v.z) * (z - v.z));
+				total += cam.dist(v);
 			}
 			return total / vertices.size();
 		}
@@ -124,7 +142,7 @@ public abstract class S_Shape {
 
 		public static Shape3D getShape(Game3D screen, Shape3D s) {
 			if (s == null) s = new Shape3D();
-			s.path = screen.gpath;
+			s.path = (GeneralPath) screen.gpath.clone();
 			s.vertices = screen.vertices;
 			s.style = screen.getStyle();
 			s.transform = screen.graphics.getTransform();

@@ -55,31 +55,31 @@ public class ScreenJava extends Screen {
 			return false;
 		}
 
-		if (canvas.getBufferStrategy() == null) {
-			canvas.createBufferStrategy(2);
-		}
 		BufferStrategy strategy = canvas.getBufferStrategy();
-		if (strategy != null) {
-//		Drawing the image
-			do {
-				// The following loop ensures that the contents of the drawing buffer
-				// are consistent in case the underlying surface was recreated
-				do {
-//					Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
-					Graphics draw = strategy.getDrawGraphics();
-					// draw to width/height, since this may be a 2x image
-					draw.drawImage(game.image, 0, 0, scaledWidth, scaledHeight, null);
-					if (showOverlay) draw.drawImage(overlay.image, 0, 0, null);
-					draw.dispose();
-				} while (strategy.contentsRestored());
-
-				// Display the buffer
-				strategy.show();
-
-				// Repeat the rendering if the drawing buffer was lost
-			} while (strategy.contentsLost());
+		if (strategy == null) {
+			canvas.createBufferStrategy(2);
+			strategy = canvas.getBufferStrategy();
 		}
+		// if (strategy != null) {
+//		Drawing the image
+		do {
+			// The following loop ensures that the contents of the drawing buffer
+			// are consistent in case the underlying surface was recreated
+			do {
+//				Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
+				Graphics draw = strategy.getDrawGraphics();
+				// draw to width/height, since this may be a 2x image
+				draw.drawImage(game.image, 0, 0, scaledWidth, scaledHeight, null);
+				if (showOverlay) draw.drawImage(overlay.image, 0, 0, null);
+				draw.dispose();
+			} while (strategy.contentsRestored());
 
+			// Display the buffer
+			strategy.show();
+
+			// Repeat the rendering if the drawing buffer was lost
+		} while (strategy.contentsLost());
+		// }
 		return true;
 	}
 

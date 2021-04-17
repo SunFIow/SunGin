@@ -345,7 +345,7 @@ public class SGraphics extends SImage implements SGFX {
 	/** Result of the last conversion to HSB */
 	private float[] cacheHsbValue = new float[3];
 
-	private Line2D.Float line = new Line2D.Float();
+	Line2D.Float line = new Line2D.Float();
 	private Ellipse2D.Float ellipse = new Ellipse2D.Float();
 	private Rectangle2D.Float rect = new Rectangle2D.Float();
 	private Arc2D.Float arc = new Arc2D.Float();
@@ -473,6 +473,7 @@ public class SGraphics extends SImage implements SGFX {
 	/** Returns the java.awt.Graphics2D object used by this renderer. */
 	@Override
 	public Object getNative() {
+		System.out.println("sgraphicsgetnative");
 		return graphics;
 	}
 
@@ -545,6 +546,7 @@ public class SGraphics extends SImage implements SGFX {
 
 		// init shape stuff
 		shape = 0;
+		gpath = new GeneralPath();
 
 		rectMode(CORNER);
 		ellipseMode(DIAMETER);
@@ -636,7 +638,7 @@ public class SGraphics extends SImage implements SGFX {
 	public void beginShape(int mode) {
 		shape = mode;
 		vertexCount = 0;
-		gpath = null;
+		gpath.reset();
 		S_Shape.beginShape(this);
 	}
 
@@ -677,6 +679,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
+					S_Shape.addShape(this);
 				}
 				break;
 
@@ -688,6 +691,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 1][Y],
 							vertices[vertexCount - 3][X],
 							vertices[vertexCount - 3][Y]);
+					S_Shape.addShape(this);
 				}
 				break;
 
@@ -706,6 +710,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
+					S_Shape.addShape(this);
 				}
 				break;
 
@@ -719,6 +724,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
+					S_Shape.addShape(this);
 				}
 				break;
 
@@ -734,12 +740,13 @@ public class SGraphics extends SImage implements SGFX {
 							x, y,
 							vertices[vertexCount - 3][X],
 							vertices[vertexCount - 3][Y]);
+					S_Shape.addShape(this);
 				}
 				break;
 
 			case POLYGON:
-				if (gpath == null) {
-					gpath = new GeneralPath();
+				if (gpath.getCurrentPoint() == null) {
+					gpath.reset();
 					gpath.moveTo(x, y);
 				} else {
 					gpath.lineTo(x, y);
@@ -763,13 +770,17 @@ public class SGraphics extends SImage implements SGFX {
 	 */
 	@Override
 	public void endShape(int mode) {
-		if (gpath == null || shape != POLYGON) {
+		if (gpath.getCurrentPoint() == null || shape != POLYGON) {
+			S_Shape.endShape(this);
 			shape = 0;
 			return;
 		}
 
 		if (mode == CLOSE) gpath.closePath();
 		drawShape(gpath);
+
+		S_Shape.addShape(this);
+		S_Shape.endShape(this);
 
 //		boolean completeShape = true;
 //		if (shape == POINTS && vertexCount < 1) completeShape = false;
@@ -902,7 +913,8 @@ public class SGraphics extends SImage implements SGFX {
 
 	@Override
 	public void triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-		gpath = new GeneralPath();
+//		gpath = new GeneralPath();
+		gpath.reset();
 		gpath.moveTo(x1, y1);
 		gpath.lineTo(x2, y2);
 		gpath.lineTo(x3, y3);
@@ -912,14 +924,13 @@ public class SGraphics extends SImage implements SGFX {
 
 	@Override
 	public void quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-		GeneralPath gp = new GeneralPath();
-		gp.moveTo(x1, y1);
-		gp.lineTo(x2, y2);
-		gp.lineTo(x3, y3);
-		gp.lineTo(x4, y4);
-		gp.closePath();
-		drawShape(gp);
-
+		gpath.reset();
+		gpath.moveTo(x1, y1);
+		gpath.lineTo(x2, y2);
+		gpath.lineTo(x3, y3);
+		gpath.lineTo(x4, y4);
+		gpath.closePath();
+//		drawShape(gpath);
 	}
 
 	//////////////////////////////////////////////////////////////

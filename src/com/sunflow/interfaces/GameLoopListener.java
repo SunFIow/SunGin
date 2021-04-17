@@ -3,7 +3,7 @@ package com.sunflow.interfaces;
 import com.sunflow.engine.eventsystem.listeners.SEventListener;
 
 public interface GameLoopListener extends SEventListener {
-	void preUpdate();
+	default void preUpdate() {}
 
-	void postUpdate();
+	default void postUpdate() {}
 }
