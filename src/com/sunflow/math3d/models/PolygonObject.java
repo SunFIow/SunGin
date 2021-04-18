@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Polygon;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.util.MathUtils;
 
 public class PolygonObject extends DrawableObject {
 
@@ -22,34 +23,32 @@ public class PolygonObject extends DrawableObject {
 		for (int i = 0; i < x.length; i++) P.addPoint((int) x[i], (int) y[i]);
 	}
 
-	public void update(float[] x, float[] y) {
-		P.reset();
-		for (int i = 0; i < x.length; i++) {
-			P.xpoints[i] = (int) x[i];
-			P.ypoints[i] = (int) y[i];
-		}
-		P.npoints = x.length;
-	}
-
 	public PolygonObject(Game3D screen, Polygon p) {
 		super(screen);
 		P = p;
 	}
 
+	public void update(int[] x, int[] y) {
+		P.invalidate();
+		P.xpoints = x;
+		P.ypoints = y;
+		P.npoints = MathUtils.instance.min(x.length, y.length);
+	}
+
 	public void update(Polygon p) {
-		if (P.npoints != p.npoints) {
-			P = new Polygon();
+		if (P.npoints < p.npoints) {
+			P.reset();
 			for (int i = 0; i < p.npoints; i++) {
 				P.addPoint(p.xpoints[i], p.ypoints[i]);
 			}
+		} else {
+			P.reset();
+			for (int i = 0; i < p.npoints; i++) {
+				P.xpoints[i] = p.xpoints[i];
+				P.ypoints[i] = p.ypoints[i];
+			}
 			P.npoints = p.npoints;
 		}
-		P.reset();
-		for (int i = 0; i < p.npoints; i++) {
-			P.xpoints[i] = p.xpoints[i];
-			P.ypoints[i] = p.ypoints[i];
-		}
-		P.npoints = p.npoints;
 	}
 
 	@Override

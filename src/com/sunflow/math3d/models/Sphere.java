@@ -2,6 +2,7 @@ package com.sunflow.math3d.models;
 
 import com.sunflow.game.Game3D;
 import com.sunflow.math.SVector;
+import com.sunflow.util.MathUtils;
 import com.sunflow.util.SConstants;
 
 public class Sphere extends Base3DModel {
@@ -16,9 +17,9 @@ public class Sphere extends Base3DModel {
 		SVector[][] globe = new SVector[detail + add][detail + add];
 
 		for (int i = 0; i < detail + add; i++) {
-			float lat = map(i, 0, detail, 0, SConstants.PI);
+			float lat = MathUtils.instance.map(i, 0, detail, 0, SConstants.PI);
 			for (int j = 0; j < detail + add; j++) {
-				float lon = map(j, 0, detail, 0, SConstants.PI * 2);
+				float lon = MathUtils.instance.map(j, 0, detail, 0, SConstants.PI * 2);
 				float vx = radius * sin(lat) * cos(lon);
 				float vy = radius * sin(lat) * sin(lon);
 				float vz = radius * cos(lat);

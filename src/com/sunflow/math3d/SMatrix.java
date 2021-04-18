@@ -237,10 +237,7 @@ public class SMatrix implements Cloneable, Serializable
 //		System.out.println("tostring: " + s);
 //		return s;
 
-		System.out.println("tostring");
 		StringBuilder builder = new StringBuilder("MatrixF[" + rows + "][" + cols + "]" + System.lineSeparator());
-
-		System.out.println(rows + "; " + cols);
 		for (int i = 0; i < rows; i++, builder.append(System.lineSeparator())) for (int j = 0; j < cols; j++) {
 //			System.out.println(i + ", " + j);
 			builder.append("|" + data[i][j] + "|");

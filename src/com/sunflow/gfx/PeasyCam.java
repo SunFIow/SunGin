@@ -44,6 +44,8 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 		game.rotateXTo(xr);
 		game.rotateYTo(yr);
 		game.rotateZTo(zr);
+//		game.vCameraPos.set(game.mouseX(), game.mouseY(), 650);
+//		game.hor
 		game.updateView();
 //		zr += 0.01f;
 	}

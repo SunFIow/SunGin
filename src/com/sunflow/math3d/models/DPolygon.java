@@ -32,7 +32,7 @@ public class DPolygon extends BaseModel {
 		addVertices(vs);
 	}
 
-	protected void addVertices(SVector... vs) {
+	public void addVertices(SVector... vs) {
 		SVector[] newVertices = new SVector[vertices.length + vs.length];
 		for (int i = 0; i < vertices.length; i++) {
 			newVertices[i] = vertices[i];
@@ -45,8 +45,8 @@ public class DPolygon extends BaseModel {
 
 	@Override
 	public void updateModel() {
-		float[] newX = new float[vertices.length];
-		float[] newY = new float[vertices.length];
+		int[] newX = new int[vertices.length];
+		int[] newY = new int[vertices.length];
 		boolean draw = true;
 		for (int i = 0; i < vertices.length; i++) {
 			SVector v = vertices[i];
@@ -68,8 +68,8 @@ public class DPolygon extends BaseModel {
 //			newY[i] = (screen.height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * screen.zoom();
 //			if (Calculator.t < 0) draw = false;
 			float[] pos = screen.convert3Dto2D(screen.apply(x, y, z));
-			newX[i] = pos[0];
-			newY[i] = pos[1];
+			newX[i] = (int) pos[0];
+			newY[i] = (int) pos[1];
 			if (pos[2] < 0) draw = false;
 		}
 

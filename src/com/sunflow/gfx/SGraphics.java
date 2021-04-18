@@ -930,7 +930,7 @@ public class SGraphics extends SImage implements SGFX {
 		gpath.lineTo(x3, y3);
 		gpath.lineTo(x4, y4);
 		gpath.closePath();
-//		drawShape(gpath);
+		drawShape(gpath);
 	}
 
 	//////////////////////////////////////////////////////////////

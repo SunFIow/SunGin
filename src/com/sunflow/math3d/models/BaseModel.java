@@ -3,7 +3,7 @@ package com.sunflow.math3d.models;
 import com.sunflow.math.SVector;
 import com.sunflow.util.MathUtils;
 
-public abstract class BaseModel implements MathUtils {
+public abstract class BaseModel {
 
 	public static BaseModel DEFAULT = getDefault();
 
@@ -116,4 +116,9 @@ public abstract class BaseModel implements MathUtils {
 	public abstract float dist();
 
 	public abstract boolean contains(float x, float y);
+
+	protected static float cos(float angle) { return MathUtils.instance.cos(angle); }
+
+	protected static float sin(float angle) { return MathUtils.instance.sin(angle); }
+
 }

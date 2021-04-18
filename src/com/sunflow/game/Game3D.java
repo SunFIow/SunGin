@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.adapters.KeyInputAdapter;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyReleasedEvent;
@@ -64,6 +63,12 @@ public class Game3D extends GameBase {
 	public boolean outlines;
 	public boolean highlight;
 
+	private static final int KEY_W = 0;
+	private static final int KEY_A = 1;
+	private static final int KEY_S = 2;
+	private static final int KEY_D = 3;
+	private static final int KEY_SPACE = 4;
+	private static final int KEY_SHIFT = 5;
 	protected boolean[] keys;
 
 	private float mouseDifX, mouseDifY;
@@ -89,7 +94,7 @@ public class Game3D extends GameBase {
 		minZoom = 100;
 		maxZoom = 10000;
 
-		keys = new boolean[4];
+		keys = new boolean[6];
 		outlines = true;
 
 		movementSpeed = 0.2f;
@@ -114,16 +119,10 @@ public class Game3D extends GameBase {
 	public void createCanvas(float width, float height, float scaleW, float scaleH) {
 		super.createCanvas(width, height, scaleW, scaleH);
 
-//		screen.addKeyListener(new Game3DKeyListeners());
-//		Game3DMouseListeners ml = new Game3DMouseListeners();
-//		screen.addMouseListener(ml);
-//		screen.addMouseWheelListener(ml);
-
-		EventManager.addKeyInputListener(new Game3DKeyInputListeners());
-		Game3DMouseInputListeners mil = new Game3DMouseInputListeners();
-		EventManager.addMouseInputListener(mil);
-		EventManager.addMouseMotionListener(mil);
-		EventManager.addScrollListener(mil);
+//		addListener(new Game3DKeyInputListeners());
+//		addListener(new Game3DMouseInputListeners());
+		addListener(new Game3DKeyListeners());
+		addListener(new Game3DMouseListeners());
 
 		if (isCameraActivated) invisibleMouse();
 		showCrosshair(true);
@@ -276,14 +275,20 @@ public class Game3D extends GameBase {
 	private final void cameraMovement() {
 		if (!isCameraActivated) return;
 		SVector viewVector = new SVector(vCameraDir.x - vCameraPos.x, vCameraDir.y - vCameraPos.y, vCameraDir.z - vCameraPos.z);
+//		viewVector.normalize();
 		SVector verticalVector = new SVector(0, 0, 1);
 		SVector sideViewVector = SVector.cross(viewVector, verticalVector).normalized();
 
 		SVector moveVector = new SVector();
-		if (keys[0]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
-		if (keys[2]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
-		if (keys[1]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
-		if (keys[3]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
+		viewVector.z = 0;
+		viewVector.normalize();
+		if (keys[KEY_W]) moveVector.add(viewVector.x, viewVector.y, viewVector.z);
+		if (keys[KEY_S]) moveVector.sub(viewVector.x, viewVector.y, viewVector.z);
+		if (keys[KEY_A]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
+		if (keys[KEY_D]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
+		if (keys[KEY_SPACE]) moveVector.z += 1;
+		if (keys[KEY_SHIFT]) moveVector.z -= 1;
+		moveVector.normalize();
 		moveVector.mult(movementSpeed * fElapsedTime * 33);
 
 		vCameraPos.add(moveVector);
@@ -473,20 +478,24 @@ public class Game3D extends GameBase {
 	private final class Game3DKeyListeners extends KeyAdapter {
 		@Override
 		public final void keyPressed(KeyEvent e) {
-			if (e.getKeyCode() == KeyEvent.VK_W) keys[0] = true;
-			if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = true;
-			if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = true;
-			if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = true;
+			if (e.getKeyCode() == KeyEvent.VK_W) keys[KEY_W] = true;
+			if (e.getKeyCode() == KeyEvent.VK_A) keys[KEY_A] = true;
+			if (e.getKeyCode() == KeyEvent.VK_S) keys[KEY_S] = true;
+			if (e.getKeyCode() == KeyEvent.VK_D) keys[KEY_D] = true;
+			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[KEY_SPACE] = true;
+			if (e.getKeyCode() == KeyEvent.VK_SHIFT) keys[KEY_SHIFT] = true;
 			if (e.getKeyCode() == KeyEvent.VK_O) outlines = !outlines;
 			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
 		}
 
 		@Override
 		public final void keyReleased(KeyEvent e) {
-			if (e.getKeyCode() == KeyEvent.VK_W) keys[0] = false;
-			if (e.getKeyCode() == KeyEvent.VK_A) keys[1] = false;
-			if (e.getKeyCode() == KeyEvent.VK_S) keys[2] = false;
-			if (e.getKeyCode() == KeyEvent.VK_D) keys[3] = false;
+			if (e.getKeyCode() == KeyEvent.VK_W) keys[KEY_W] = false;
+			if (e.getKeyCode() == KeyEvent.VK_A) keys[KEY_A] = false;
+			if (e.getKeyCode() == KeyEvent.VK_S) keys[KEY_S] = false;
+			if (e.getKeyCode() == KeyEvent.VK_D) keys[KEY_D] = false;
+			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[KEY_SPACE] = false;
+			if (e.getKeyCode() == KeyEvent.VK_SHIFT) keys[KEY_SHIFT] = false;
 		}
 	}
 
@@ -502,6 +511,20 @@ public class Game3D extends GameBase {
 			if (e.getUnitsToScroll() > 0) {
 				if (zoom > minZoom) zoom -= 25 * e.getUnitsToScroll();
 			} else if (zoom < maxZoom) zoom += 25 * -e.getUnitsToScroll();
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) { onMouseMotion(e.getX(), e.getY()); }
+
+		@Override
+		public void mouseDragged(MouseEvent e) { onMouseMotion(e.getX(), e.getY()); }
+
+		public void onMouseMotion(int x, int y) {
+			if (!screen.hasFocus()) return;
+			if (!isCameraActivated) return;
+//			System.out.println(isCameraActivated);
+			mouseMovement(x, y);
+			centerMouse();
 		}
 	}
 
@@ -541,8 +564,10 @@ public class Game3D extends GameBase {
 
 		@Override
 		public void onMouseMotion(MouseMotionEvent event) {
+			System.out.println("r");
 			if (!screen.hasFocus()) return;
 			if (!isCameraActivated) return;
+			System.out.println("a");
 			mouseMovement((float) event.getMouseX(), (float) event.getMouseY());
 			centerMouse();
 		}
