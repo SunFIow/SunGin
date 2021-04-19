@@ -1,47 +1,45 @@
 package com.sunflow.gfx;
 
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 
-import com.sunflow.game.GameBase;
 import com.sunflow.math.SMatrix2D;
-import com.sunflow.util.Style;
+import com.sunflow.math.SMatrix_D;
+import com.sunflow.util.SStyle;
 
 public interface SGFX {
 
-	void setParent(GameBase parent);
+//	void setParent(GameBase parent);
 
-	void setPrimary(boolean primary);
+//	void setPrimary(boolean primary);
 
-	void setPath(String path);
+//	void setPath(String path);
 
 	void setSize(int w, int h);
 
-	void setCache(Object key, Object val);
+//	void setCache(Object key, Object val);
 
-	Object getCache(Object key);
+//	Object getCache(Object key);
 
-	void removeCache(Object key);
+//	void removeCache(Object key);
 
-	SScreen createScreen();
+//	SScreen createScreen();
 
-	/**
-	 * Still need a means to get the java.awt.Image object, since getNative()
-	 * is going to return the {@link Graphics2D} object.
-	 */
-	BufferedImage getImage();
+//	/**
+//	 * Still need a means to get the java.awt.Image object, since getNative()
+//	 * is going to return the {@link Graphics2D} object.
+//	 */
+//	Image getImage();
+//
+//	/** Returns the java.awt.Graphics2D object used by this renderer. */
+//	Object getNative();
+//
+//	Graphics2D checkImage();
 
-	/** Returns the java.awt.Graphics2D object used by this renderer. */
-	Object getNative();
+//	void beginDraw();
 
-	Graphics2D checkImage();
-
-	void beginDraw();
-
-	void endDraw();
+//	void endDraw();
 
 	void beginShape();
 
@@ -291,11 +289,11 @@ public interface SGFX {
 			float x, float y, float w, float h,
 			int u1, int v1, int u2, int v2);
 
-	/**
-	 * @param mode
-	 *            either CORNER, CORNERS, CENTER
-	 */
-	void shapeMode(int mode);
+//	/**
+//	 * @param mode
+//	 *            either CORNER, CORNERS, CENTER
+//	 */
+//	void shapeMode(int mode);
 
 	void fillShape(Shape s);
 
@@ -415,23 +413,25 @@ public interface SGFX {
 
 	void popMatrix();
 
-	void translate(double x, double y);
+	void translate(float x, float y);
 
-	void rotate(double theta);
+	void rotate(float theta);
 
-	void rotate(double theta, double x, double y);
+	void rotate(float theta, float x, float y);
 
-	void scale(double xy);
+	void scale(float xy);
 
-	void scale(double x, double y);
+	void scale(float x, float y);
 
-	void shear(double x, double y);
+	void shear(float x, float y);
 
 	void shearX(float angle);
 
 	void shearY(float angle);
 
 	void transform(AffineTransform affineTransform);
+
+	void setTransform(AffineTransform affineTransform);
 
 	void resetMatrix();
 
@@ -440,7 +440,7 @@ public interface SGFX {
 	void applyMatrix(float n00, float n01, float n02,
 			float n10, float n11, float n12);
 
-	SMatrix2D getMatrix();
+	SMatrix_D getMatrix();
 
 	SMatrix2D getMatrix(SMatrix2D target);
 
@@ -456,11 +456,11 @@ public interface SGFX {
 
 	void popStyle();
 
-	Style getStyle();
+	SStyle getStyle();
 
-	Style getStyle(Style s);
+	SStyle getStyle(SStyle s);
 
-	void style(Style s);
+	void style(SStyle s);
 
 	void strokeWeight(float weight);
 
@@ -665,8 +665,6 @@ public interface SGFX {
 
 	int color(float gray);
 
-	int color(double gray);
-
 	/**
 	 * @param c
 	 *            can be packed ARGB or a gray in this case
@@ -709,13 +707,15 @@ public interface SGFX {
 
 	void loadPixels();
 
+	void updatePixels();
+
 	/**
 	 * Update the pixels[] buffer to the PGraphics image.
 	 * <P>
 	 * Unlike in PImage, where updatePixels() only requests that the
 	 * update happens, in PGraphicsJava2D, this will happen immediately.
 	 */
-	void updatePixels(int x, int y, int c, int d);
+	void updatePixels(int x, int y, int w, int h);
 
 	int get(int x, int y);
 

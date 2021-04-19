@@ -112,7 +112,7 @@ public class ExampleGame3D extends Game3D {
 
 	@Override
 	public void draw() {
-		translate(sx, 0, 0);
+//		translate(sx, 0, 0);
 		sx += 0.1;
 
 		if (frameCount % frameRate == 0) {

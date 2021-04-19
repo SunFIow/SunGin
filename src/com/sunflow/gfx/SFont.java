@@ -895,14 +895,14 @@ public class SFont implements SConstants {
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		fonts = ge.getAllFonts();
 
-//		if (GameBase.platform == SConstants.MACOSX) {
-//			fontDifferent = new HashMap<>();
-//			for (Font font : fonts) {
-//				// No need to use getPSName() anymore because getName()
-//				// returns the PostScript name on OS X 10.6 w/ Java 6.
-//				fontDifferent.put(font.getName(), font);
-//			}
-//		}
+		if (GameBase.platform == SConstants.MACOSX) {
+			fontDifferent = new HashMap<>();
+			for (Font font : fonts) {
+				// No need to use getPSName() anymore because getName()
+				// returns the PostScript name on OS X 10.6 w/ Java 6.
+				fontDifferent.put(font.getName(), font);
+			}
+		}
 	}
 
 	/**
@@ -915,13 +915,13 @@ public class SFont implements SConstants {
 	 * See: <a href="https://github.com/processing/processing/issues/5481">issue #5481</a>
 	 */
 	static public Font findFont(String name) {
-//		if (GameBase.platform == SConstants.MACOSX) {
-//			loadFonts();
-//			Font maybe = fontDifferent.get(name);
-//			if (maybe != null) {
-//				return maybe;
-//			}
-//		}
+		if (GameBase.platform == SConstants.MACOSX) {
+			loadFonts();
+			Font maybe = fontDifferent.get(name);
+			if (maybe != null) {
+				return maybe;
+			}
+		}
 		Font font = new Font(name, Font.PLAIN, 1);
 
 		// make sure we have the name of the system fallback font

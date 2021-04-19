@@ -85,7 +85,7 @@ public class Game3DOLC extends GameBase {
 	}
 
 	@Override
-	public void createCanvas(float width, float height, float scaleW, float scaleH) {
+	public void createCanvas(int width, int height, float scaleW, float scaleH) {
 		super.createCanvas(width, height, scaleW, scaleH);
 
 		screen.addListener(new Game3DKeyListeners());
@@ -156,14 +156,14 @@ public class Game3DOLC extends GameBase {
 	public final void box(float l) { box(0, 0, 0, l); }
 
 	public final void box(float x, float y, float z, float l) {
-		if (!stroke && !fill) return;
+		if (!getGraphics().stroke && !getGraphics().fill) return;
 
 		SMatrix matWorld = SMatrix.Matrix_MakeTranslation(x, y, z);
 		renderer.SetTransform(matWorld);
 
-		if (fill) {
+		if (getGraphics().fill) {
 			Mesh cube = Mesh.Cube();
-			cube.color(fillColor);
+			cube.color(getGraphics().fillColor);
 			renderer.Render(cube.tris, RENDER_FLAT | RENDER_CULL_CW | RENDER_DEPTH | RENDER_LIGHTING_SUNLIGHT);
 		}
 	}
@@ -296,6 +296,7 @@ public class Game3DOLC extends GameBase {
 
 	public final void translateTo(float x, float y, float z) { gMatrix.translateTo(x, y, z); }
 
+	@Override
 	public final void scale(float n) { scale(n, n, n); };
 
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };

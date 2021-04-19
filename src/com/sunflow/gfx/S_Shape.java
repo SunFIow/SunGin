@@ -6,8 +6,9 @@ import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 
 import com.sunflow.game.Game3D;
+import com.sunflow.game.GameBase;
 import com.sunflow.math.SVector;
-import com.sunflow.util.Style;
+import com.sunflow.util.SStyle;
 import com.sunflow.util.Transform;
 
 public abstract class S_Shape {
@@ -15,29 +16,29 @@ public abstract class S_Shape {
 //	public static boolean tempShape = false;
 
 	public Shape path;
-	public Style style;
+	public SStyle style;
 	public AffineTransform transform;
 
-	public static void drawAll(SGraphics screen) {
+	public static void drawAll(SGFX screen) {
 		if (screen instanceof Game3D) Shape3D.drawAll((Game3D) screen);
-		else if (screen instanceof SGraphics) Shape2D.drawAll(screen);
+		else if (screen instanceof GameBase) Shape2D.drawAll((GameBase) screen);
 	}
 
-	public static void addShape(SGraphics screen) {
+	public static void addShape(SGFX screen) {
 		if (screen instanceof Game3D) Shape3D.addShape((Game3D) screen);
-		else if (screen instanceof SGraphics) Shape2D.addShape(screen);
+		else if (screen instanceof GameBase) Shape2D.addShape(screen);
 	}
 
 	public static void endShape(SGFX screen) {
 //		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
-		else if (screen instanceof SGraphics) Shape2D.endShape(screen);
+		else if (screen instanceof GameBase) Shape2D.endShape(screen);
 	}
 
 	public static void beginShape(SGFX screen) {
 //		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.beginShape((Game3D) screen);
-		else if (screen instanceof SGraphics) Shape2D.beginShape(screen);
+		else if (screen instanceof GameBase) Shape2D.beginShape(screen);
 	}
 
 	public static class Shape3D extends S_Shape {
@@ -61,8 +62,8 @@ public abstract class S_Shape {
 //				if (shape.path != null) {
 				screen.push();
 				screen.style(shape.style);
-				screen.graphics.setTransform(shape.transform);
-				screen.gMatrix.transform(shape.m_transform);
+				screen.setTransform(shape.transform);
+				screen.gMatrix.setTransform(shape.m_transform);
 				screen.drawShape(shape.path);
 				screen.pop();
 //				}
@@ -108,7 +109,7 @@ public abstract class S_Shape {
 //		public float dist(float x, float y, float z) {
 
 		public float dist(Game3D screen) {
-			gm.transform(m_transform);
+			gm.setTransform(m_transform);
 			SVector cam_Raw = screen.vCameraPos;
 			SVector cam = gm.apply(cam_Raw);
 			float total = 0;
@@ -142,10 +143,10 @@ public abstract class S_Shape {
 
 		public static Shape3D getShape(Game3D screen, Shape3D s) {
 			if (s == null) s = new Shape3D();
-			s.path = (GeneralPath) screen.gpath.clone();
+			s.path = (GeneralPath) screen.getGraphics().gpath.clone();
 			s.vertices = screen.vertices;
 			s.style = screen.getStyle();
-			s.transform = screen.graphics.getTransform();
+			s.transform = screen.getGraphics().graphics.getTransform();
 			s.m_transform = screen.gMatrix.getTransform();
 			return s;
 		}
@@ -155,37 +156,37 @@ public abstract class S_Shape {
 		public static ArrayList<Shape2D> shapes = new ArrayList<>();
 		public static ArrayList<Shape2D> temp_shapes = new ArrayList<>();
 
-		public static void drawAll(SGraphics screen) {
+		public static void drawAll(GameBase screen) {
 			for (Shape2D shape : shapes) {
 				screen.push();
 				screen.style(shape.style);
-				screen.graphics.setTransform(shape.transform);
+				screen.getGraphics().setTransform(shape.transform);
 				screen.drawShape(shape.path);
 				screen.pop();
 			}
 			shapes.clear();
 		}
 
-		public static void beginShape(SGFX screen) {
+		public static void beginShape(GameBase screen) {
 			temp_shapes.clear();
 		}
 
-		public static void addShape(SGraphics screen) {
+		public static void addShape(GameBase screen) {
 			temp_shapes.add(getShape(screen));
 		}
 
-		public static void endShape(SGFX screen) {
+		public static void endShape(GameBase screen) {
 			shapes.addAll(temp_shapes);
 			temp_shapes.clear();
 		}
 
-		public static Shape2D getShape(SGraphics screen) { return getShape(screen, null); }
+		public static Shape2D getShape(GameBase screen) { return getShape(screen, null); }
 
-		public static Shape2D getShape(SGraphics screen, Shape2D s) {
+		public static Shape2D getShape(GameBase screen, Shape2D s) {
 			if (s == null) s = new Shape2D();
-			s.path = screen.gpath;
+			s.path = (GeneralPath) screen.getGraphics().gpath.clone();
 			s.style = screen.getStyle();
-			s.transform = screen.graphics.getTransform();
+			s.transform = screen.getGraphics().graphics.getTransform();
 			return s;
 		}
 	}

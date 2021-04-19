@@ -16,7 +16,7 @@ public class Sprite implements GameUtils, SConstants {
 	}
 
 	public Sprite(String string) {
-		this(GameUtils.instance.loadSImage(string));
+		this(GameUtils.instance.loadImage(string));
 	}
 
 	public Sprite(Sprite spr) {

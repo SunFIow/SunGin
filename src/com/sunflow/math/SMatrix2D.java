@@ -19,6 +19,7 @@
 
 package com.sunflow.math;
 
+import com.sunflow.game.GameBase;
 import com.sunflow.math3d.SMatrix3D;
 import com.sunflow.util.GameUtils;
 
@@ -485,13 +486,13 @@ public class SMatrix2D implements SMatrix_D {
 			while ((big /= 10) != 0) digits++; // cheap log()
 		}
 
-		System.out.println(GameUtils.instance.nfs(m00, digits, 4) + " " +
-				GameUtils.instance.nfs(m01, digits, 4) + " " +
-				GameUtils.instance.nfs(m02, digits, 4));
+		System.out.println(GameBase.nfs(m00, digits, 4) + " " +
+				GameBase.nfs(m01, digits, 4) + " " +
+				GameBase.nfs(m02, digits, 4));
 
-		System.out.println(GameUtils.instance.nfs(m10, digits, 4) + " " +
-				GameUtils.instance.nfs(m11, digits, 4) + " " +
-				GameUtils.instance.nfs(m12, digits, 4));
+		System.out.println(GameBase.nfs(m10, digits, 4) + " " +
+				GameBase.nfs(m11, digits, 4) + " " +
+				GameBase.nfs(m12, digits, 4));
 
 		System.out.println();
 	}

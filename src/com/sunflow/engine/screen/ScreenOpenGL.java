@@ -31,7 +31,6 @@ import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.S_Shape;
-import com.sunflow.util.GameUtils;
 import com.sunflow.util.SConstants;
 
 public class ScreenOpenGL extends Screen {
@@ -70,7 +69,7 @@ public class ScreenOpenGL extends Screen {
 
 		BufferedImage image = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
-		g.drawImage(game.image, 0, scaledHeight, scaledWidth, -scaledHeight, null);
+		g.drawImage(game.getGraphics().image, 0, scaledHeight, scaledWidth, -scaledHeight, null);
 		if (showOverlay) g.drawImage(overlay.image, 0, scaledHeight, scaledWidth, -scaledHeight, null);
 		g.dispose();
 
@@ -230,11 +229,11 @@ public class ScreenOpenGL extends Screen {
 				int h = e.getHeight();
 				scaledWidth = w;
 				scaledHeight = h;
-				width = scaledWidth / scaleWidth;
-				height = scaledHeight / scaleHeight;
+				width = (int) (scaledWidth / scaleWidth);
+				height = (int) (scaledHeight / scaleHeight);
 				frameWidth = w;
 				frameHeight = h;
-				game.resize((int) width, (int) height);
+				game.getGraphics().resize(width, height);
 			}
 		});
 
@@ -247,7 +246,7 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	final public void createCanvas(float width, float height, float scaleW, float scaleH) {
+	final public void createCanvas(int width, int height, float scaleW, float scaleH) {
 		if (!isCreated) {
 			isCreated = true;
 			this.width = width;
@@ -267,7 +266,7 @@ public class ScreenOpenGL extends Screen {
 	@Override
 	public void defaultSettings() {
 //		overlay = new SGraphics(scaledWidth, scaledHeight);
-		overlay = GameUtils.instance.createGraphics(scaledWidth, scaledHeight);
+		overlay = game.createGraphics(scaledWidth, scaledHeight);
 //		overlay.init();
 		overlay.smooth();
 

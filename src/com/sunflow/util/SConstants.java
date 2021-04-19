@@ -42,6 +42,13 @@ public interface SConstants {
 
 //	static final String OPENGL = P3D;
 
+	// platform IDs for PApplet.platform
+
+	static final int OTHER = 0;
+	static final int WINDOWS = 1;
+	static final int MACOSX = 2;
+	static final int LINUX = 3;
+
 	// Mouse Buttons
 	static final int MOUSE_LEFT = 1, BUTTON_LEFT = 1,
 			MOUSE_MIDDLE = 2, BUTTON_MIDDLE = 2,

@@ -9,6 +9,7 @@ import java.util.EventListener;
 
 import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
+import com.sunflow.gfx.SGraphics;
 import com.sunflow.math.SVector;
 
 public abstract class Screen {
@@ -18,7 +19,7 @@ public abstract class Screen {
 
 	public String title, title_info;
 
-	public float width, height;
+	public int width, height;
 	public float scaleWidth, scaleHeight;
 	public int scaledWidth, scaledHeight;
 
@@ -58,10 +59,13 @@ public abstract class Screen {
 	protected boolean showCrosshair;
 
 	protected GameBase game;
+	protected SGraphics graphics;
+
 	protected Mouse mouse;
 
 	public Screen(GameBase game, Mouse mouse) {
 		this.game = game;
+		this.graphics = game.getGraphics();
 		this.mouse = mouse;
 		this.title = "";
 		this.savedSize = new SVector();
@@ -113,7 +117,7 @@ public abstract class Screen {
 
 	public abstract void createScreen();
 
-	public abstract void createCanvas(float width, float height, float scaleW, float scaleH);
+	public abstract void createCanvas(int width, int height, float scaleW, float scaleH);
 
 	public abstract void show();
 
@@ -171,9 +175,9 @@ public abstract class Screen {
 //
 //	public int getLastMouseY() { return (int) lastMouseY; }
 
-	public int getWidth() { return (int) width; }
+	public int getWidth() { return width; }
 
-	public int getHeight() { return (int) height; }
+	public int getHeight() { return height; }
 
 	public boolean isCreated() { return isCreated; }
 

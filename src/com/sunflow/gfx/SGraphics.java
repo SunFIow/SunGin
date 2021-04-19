@@ -23,6 +23,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.VolatileImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.InputStream;
@@ -43,9 +44,9 @@ import java.util.function.BiFunction;
 import com.sunflow.game.GameBase;
 import com.sunflow.logging.Log;
 import com.sunflow.math.SMatrix2D;
-import com.sunflow.util.GameUtils;
+import com.sunflow.math.SMatrix_D;
 import com.sunflow.util.MathUtils;
-import com.sunflow.util.Style;
+import com.sunflow.util.SStyle;
 
 public class SGraphics extends SImage implements SGFX {
 
@@ -54,10 +55,10 @@ public class SGraphics extends SImage implements SGFX {
 	 * The offscreen drawing buffer.
 	 */
 
-	public BufferedImage image;
+	public Image image;
 
-	/** Screen object that we're talking to */
-	protected SScreen screen;
+	/** Surface object that we're talking to */
+	protected SSurface surface;
 
 	public Graphics2D graphics;
 
@@ -194,18 +195,18 @@ public class SGraphics extends SImage implements SGFX {
 	// ........................................................
 
 	/** The current colorMode */
-	protected int colorMode; // = RGB;
+	public int colorMode; // = RGB;
 
 	/** Max value for red/green/blue/alpha (or hue/saturation/value/alpha) set by colorMode */
-	protected float colorModeX, colorModeY, colorModeZ, colorModeA; // = 255;
+	public float colorModeX, colorModeY, colorModeZ, colorModeA; // = 255;
 
 	/** True if colors are not in the range 0..1 */
-	protected boolean colorModeScale; // = true;
+	public boolean colorModeScale; // = true;
 	/**
 	 * True if colorMode(RGB, 255). Defaults to true so that color()
 	 * used as part of a field declaration will properly assign values.
 	 */
-	protected boolean colorModeDefault = true;
+	public boolean colorModeDefault = true;
 
 	// ........................................................
 
@@ -234,10 +235,10 @@ public class SGraphics extends SImage implements SGFX {
 	// Fill color
 
 	/** true if fill() is enabled, (read-only) */
-	protected boolean fill;
+	public boolean fill;
 
 	/** fill that was last set (read-only) */
-	protected int fillColor;
+	public int fillColor;
 
 	protected boolean fillAlpha;
 	protected float fillR, fillG, fillB, fillA;
@@ -248,10 +249,10 @@ public class SGraphics extends SImage implements SGFX {
 	// Stroke color
 
 	/** true if stroke() is enabled, (read-only) */
-	protected boolean stroke;
+	public boolean stroke;
 
 	/** stroke that was last set (read-only) */
-	protected int strokeColor;
+	public int strokeColor;
 
 	protected boolean strokeAlpha;
 	protected float strokeR, strokeG, strokeB, strokeA;
@@ -263,23 +264,9 @@ public class SGraphics extends SImage implements SGFX {
 	protected static final int DEFAULT_STROKE_JOIN = MITER;
 	protected static final int DEFAULT_STROKE_CAP = ROUND;
 
-	protected float strokeWeight = DEFAULT_STROKE_WEIGHT;
-	protected int strokeJoin = DEFAULT_STROKE_JOIN;
-	protected int strokeCap = DEFAULT_STROKE_CAP;
-
-	// ........................................................
-
-	/** Last background color that was set, zero if an image */
-	protected int backgroundColor = 0xffCCCCCC;
-
-	protected boolean backgroundAlpha;
-	protected float backgroundR, backgroundG, backgroundB, backgroundA;
-	protected int backgroundRi, backgroundGi, backgroundBi, backgroundAi;
-
-	// ........................................................
-
-	/** The current blending mode. */
-	protected int blendMode;
+	public float strokeWeight = DEFAULT_STROKE_WEIGHT;
+	public int strokeJoin = DEFAULT_STROKE_JOIN;
+	public int strokeCap = DEFAULT_STROKE_CAP;
 
 	// ........................................................
 
@@ -288,39 +275,60 @@ public class SGraphics extends SImage implements SGFX {
 	// imageMode() is inherited from PImage
 
 	/** The current rect mode (read-only) */
-	protected int rectMode;
+	public int rectMode;
 
 	/** The current ellipse mode (read-only) */
-	protected int ellipseMode;
+	public int ellipseMode;
 
 	/** The current shape alignment mode (read-only) */
-	@SuppressWarnings("unused")
-	protected int shapeMode;
+//	protected int shapeMode;
 
 	/** The current image alignment (read-only) */
-	protected int imageMode = CORNER;
+	public int imageMode = CORNER;
 
 	// ........................................................
 
 	// Text and font properties
 
 	/** The current text font (read-only) */
-	protected SFont textFont;
+	public SFont textFont;
 
 	/** The current text align (read-only) */
-	protected int textAlign = LEFT;
+	public int textAlign = LEFT;
 
 	/** The current vertical text alignment (read-only) */
-	protected int textAlignY = BASELINE;
+	public int textAlignY = BASELINE;
 
 	/** The current text mode (read-only) */
-	protected int textMode = MODEL;
+	public int textMode = MODEL;
 
 	/** The current text size (read-only) */
 	public float textSize;
 
 	/** The current text leading (read-only) */
-	protected float textLeading;
+	public float textLeading;
+
+	private static final String ERROR_TEXTFONT_NULL_FONT = "A null Font was passed to textFont()";
+
+	// ........................................................
+
+	// Style stack
+
+	private static final int STYLE_STACK_DEPTH = 64;
+	private SStyle[] styleStack = new SStyle[STYLE_STACK_DEPTH];
+	private int styleStackDepth;
+
+	////////////////////////////////////////////////////////////
+
+	/** Last background color that was set, zero if an image */
+	public int backgroundColor = 0xffCCCCCC;
+
+	protected boolean backgroundAlpha;
+	protected float backgroundR, backgroundG, backgroundB, backgroundA;
+	protected int backgroundRi, backgroundGi, backgroundBi, backgroundAi;
+
+	/** The current blending mode. */
+	protected int blendMode;
 
 	// ........................................................
 
@@ -328,24 +336,20 @@ public class SGraphics extends SImage implements SGFX {
 	private static final int MATRIX_STACK_DEPTH = 32;
 	AffineTransform transformStack[] = new AffineTransform[MATRIX_STACK_DEPTH];
 
-	private int styleStackDepth;
-	private static final int STYLE_STACK_DEPTH = 64;
-	private Style[] styleStack = new Style[STYLE_STACK_DEPTH];
-
 	// ........................................................
 
 	// internal color for setting/calculating
-	private float calcR, calcG, calcB, calcA;
-	private int calcRi, calcGi, calcBi, calcAi;
-	private int calcColor;
-	private boolean calcAlpha;
+	protected float calcR, calcG, calcB, calcA;
+	protected int calcRi, calcGi, calcBi, calcAi;
+	protected int calcColor;
+	protected boolean calcAlpha;
 
 	/** The last RGB value converted to HSB */
 	private int cacheHsbKey;
 	/** Result of the last conversion to HSB */
 	private float[] cacheHsbValue = new float[3];
 
-	Line2D.Float line = new Line2D.Float();
+	private Line2D.Float line = new Line2D.Float();
 	private Ellipse2D.Float ellipse = new Ellipse2D.Float();
 	private Rectangle2D.Float rect = new Rectangle2D.Float();
 	private Arc2D.Float arc = new Arc2D.Float();
@@ -356,6 +360,8 @@ public class SGraphics extends SImage implements SGFX {
 	public static final int DEFAULT_VERTICES = 512;
 	protected float vertices[][] = new float[DEFAULT_VERTICES][VERTEX_FIELD_COUNT];
 	protected int vertexCount;
+
+	private Composite defaultComposite;
 
 	protected GeneralPath gpath;
 //	protected ArrayList<Shape> shapes_tmp;
@@ -371,9 +377,7 @@ public class SGraphics extends SImage implements SGFX {
 	public boolean strokeGradient;
 	public Paint strokeGradientObject;
 
-	Font fontObject;
-
-	private static final String ERROR_TEXTFONT_NULL_FONT = "A null Font was passed to textFont()";
+	private Font fontObject;
 
 	/**
 	 * Internal buffer used by the text() functions
@@ -385,8 +389,6 @@ public class SGraphics extends SImage implements SGFX {
 	protected int textBreakCount;
 	protected int[] textBreakStart;
 	protected int[] textBreakStop;
-
-	private Composite defaultComposite;
 
 //	public SGraphics() {
 //		// In 3.1.2, giving up on the async image saving as the default
@@ -403,17 +405,15 @@ public class SGraphics extends SImage implements SGFX {
 
 //	public SGraphics(BufferedImage bi) { super(bi); }
 
-	@Override
 	public void setParent(GameBase parent) {
 		this.parent = parent;
 
 		// Some renderers (OpenGL) need to know what smoothing level will be used
 		// before the rendering surface is even created.
-		smooth = parent.smooth;
-		pixelDensity = parent.pixelDensity;
+		smooth = parent.getSmooth();
+		pixelDensity = parent.getPixelDensity();
 	}
 
-	@Override
 	public void setPrimary(boolean primary) {
 		this.primaryGraphics = primary;
 
@@ -425,7 +425,6 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	@Override
 	public void setPath(String path) {
 		this.path = path;
 	}
@@ -446,47 +445,52 @@ public class SGraphics extends SImage implements SGFX {
 		reapplySettings = true;
 	}
 
-	@Override
 	public void setCache(Object key, Object val) {
 		cacheMap.put(key, val);
 	}
 
-	@Override
 	public Object getCache(Object key) {
 		return cacheMap.get(key);
 	}
 
-	@Override
 	public void removeCache(Object key) {
 		cacheMap.remove(key);
 	}
 
-	@Override
-	public SScreen createScreen() {
-		return screen = new SScreenAWT(this);
+	public void dispose() { // ignore
+		if (primaryGraphics && asyncImageSaver != null) {
+			asyncImageSaver.dispose();
+			asyncImageSaver = null;
+		}
 	}
 
+	public SSurface createSurface() {
+		return surface = new SScreenAWT(this);
+	}
+
+	// JAVA2D
 	/**
 	 * Still need a means to get the java.awt.Image object, since getNative()
 	 * is going to return the {@link Graphics2D} object.
 	 */
 	@Override
-	public BufferedImage getImage() {
+	public Image getImage() {
 		return image;
 	}
 
+	// JAVA2D
 	/** Returns the java.awt.Graphics2D object used by this renderer. */
 	@Override
 	public Object getNative() {
-		System.out.println("sgraphicsgetnative");
 		return graphics;
 	}
 
-	@Override
+	// JAVA2D
+
 	public Graphics2D checkImage() {
 		if (image == null ||
-				image.getWidth() != width * pixelDensity ||
-				image.getHeight() != height * pixelDensity) {
+				((BufferedImage) image).getWidth() != width * pixelDensity ||
+				((BufferedImage) image).getHeight() != height * pixelDensity) {
 			int wide = width * pixelDensity;
 			int high = height * pixelDensity;
 			image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
@@ -494,7 +498,6 @@ public class SGraphics extends SImage implements SGFX {
 		return (Graphics2D) image.getGraphics();
 	}
 
-	@Override
 	public void beginDraw() {
 		graphics = checkImage();
 
@@ -519,7 +522,6 @@ public class SGraphics extends SImage implements SGFX {
 //		vertexCount = 0;
 	}
 
-	@Override
 	public void endDraw() {
 		if (primaryGraphics) {} else {
 			// TODO this is probably overkill for most tasks...
@@ -644,7 +646,7 @@ public class SGraphics extends SImage implements SGFX {
 		shape = mode;
 		vertexCount = 0;
 		gpath.reset();
-		S_Shape.beginShape(this);
+		S_Shape.beginShape(parent);
 	}
 
 	protected void vertexCheck() {
@@ -684,7 +686,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
-					S_Shape.addShape(this);
+					S_Shape.addShape(parent);
 				}
 				break;
 
@@ -696,7 +698,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 1][Y],
 							vertices[vertexCount - 3][X],
 							vertices[vertexCount - 3][Y]);
-					S_Shape.addShape(this);
+					S_Shape.addShape(parent);
 				}
 				break;
 
@@ -715,7 +717,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
-					S_Shape.addShape(this);
+					S_Shape.addShape(parent);
 				}
 				break;
 
@@ -729,7 +731,7 @@ public class SGraphics extends SImage implements SGFX {
 							vertices[vertexCount - 2][X],
 							vertices[vertexCount - 2][Y],
 							x, y);
-					S_Shape.addShape(this);
+					S_Shape.addShape(parent);
 				}
 				break;
 
@@ -745,7 +747,7 @@ public class SGraphics extends SImage implements SGFX {
 							x, y,
 							vertices[vertexCount - 3][X],
 							vertices[vertexCount - 3][Y]);
-					S_Shape.addShape(this);
+					S_Shape.addShape(parent);
 				}
 				break;
 
@@ -776,7 +778,7 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public void endShape(int mode) {
 		if (gpath.getCurrentPoint() == null || shape != POLYGON) {
-			S_Shape.endShape(this);
+			S_Shape.endShape(parent);
 			shape = 0;
 			return;
 		}
@@ -784,8 +786,8 @@ public class SGraphics extends SImage implements SGFX {
 		if (mode == CLOSE) gpath.closePath();
 		drawShape(gpath);
 
-		S_Shape.addShape(this);
-		S_Shape.endShape(this);
+		S_Shape.addShape(parent);
+		S_Shape.endShape(parent);
 
 //		boolean completeShape = true;
 //		if (shape == POINTS && vertexCount < 1) completeShape = false;
@@ -1848,7 +1850,7 @@ public class SGraphics extends SImage implements SGFX {
 				if (targetType == RGB && (source.pixels[0] >> 24 == 0)) {
 					// If it's an RGB image and the high bits aren't set, need to set
 					// the high bits to opaque because we're drawing ARGB images.
-					source.filterOPAQUE();
+					source.filter(OPAQUE);
 					// Opting to just manipulate the image here, since it shouldn't
 					// affect anything else (and alpha(get(x, y)) should return 0xff).
 					// Wel also make no guarantees about the values of the pixels array
@@ -2064,12 +2066,12 @@ public class SGraphics extends SImage implements SGFX {
 
 	// SHAPE
 
-	/**
-	 * @param mode
-	 *            either CORNER, CORNERS, CENTER
-	 */
-	@Override
-	public final void shapeMode(int mode) { this.shapeMode = mode; }
+//	/**
+//	 * @param mode
+//	 *            either CORNER, CORNERS, CENTER
+//	 */
+//	@Override
+//	public final void shapeMode(int mode) { this.shapeMode = mode; }
 
 	@Override
 	public final void fillShape(Shape s) {
@@ -2725,7 +2727,7 @@ public class SGraphics extends SImage implements SGFX {
 	public void text(int num, float x, float y) { text(String.valueOf(num), x, y); }
 
 	@Override
-	public void text(float num, float x, float y) { text(GameUtils.instance.nfs(num, 0, 3), x, y); }
+	public void text(float num, float x, float y) { text(GameBase.nfs(num, 0, 3), x, y); }
 
 	//////////////////////////////////////////////////////////////
 
@@ -2884,35 +2886,6 @@ public class SGraphics extends SImage implements SGFX {
 		tintAlpha = savedTintAlpha;
 	}
 
-//	@Override
-//	public void text(String text, float x, float y) {
-//		if (textFont == null) textFont = createDefaultFont(12);
-//
-//		Font f = textFont.deriveFont(textSize);
-//		FontMetrics fm = graphics.getFontMetrics(f);
-//		FontRenderContext frc = fm.getFontRenderContext();
-//		TextLayout tl = new TextLayout(text, f, frc);
-//		Shape shape = tl.getOutline(null);
-//
-//		float w = (float) tl.getBounds().getWidth();
-//		float h = (float) tl.getBounds().getHeight();
-//
-//		if (textAlign == CENTER) x -= w / 2;
-//		else if (textAlign == RIGHT) x -= w;
-////		else if (textAlign == LEFT) {} // default
-//
-//		if (textAlignY == TOP) y += h;
-//		else if (textAlignY == CENTER) y += h / 2;
-//		else if (textAlignY == BOTTOM) y -= textDescent();
-////		 else if (textAlign == BASELINE) {} // default
-//
-//		pushMatrix();
-//		translate(x, y);
-//		strokeShape(shape);
-//		fillShape(shape);
-//		popMatrix();
-//	}
-
 	//////////////////////////////////////////////////////////////
 
 	// MATRIX STACK
@@ -2954,31 +2927,34 @@ public class SGraphics extends SImage implements SGFX {
 	// MATRIX TRANSFORMS
 
 	@Override
-	public final void translate(double x, double y) { graphics.translate(x, y); }
+	public final void translate(float x, float y) { graphics.translate(x, y); }
 
 	@Override
-	public final void rotate(double theta) { graphics.rotate(theta); }
+	public final void rotate(float theta) { graphics.rotate(theta); }
 
 	@Override
-	public final void rotate(double theta, double x, double y) { graphics.rotate(theta, x, y); }
+	public final void rotate(float theta, float x, float y) { graphics.rotate(theta, x, y); }
 
 	@Override
-	public final void scale(double xy) { graphics.scale(xy, xy); };
+	public final void scale(float xy) { graphics.scale(xy, xy); };
 
 	@Override
-	public final void scale(double x, double y) { graphics.scale(x, y); };
+	public final void scale(float x, float y) { graphics.scale(x, y); };
 
 	@Override
-	public final void shear(double x, double y) { graphics.shear(x, y); };
+	public final void shear(float x, float y) { graphics.shear(x, y); };
 
 	@Override
-	public void shearX(float angle) { shear(Math.tan(angle), 0); }
+	public void shearX(float angle) { graphics.shear(Math.tan(angle), 0); }
 
 	@Override
-	public void shearY(float angle) { shear(0, Math.tan(angle)); }
+	public void shearY(float angle) { graphics.shear(0, Math.tan(angle)); }
 
 	@Override
 	public final void transform(AffineTransform affineTransform) { graphics.transform(affineTransform); };
+
+	@Override
+	public final void setTransform(AffineTransform affineTransform) { graphics.setTransform(affineTransform); };
 
 	//////////////////////////////////////////////////////////////
 
@@ -3007,7 +2983,7 @@ public class SGraphics extends SImage implements SGFX {
 	// MATRIX GET/SET
 
 	@Override
-	public SMatrix2D getMatrix() { return getMatrix((SMatrix2D) null); }
+	public SMatrix_D getMatrix() { return getMatrix((SMatrix2D) null); }
 
 	double[] transform = new double[6];
 
@@ -3074,18 +3050,18 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	@Override
-	public final Style getStyle() { return getStyle(null); }
+	public final SStyle getStyle() { return getStyle(null); }
 
 	@Override
-	public final Style getStyle(Style s) {
-		if (s == null) s = new Style();
+	public final SStyle getStyle(SStyle s) {
+		if (s == null) s = new SStyle();
 
 		s.smooth = smooth;
 
 		s.imageMode = imageMode;
 		s.rectMode = rectMode;
 		s.ellipseMode = ellipseMode;
-		s.shapeMode = shapeMode;
+//		s.shapeMode = shapeMode;
 
 		s.blendMode = blendMode;
 
@@ -3116,13 +3092,13 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	@Override
-	public final void style(Style s) {
+	public final void style(SStyle s) {
 		smooth(s.smooth);
 
 		imageMode(s.imageMode);
 		rectMode(s.rectMode);
 		ellipseMode(s.ellipseMode);
-		shapeMode(s.shapeMode);
+//		shapeMode(s.shapeMode);
 
 		if (blendMode != s.blendMode) {
 			blendMode(s.blendMode);
@@ -3592,7 +3568,7 @@ public class SGraphics extends SImage implements SGFX {
 
 			Composite oldComposite = graphics.getComposite();
 			graphics.setComposite(defaultComposite);
-//			AffineTransform at = graphics.getTransform();
+			AffineTransform at = graphics.getTransform();
 
 			pushMatrix();
 			resetMatrix();
@@ -3608,7 +3584,7 @@ public class SGraphics extends SImage implements SGFX {
 			}
 			popMatrix();
 
-//			graphics.setTransform(at);
+			graphics.setTransform(at);
 			graphics.setComposite(oldComposite);
 		}
 	}
@@ -3875,12 +3851,6 @@ public class SGraphics extends SImage implements SGFX {
 		return calcColor;
 	}
 
-	@Override
-	public final int color(double gray) {
-		colorCalc((float) gray);
-		return calcColor;
-	}
-
 	/**
 	 * @param c
 	 *            can be packed ARGB or a gray in this case
@@ -4099,20 +4069,20 @@ public class SGraphics extends SImage implements SGFX {
 
 	protected WritableRaster getRaster() {
 		WritableRaster raster = null;
-//		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
-//			/*
-//			 * // 'offscreen' will probably be removed in the next release
-//			 * if (useOffscreen) {
-//			 * raster = offscreen.getRaster();
-//			 * } else
-//			 */
-//			if (image instanceof VolatileImage) {
-//				// when possible, we'll try VolatileImage
-//				raster = ((VolatileImage) image).getSnapshot().getRaster();
-//			}
-//		}
+		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
+			/*
+			 * // 'offscreen' will probably be removed in the next release
+			 * if (useOffscreen) {
+			 * raster = offscreen.getRaster();
+			 * } else
+			 */
+			if (image instanceof VolatileImage) {
+				// when possible, we'll try VolatileImage
+				raster = ((VolatileImage) image).getSnapshot().getRaster();
+			}
+		}
 		if (raster == null) {
-			raster = image.getRaster();
+			raster = ((BufferedImage) image).getRaster();
 		}
 
 		// On Raspberry Pi (and perhaps other platforms, the color buffer won't
@@ -4156,10 +4126,10 @@ public class SGraphics extends SImage implements SGFX {
 	 * update happens, in PGraphicsJava2D, this will happen immediately.
 	 */
 	@Override
-	public void updatePixels(int x, int y, int c, int d) {
+	public void updatePixels(int x, int y, int w, int h) {
 		// if ((x == 0) && (y == 0) && (c == width) && (d == height)) {
 //	    System.err.format("%d %d %d %d .. w/h = %d %d .. pw/ph = %d %d %n", x, y, c, d, width, height, pixelWidth, pixelHeight);
-		if ((x != 0) || (y != 0) || (c != pixelWidth) || (d != pixelHeight)) {
+		if ((x != 0) || (y != 0) || (w != pixelWidth) || (h != pixelHeight)) {
 			// Show a warning message, but continue anyway.
 			showWarning("updatePixels(x, y, w, h) is not available with this renderer.");
 //	      new Exception().printStackTrace(System.out);
@@ -4177,6 +4147,7 @@ public class SGraphics extends SImage implements SGFX {
 
 	static int getset[] = new int[1];
 
+	// JAVA2D
 	@Override
 	public int get(int x, int y) {
 		if ((x < 0) || (y < 0) || (x >= width) || (y >= height)) return 0;
@@ -4191,6 +4162,7 @@ public class SGraphics extends SImage implements SGFX {
 		return getset[0];
 	}
 
+	// JAVA2D
 	@Override
 	protected void getImpl(int sourceX, int sourceY,
 			int sourceWidth, int sourceHeight,
@@ -4205,7 +4177,7 @@ public class SGraphics extends SImage implements SGFX {
 			raster.getDataElements(sourceX, sourceY, sourceWidth, sourceHeight, target.pixels);
 			// https://github.com/processing/processing/issues/2030
 			if (raster.getNumBands() == 3) {
-				target.filterOPAQUE();
+				target.filter(OPAQUE);
 			}
 
 		} else {
@@ -4232,9 +4204,11 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
+	// JAVA2D
 	@Override
 	public void pixel(int x, int y) { pixel(x, y, strokeColor); }
 
+	// JAVA2D
 	@Override
 	public void pixel(int x, int y, int argb) {
 		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
@@ -4245,6 +4219,7 @@ public class SGraphics extends SImage implements SGFX {
 		getRaster().setDataElements(x, y, getset);
 	}
 
+	// JAVA2D
 	@Override
 	public void set(int x, int y, int argb) {
 		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
@@ -4255,6 +4230,7 @@ public class SGraphics extends SImage implements SGFX {
 		getRaster().setDataElements(x, y, getset);
 	}
 
+	// JAVA2D
 	@Override
 	protected void setImpl(SImage sourceImage,
 			int sourceX, int sourceY,
@@ -4283,6 +4259,7 @@ public class SGraphics extends SImage implements SGFX {
 
 	// COPY
 
+	// JAVA2D
 	@Override
 	public void copy(int sx, int sy, int sw, int sh,
 			int dx, int dy, int dw, int dh) {
@@ -4296,6 +4273,7 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
+	// JAVA2D
 	@Override
 	public void copy(SImage src,
 			int sx, int sy, int sw, int sh,
@@ -4337,7 +4315,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * 
 	 * @param filename
 	 */
-	protected void awaitAsyncSaveCompletion(String filename) {
+	public void awaitAsyncSaveCompletion(String filename) {
 		if (asyncImageSaver != null) {
 			asyncImageSaver.awaitAsyncSaveCompletion(parent.sketchFile(filename));
 		}

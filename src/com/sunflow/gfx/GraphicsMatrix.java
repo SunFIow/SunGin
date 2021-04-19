@@ -47,7 +47,7 @@ public class GraphicsMatrix {
 					"to go with that popMatrix()");
 		}
 		transformCount--;
-		transform(transformStack[transformCount]);
+		setTransform(transformStack[transformCount]);
 	}
 
 	public final void resetMatrix() {
@@ -77,7 +77,7 @@ public class GraphicsMatrix {
 		return t;
 	}
 
-	public final void transform(Transform t) {
+	public final void setTransform(Transform t) {
 		tx = t.tx;
 		ty = t.ty;
 		tz = t.tz;

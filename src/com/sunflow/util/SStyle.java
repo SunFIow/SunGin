@@ -21,13 +21,13 @@ package com.sunflow.util;
 
 import com.sunflow.gfx.SFont;
 
-public class Style {
+public class SStyle {
 	public int smooth;
 
 	public int imageMode;
 	public int rectMode;
 	public int ellipseMode;
-	public int shapeMode;
+//	public int shapeMode;
 
 	public int blendMode;
 

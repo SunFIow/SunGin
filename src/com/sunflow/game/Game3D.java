@@ -68,7 +68,10 @@ public class Game3D extends GameBase {
 	private static final int KEY_S = 2;
 	private static final int KEY_D = 3;
 	private static final int KEY_SPACE = 4;
-	private static final int KEY_SHIFT = 5;
+	private static final int KEY_CONTROL = 5;
+	private static final int KEY_SHIFT = 6;
+
+	private static final int KEY_COUNT = 7;
 	protected boolean[] keys;
 
 	private float mouseDifX, mouseDifY;
@@ -94,7 +97,7 @@ public class Game3D extends GameBase {
 		minZoom = 100;
 		maxZoom = 10000;
 
-		keys = new boolean[6];
+		keys = new boolean[KEY_COUNT];
 		outlines = true;
 
 		movementSpeed = 0.2f;
@@ -116,7 +119,7 @@ public class Game3D extends GameBase {
 	}
 
 	@Override
-	public void createCanvas(float width, float height, float scaleW, float scaleH) {
+	public void createCanvas(int width, int height, float scaleW, float scaleH) {
 		super.createCanvas(width, height, scaleW, scaleH);
 
 //		addListener(new Game3DKeyInputListeners());
@@ -250,6 +253,12 @@ public class Game3D extends GameBase {
 	public final void vertex(float x, float y) { vertex(x, y, 0); }
 
 	@Override
+	public void beginShape() {
+		super.beginShape();
+		vertices = new ArrayList<>();
+	}
+
+	@Override
 	public void beginShape(int mode) {
 		super.beginShape(mode);
 		vertices = new ArrayList<>();
@@ -287,9 +296,9 @@ public class Game3D extends GameBase {
 		if (keys[KEY_A]) moveVector.add(sideViewVector.x, sideViewVector.y, sideViewVector.z);
 		if (keys[KEY_D]) moveVector.sub(sideViewVector.x, sideViewVector.y, sideViewVector.z);
 		if (keys[KEY_SPACE]) moveVector.z += 1;
-		if (keys[KEY_SHIFT]) moveVector.z -= 1;
+		if (keys[KEY_CONTROL]) moveVector.z -= 1;
 		moveVector.normalize();
-		moveVector.mult(movementSpeed * fElapsedTime * 33);
+		moveVector.mult(movementSpeed * fElapsedTime * (keys[KEY_SHIFT] ? 33 : 99));
 
 		vCameraPos.add(moveVector);
 
@@ -407,6 +416,7 @@ public class Game3D extends GameBase {
 
 	public final void translateTo(float x, float y, float z) { gMatrix.translateTo(x, y, z); }
 
+	@Override
 	public final void scale(float n) { scale(n, n, n); };
 
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };
@@ -483,6 +493,7 @@ public class Game3D extends GameBase {
 			if (e.getKeyCode() == KeyEvent.VK_S) keys[KEY_S] = true;
 			if (e.getKeyCode() == KeyEvent.VK_D) keys[KEY_D] = true;
 			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[KEY_SPACE] = true;
+			if (e.getKeyCode() == KeyEvent.VK_CONTROL) keys[KEY_CONTROL] = true;
 			if (e.getKeyCode() == KeyEvent.VK_SHIFT) keys[KEY_SHIFT] = true;
 			if (e.getKeyCode() == KeyEvent.VK_O) outlines = !outlines;
 			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
@@ -495,6 +506,7 @@ public class Game3D extends GameBase {
 			if (e.getKeyCode() == KeyEvent.VK_S) keys[KEY_S] = false;
 			if (e.getKeyCode() == KeyEvent.VK_D) keys[KEY_D] = false;
 			if (e.getKeyCode() == KeyEvent.VK_SPACE) keys[KEY_SPACE] = false;
+			if (e.getKeyCode() == KeyEvent.VK_CONTROL) keys[KEY_CONTROL] = false;
 			if (e.getKeyCode() == KeyEvent.VK_SHIFT) keys[KEY_SHIFT] = false;
 		}
 	}
@@ -531,20 +543,26 @@ public class Game3D extends GameBase {
 	private final class Game3DKeyInputListeners extends KeyInputAdapter {
 		@Override
 		public void onKeyPressed(KeyPressedEvent e) {
-			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[0] = true;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[1] = true;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[2] = true;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[3] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[KEY_W] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[KEY_A] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[KEY_S] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[KEY_D] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_SPACE) keys[KEY_SPACE] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_LEFT_CONTROL) keys[KEY_CONTROL] = true;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_LEFT_SHIFT) keys[KEY_SHIFT] = true;
 			if (e.getKeyCode() == GLFW.GLFW_KEY_O) outlines = !outlines;
 			if (e.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) System.exit(0);
 		}
 
 		@Override
 		public void onKeyReleased(KeyReleasedEvent e) {
-			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[0] = false;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[1] = false;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[2] = false;
-			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[3] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_W) keys[KEY_W] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_A) keys[KEY_A] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_S) keys[KEY_S] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_D) keys[KEY_D] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_SPACE) keys[KEY_SPACE] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_LEFT_CONTROL) keys[KEY_CONTROL] = false;
+			if (e.getKeyCode() == GLFW.GLFW_KEY_LEFT_SHIFT) keys[KEY_SHIFT] = false;
 		}
 	}
 

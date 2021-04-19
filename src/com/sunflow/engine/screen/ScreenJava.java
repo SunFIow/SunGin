@@ -1,10 +1,16 @@
 package com.sunflow.engine.screen;
 
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -16,6 +22,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferStrategy;
 import java.util.EventListener;
 
@@ -29,8 +38,19 @@ import com.sunflow.gfx.S_Shape;
 import com.sunflow.util.SConstants;
 
 public class ScreenJava extends Screen {
+	GraphicsDevice displayDevice;
 
-	protected JFrame frame;
+	// Note that x and y may not be zero, depending on the display configuration
+	Rectangle screenRect;
+
+//	Insets currentInsets = new Insets(0, 0, 0, 0);
+
+	int gameWidth;
+	int gameHeight;
+
+	int windowScaleFactor;
+
+	protected Frame frame;
 	protected Canvas canvas;
 //	protected BufferStrategy bs;
 
@@ -38,6 +58,55 @@ public class ScreenJava extends Screen {
 	protected SGraphics overlay;
 
 	public ScreenJava(GameBase game, Mouse mouse) { super(game, mouse); }
+
+	public class SmoothCanvas extends Canvas {
+		private static final long serialVersionUID = -3098873451251328369L;
+
+		private Dimension oldSize = new Dimension(0, 0);
+		private Dimension newSize = new Dimension(0, 0);
+
+		// Turns out getParent() returns a JPanel on a JFrame. Yech.
+		public Frame getFrame() {
+			return frame;
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			return new Dimension(gameWidth, gameHeight);
+		}
+
+		@Override
+		public Dimension getMinimumSize() {
+			return getPreferredSize();
+		}
+
+		@Override
+		public Dimension getMaximumSize() {
+			// return resizable ? super.getMaximumSize() : getPreferredSize();
+			return frame.isResizable() ? super.getMaximumSize() : getPreferredSize();
+		}
+
+		@Override
+		public void validate() {
+			super.validate();
+			newSize.width = getWidth();
+			newSize.height = getHeight();
+//	      if (oldSize.equals(newSize)) {
+////	        System.out.println("validate() return " + oldSize);
+//	        return;
+//	      } else {
+			if (!oldSize.equals(newSize)) {
+//	        System.out.println("validate() render old=" + oldSize + " -> new=" + newSize);
+				oldSize = newSize;
+				game.setSize(newSize.width / windowScaleFactor, newSize.height / windowScaleFactor);
+//	        try {
+				render();
+//	        } catch (IllegalStateException ise) {
+//	          System.out.println(ise.getMessage());
+//	        }
+			}
+		}
+	}
 
 	@Override
 	public void refresh() {
@@ -50,7 +119,7 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public boolean render() {
-		if (!isCreated) {
+		if (!isCreated || !canvas.isDisplayable() || game.getGraphics().image == null) {
 			System.out.println("not created");
 			return false;
 		}
@@ -69,7 +138,7 @@ public class ScreenJava extends Screen {
 //				Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
 				Graphics draw = strategy.getDrawGraphics();
 				// draw to width/height, since this may be a 2x image
-				draw.drawImage(game.image, 0, 0, scaledWidth, scaledHeight, null);
+				draw.drawImage(game.getGraphics().image, 0, 0, scaledWidth, scaledHeight, null);
 				if (showOverlay) draw.drawImage(overlay.image, 0, 0, null);
 				draw.dispose();
 			} while (strategy.contentsRestored());
@@ -99,6 +168,46 @@ public class ScreenJava extends Screen {
 	public void createScreen() {
 		if (frame != null) frame.dispose();
 
+		GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+		int displayNum = game.getDisplay();
+//			    System.out.println("display from sketch is " + displayNum);
+		if (displayNum > 0) { // if -1, use the default device
+			GraphicsDevice[] devices = environment.getScreenDevices();
+			if (displayNum <= devices.length) {
+				displayDevice = devices[displayNum - 1];
+			} else {
+				System.err.format("Display %d does not exist, " +
+						"using the default display instead.%n", displayNum);
+				for (int i = 0; i < devices.length; i++) {
+					System.err.format("Display %d is %s%n", (i + 1), devices[i]);
+				}
+			}
+		}
+		if (displayDevice == null) {
+			displayDevice = environment.getDefaultScreenDevice();
+		}
+
+		// Need to save the window bounds at full screen,
+		// because pack() will cause the bounds to go to zero.
+		// http://dev.processing.org/bugs/show_bug.cgi?id=923
+		boolean spanDisplays = game.getDisplay() == SConstants.SPAN;
+		screenRect = spanDisplays
+				? getDisplaySpan()
+				: displayDevice.getDefaultConfiguration().getBounds();
+		// DisplayMode doesn't work here, because we can't get the upper-left
+		// corner of the display, which is important for multi-display setups.
+
+		// Set the displayWidth/Height variables inside PApplet, so that they're
+		// usable and can even be returned by the gameWidth()/Height() methods.
+		game.displayWidth = screenRect.width;
+		game.displayHeight = screenRect.height;
+
+		windowScaleFactor = GameBase.platform == SConstants.MACOSX ? 1 : game.pixelDensity;
+
+		gameWidth = game.getWidth() * windowScaleFactor;
+		gameHeight = game.getHeight() * windowScaleFactor;
+
 		canvas = new Canvas();
 		canvas.setFocusable(true);
 //		canvas.setPreferredSize(new Dimension(width(), height()));
@@ -109,8 +218,24 @@ public class ScreenJava extends Screen {
 
 		canvas.setIgnoreRepaint(true);
 
-		frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame = new JFrame(displayDevice.getDefaultConfiguration());
+
+		final Color windowColor = new Color(game.getWindowColor(), false);
+		if (frame instanceof JFrame) {
+			((JFrame) frame).getContentPane().setBackground(windowColor);
+		} else {
+			frame.setBackground(windowColor);
+		}
+
+//		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //TODO
+
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				game.exit(); // don't quit, need to just shut everything down (0133)
+			}
+		});
+
 		if (title != null) frame.setTitle(title);
 		frame.setUndecorated(undecorated);
 		frame.add(canvas);
@@ -211,9 +336,9 @@ public class ScreenJava extends Screen {
 				int h = e.getComponent().getHeight();
 				scaledWidth = w;
 				scaledHeight = h;
-				width = scaledWidth / scaleWidth;
-				height = scaledHeight / scaleHeight;
-				game.resize((int) width, (int) height);
+				width = (int) (scaledWidth / scaleWidth);
+				height = (int) (scaledHeight / scaleHeight);
+				game.getGraphics().resize(width, height);
 			}
 		});
 
@@ -233,9 +358,8 @@ public class ScreenJava extends Screen {
 	}
 
 	@Override
-	final public void createCanvas(float width, float height, float scaleW, float scaleH) {
+	final public void createCanvas(int width, int height, float scaleW, float scaleH) {
 		if (!isCreated) {
-			isCreated = true;
 			this.width = width;
 			this.height = height;
 			this.scaleWidth = scaleW;
@@ -245,6 +369,7 @@ public class ScreenJava extends Screen {
 			this.scaledHeight = (int) (height * scaleHeight);
 
 			createScreen();
+			isCreated = true;
 		}
 	}
 
@@ -294,7 +419,7 @@ public class ScreenJava extends Screen {
 		fullscreen = !fullscreen;
 		frame.dispose();
 		frame.setUndecorated(!(!fullscreen && frame.isOpaque()));
-		frame.getContentPane().setPreferredSize(new Dimension(w, h));
+		if (frame instanceof JFrame) ((JFrame) frame).getContentPane().setPreferredSize(new Dimension(w, h));
 		frame.pack();
 		frame.setVisible(true);
 //		}
@@ -411,5 +536,17 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public int getScreenY() { return frame.getLocationOnScreen().y; }
+
+	/** Get the bounds rectangle for all displays. */
+	static Rectangle getDisplaySpan() {
+		Rectangle bounds = new Rectangle();
+		GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		for (GraphicsDevice device : environment.getScreenDevices()) {
+			for (GraphicsConfiguration config : device.getConfigurations()) {
+				Rectangle2D.union(bounds, config.getBounds(), bounds);
+			}
+		}
+		return bounds;
+	}
 
 }

@@ -18,10 +18,10 @@
 
 package com.sunflow.math3d;
 
+import com.sunflow.game.GameBase;
 import com.sunflow.math.SMatrix2D;
 import com.sunflow.math.SMatrix_D;
 import com.sunflow.math.SVector;
-import com.sunflow.util.GameUtils;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.SConstants;
 
@@ -866,25 +866,25 @@ public final class SMatrix3D implements SMatrix_D /* , SConstants */ {
 			while ((big /= 10) != 0) digits++; // cheap log()
 		}
 
-		System.out.println(GameUtils.instance.nfs(m00, digits, 4) + " " +
-				GameUtils.instance.nfs(m01, digits, 4) + " " +
-				GameUtils.instance.nfs(m02, digits, 4) + " " +
-				GameUtils.instance.nfs(m03, digits, 4));
+		System.out.println(GameBase.nfs(m00, digits, 4) + " " +
+				GameBase.nfs(m01, digits, 4) + " " +
+				GameBase.nfs(m02, digits, 4) + " " +
+				GameBase.nfs(m03, digits, 4));
 
-		System.out.println(GameUtils.instance.nfs(m10, digits, 4) + " " +
-				GameUtils.instance.nfs(m11, digits, 4) + " " +
-				GameUtils.instance.nfs(m12, digits, 4) + " " +
-				GameUtils.instance.nfs(m13, digits, 4));
+		System.out.println(GameBase.nfs(m10, digits, 4) + " " +
+				GameBase.nfs(m11, digits, 4) + " " +
+				GameBase.nfs(m12, digits, 4) + " " +
+				GameBase.nfs(m13, digits, 4));
 
-		System.out.println(GameUtils.instance.nfs(m20, digits, 4) + " " +
-				GameUtils.instance.nfs(m21, digits, 4) + " " +
-				GameUtils.instance.nfs(m22, digits, 4) + " " +
-				GameUtils.instance.nfs(m23, digits, 4));
+		System.out.println(GameBase.nfs(m20, digits, 4) + " " +
+				GameBase.nfs(m21, digits, 4) + " " +
+				GameBase.nfs(m22, digits, 4) + " " +
+				GameBase.nfs(m23, digits, 4));
 
-		System.out.println(GameUtils.instance.nfs(m30, digits, 4) + " " +
-				GameUtils.instance.nfs(m31, digits, 4) + " " +
-				GameUtils.instance.nfs(m32, digits, 4) + " " +
-				GameUtils.instance.nfs(m33, digits, 4));
+		System.out.println(GameBase.nfs(m30, digits, 4) + " " +
+				GameBase.nfs(m31, digits, 4) + " " +
+				GameBase.nfs(m32, digits, 4) + " " +
+				GameBase.nfs(m33, digits, 4));
 
 		System.out.println();
 	}
