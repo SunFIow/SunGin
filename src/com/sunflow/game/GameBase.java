@@ -63,6 +63,7 @@ import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
 import com.sunflow.engine.screen.Screen;
 import com.sunflow.engine.screen.ScreenJava;
 import com.sunflow.engine.screen.ScreenOpenGL;
+import com.sunflow.gfx.SGFX;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SImage;
 import com.sunflow.interfaces.FrameLoopListener;
@@ -1117,7 +1118,7 @@ public abstract class GameBase extends SGraphics implements Runnable,
 		return sg;
 	}
 
-	protected SGraphics createPrimaryGraphics() { return makeGraphics(width(), height(), renderer, outputPath, true); }
+	protected SGFX createPrimaryGraphics() { return makeGraphics(width(), height(), renderer, outputPath, true); }
 
 //	protected SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
 

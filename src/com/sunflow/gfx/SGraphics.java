@@ -119,75 +119,75 @@ public class SGraphics extends SImage implements SGFX {
 	// X, Y and Z are still stored in PConstants because of their general
 	// usefulness, and that X we'll always want to be 0, etc.
 
-//	static public final int R = 3; // actual rgb, after lighting
-//	static public final int G = 4; // fill stored here, transform in place
-//	static public final int B = 5; // TODO don't do that anymore (?)
-//	static public final int A = 6;
+//	public static final int R = 3; // actual rgb, after lighting
+//	public static final int G = 4; // fill stored here, transform in place
+//	public static final int B = 5; // TODO don't do that anymore (?)
+//	public static final int A = 6;
 //
-//	static public final int U = 7; // texture
-//	static public final int V = 8;
+//	public static final int U = 7; // texture
+//	public static final int V = 8;
 //
-//	static public final int NX = 9; // normal
-//	static public final int NY = 10;
-//	static public final int NZ = 11;
+//	public static final int NX = 9; // normal
+//	public static final int NY = 10;
+//	public static final int NZ = 11;
 //
-//	static public final int EDGE = 12;
+//	public static final int EDGE = 12;
 //
 //	// stroke
 //
 //	/** stroke argb values */
-//	static public final int SR = 13;
-//	static public final int SG = 14;
-//	static public final int SB = 15;
-//	static public final int SA = 16;
+//	public static final int SR = 13;
+//	public static final int SG = 14;
+//	public static final int SB = 15;
+//	public static final int SA = 16;
 //
 //	/** stroke weight */
-//	static public final int SW = 17;
+//	public static final int SW = 17;
 //
 //	// transformations (2D and 3D)
 //
-//	static public final int TX = 18; // transformed xyzw
-//	static public final int TY = 19;
-//	static public final int TZ = 20;
+//	public static final int TX = 18; // transformed xyzw
+//	public static final int TY = 19;
+//	public static final int TZ = 20;
 //
-//	static public final int VX = 21; // view space coords
-//	static public final int VY = 22;
-//	static public final int VZ = 23;
-//	static public final int VW = 24;
+//	public static final int VX = 21; // view space coords
+//	public static final int VY = 22;
+//	public static final int VZ = 23;
+//	public static final int VW = 24;
 //
 //	// material properties
 //
 //	// Ambient color (usually to be kept the same as diffuse)
 //	// fill(_) sets both ambient and diffuse.
-//	static public final int AR = 25;
-//	static public final int AG = 26;
-//	static public final int AB = 27;
+//	public static final int AR = 25;
+//	public static final int AG = 26;
+//	public static final int AB = 27;
 //
 //	// Diffuse is shared with fill.
-//	static public final int DR = 3; // TODO needs to not be shared, this is a material property
-//	static public final int DG = 4;
-//	static public final int DB = 5;
-//	static public final int DA = 6;
+//	public static final int DR = 3; // TODO needs to not be shared, this is a material property
+//	public static final int DG = 4;
+//	public static final int DB = 5;
+//	public static final int DA = 6;
 //
 //	// specular (by default kept white)
-//	static public final int SPR = 28;
-//	static public final int SPG = 29;
-//	static public final int SPB = 30;
+//	public static final int SPR = 28;
+//	public static final int SPG = 29;
+//	public static final int SPB = 30;
 //
-//	static public final int SHINE = 31;
+//	public static final int SHINE = 31;
 //
 //	// emissive (by default kept black)
-//	static public final int ER = 32;
-//	static public final int EG = 33;
-//	static public final int EB = 34;
+//	public static final int ER = 32;
+//	public static final int EG = 33;
+//	public static final int EB = 34;
 //
 //	// has this vertex been lit yet
-//	static public final int BEEN_LIT = 35;
+//	public static final int BEEN_LIT = 35;
 //
 //	// has this vertex been assigned a normal yet
-//	static public final int HAS_NORMAL = 36;
+//	public static final int HAS_NORMAL = 36;
 
-	static public final int VERTEX_FIELD_COUNT = 2; // 37;
+	public static final int VERTEX_FIELD_COUNT = 2; // 37;
 
 	////////////////////////////////////////////////////////////
 
@@ -259,9 +259,9 @@ public class SGraphics extends SImage implements SGFX {
 
 	// Additional stroke properties
 
-	static protected final float DEFAULT_STROKE_WEIGHT = 1;
-	static protected final int DEFAULT_STROKE_JOIN = MITER;
-	static protected final int DEFAULT_STROKE_CAP = ROUND;
+	protected static final float DEFAULT_STROKE_WEIGHT = 1;
+	protected static final int DEFAULT_STROKE_JOIN = MITER;
+	protected static final int DEFAULT_STROKE_CAP = ROUND;
 
 	protected float strokeWeight = DEFAULT_STROKE_WEIGHT;
 	protected int strokeJoin = DEFAULT_STROKE_JOIN;
@@ -403,6 +403,7 @@ public class SGraphics extends SImage implements SGFX {
 
 //	public SGraphics(BufferedImage bi) { super(bi); }
 
+	@Override
 	public void setParent(GameBase parent) {
 		this.parent = parent;
 
@@ -445,18 +446,22 @@ public class SGraphics extends SImage implements SGFX {
 		reapplySettings = true;
 	}
 
+	@Override
 	public void setCache(Object key, Object val) {
 		cacheMap.put(key, val);
 	}
 
+	@Override
 	public Object getCache(Object key) {
 		return cacheMap.get(key);
 	}
 
+	@Override
 	public void removeCache(Object key) {
 		cacheMap.remove(key);
 	}
 
+	@Override
 	public SScreen createScreen() {
 		return screen = new SScreenAWT(this);
 	}
@@ -1058,6 +1063,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param stop
 	 *            angle to stop the arc, specified in radians
 	 */
+	@Override
 	public void arc(float a, float b, float c, float d,
 			float start, float stop) {
 		arc(a, b, c, d, start, stop, 0);
@@ -1066,6 +1072,7 @@ public class SGraphics extends SImage implements SGFX {
 	/*
 	 * @param mode either OPEN, CHORD, or PIE
 	 */
+	@Override
 	public void arc(float a, float b, float c, float d,
 			float start, float stop, int mode) {
 		float x = a;
@@ -2151,6 +2158,7 @@ public class SGraphics extends SImage implements SGFX {
 				parent.pixelDensity);
 	}
 
+	@Override
 	public void textAlign(int alignX) { textAlign(alignX, BASELINE); }
 
 	/**
@@ -2311,6 +2319,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param c
 	 *            the character to measure
 	 */
+	@Override
 	public float textWidth(char c) {
 		textWidthBuffer[0] = c;
 		return textWidthImpl(textWidthBuffer, 0, 1);
@@ -2320,6 +2329,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param str
 	 *            the String of characters to measure
 	 */
+	@Override
 	public float textWidth(String str) {
 		if (textFont == null) {
 			defaultFontOrDeath("textWidth");
@@ -2348,6 +2358,7 @@ public class SGraphics extends SImage implements SGFX {
 		return wide;
 	}
 
+	@Override
 	public float textWidth(char[] chars, int start, int length) {
 		return textWidthImpl(chars, start, start + length);
 	}
@@ -2380,6 +2391,7 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public void string(String text, float x, float y) { text(text, x, y); }
 
+	@Override
 	public void text(char c, float x, float y) {
 		if (textFont == null) defaultFontOrDeath("text");
 
@@ -2422,6 +2434,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param stop
 	 *            array index at which to stop writing characters
 	 */
+	@Override
 	public void text(char[] chars, int start, int stop, float x, float y) {
 		// If multiple lines, sum the height of the additional lines
 		float high = 0; // -textAscent();
@@ -2485,6 +2498,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param y2
 	 *            by default, the height of the text box, see rectMode() for more info
 	 */
+	@Override
 	public void text(String str, float x1, float y1, float x2, float y2) {
 		if (textFont == null) {
 			defaultFontOrDeath("text");
@@ -2707,8 +2721,10 @@ public class SGraphics extends SImage implements SGFX {
 		textBreakCount++;
 	}
 
+	@Override
 	public void text(int num, float x, float y) { text(String.valueOf(num), x, y); }
 
+	@Override
 	public void text(float num, float x, float y) { text(GameUtils.instance.nfs(num, 0, 3), x, y); }
 
 	//////////////////////////////////////////////////////////////
@@ -2955,8 +2971,10 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public final void shear(double x, double y) { graphics.shear(x, y); };
 
+	@Override
 	public void shearX(float angle) { shear(Math.tan(angle), 0); }
 
+	@Override
 	public void shearY(float angle) { shear(0, Math.tan(angle)); }
 
 	@Override
@@ -2972,11 +2990,13 @@ public class SGraphics extends SImage implements SGFX {
 		graphics.scale(pixelDensity, pixelDensity);
 	}
 
+	@Override
 	public void applyMatrix(SMatrix2D source) {
 		applyMatrix(source.m00, source.m01, source.m02,
 				source.m10, source.m11, source.m12);
 	}
 
+	@Override
 	public void applyMatrix(float n00, float n01, float n02,
 			float n10, float n11, float n12) {
 		graphics.transform(new AffineTransform(n00, n10, n01, n11, n02, n12));
@@ -2986,10 +3006,12 @@ public class SGraphics extends SImage implements SGFX {
 
 	// MATRIX GET/SET
 
+	@Override
 	public SMatrix2D getMatrix() { return getMatrix((SMatrix2D) null); }
 
 	double[] transform = new double[6];
 
+	@Override
 	public SMatrix2D getMatrix(SMatrix2D target) {
 		if (target == null) {
 			target = new SMatrix2D();
@@ -3000,12 +3022,14 @@ public class SGraphics extends SImage implements SGFX {
 		return target;
 	}
 
+	@Override
 	public void setMatrix(SMatrix2D source) {
 		graphics.setTransform(new AffineTransform(source.m00, source.m10,
 				source.m01, source.m11,
 				source.m02, source.m12));
 	}
 
+	@Override
 	public void printMatrix() {
 		getMatrix((SMatrix2D) null).print();
 	}
@@ -3014,11 +3038,13 @@ public class SGraphics extends SImage implements SGFX {
 
 	// SCREEN and MODEL transforms
 
+	@Override
 	public float screenX(float x, float y) {
 		graphics.getTransform().getMatrix(transform);
 		return (float) transform[0] * x + (float) transform[2] * y + (float) transform[4];
 	}
 
+	@Override
 	public float screenY(float x, float y) {
 		graphics.getTransform().getMatrix(transform);
 		return (float) transform[1] * x + (float) transform[3] * y + (float) transform[5];
@@ -3528,6 +3554,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * @param image
 	 *            SImage to set as background (must be same size as the sketch window)
 	 */
+	@Override
 	public void background(SImage image) {
 		if ((image.pixelWidth != pixelWidth) || (image.pixelHeight != pixelHeight)) {
 			throw new RuntimeException(ERROR_BACKGROUND_IMAGE_SIZE);
@@ -4032,9 +4059,9 @@ public class SGraphics extends SImage implements SGFX {
 
 	// WARNINGS and EXCEPTIONS
 
-	static protected Map<String, Object> warnings;
+	protected static Map<String, Object> warnings;
 
-	static public void showWarning(String msg) {
+	public static void showWarning(String msg) {
 		if (warnings == null) {
 			warnings = new HashMap<>();
 		}
@@ -4044,9 +4071,9 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	static public void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
+	public static void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
 
-	static public void showException(String msg) { throw new RuntimeException(msg); }
+	public static void showException(String msg) { throw new RuntimeException(msg); }
 
 	/**
 	 * Same as below, but defaults to a 12 point font, just as MacWrite intended.
@@ -4205,6 +4232,7 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
+	@Override
 	public void pixel(int x, int y) { pixel(x, y, strokeColor); }
 
 	@Override
@@ -4255,6 +4283,7 @@ public class SGraphics extends SImage implements SGFX {
 
 	// COPY
 
+	@Override
 	public void copy(int sx, int sy, int sw, int sh,
 			int dx, int dy, int dw, int dh) {
 		if ((sw != dw) || (sh != dh)) {
@@ -4267,6 +4296,7 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
+	@Override
 	public void copy(SImage src,
 			int sx, int sy, int sw, int sh,
 			int dx, int dy, int dw, int dh) {

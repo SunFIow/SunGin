@@ -384,7 +384,7 @@ public class SImage implements Cloneable, SConstants {
 	// Additional modifications and simplifications have been added,
 	// plus a fix to deal with an infinite loop if images are expanded.
 	// http://code.google.com/p/processing/issues/detail?id=1463
-	static private BufferedImage shrinkImage(BufferedImage img,
+	private static BufferedImage shrinkImage(BufferedImage img,
 			int targetWidth, int targetHeight) {
 		int type = (img.getTransparency() == Transparency.OPAQUE) ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
 		BufferedImage outgoing = img;
@@ -697,7 +697,7 @@ public class SImage implements Cloneable, SConstants {
 		updatePixels(); // mark as modified
 	}
 
-	static public int blendColor(int c1, int c2, int mode) { // ignore
+	public static int blendColor(int c1, int c2, int mode) { // ignore
 		switch (mode) {
 			case REPLACE:
 				return c2;
@@ -738,7 +738,7 @@ public class SImage implements Cloneable, SConstants {
 		return 0;
 	}
 
-	static public BiFunction<Integer, Integer, Integer> getBlendColorFunc(int mode) { // ignore
+	public static BiFunction<Integer, Integer, Integer> getBlendColorFunc(int mode) { // ignore
 		switch (mode) {
 			case REPLACE:
 				return (c1, c2) -> c2;
@@ -1282,7 +1282,7 @@ public class SImage implements Cloneable, SConstants {
 
 	static final String TIFF_ERROR = "Error: Processing can only read its own TIFF files.";
 
-	static protected SImage loadTIFF(byte tiff[]) {
+	protected static SImage loadTIFF(byte tiff[]) {
 		if ((tiff[42] != tiff[102]) || // width/height in both places
 				(tiff[43] != tiff[103])) {
 			System.err.println(TIFF_ERROR);
