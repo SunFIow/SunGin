@@ -105,8 +105,9 @@ public class Game3D extends GameBase {
 		vertLook = -0.9999999f;
 		horLook = HALF_PI + PI;
 
-		horRotSpeed = 900;
-		vertRotSpeed = 2200;
+		horRotSpeed = 1000;
+//		vertRotSpeed = 2000;
+		vertRotSpeed = 1000 / PI;
 
 		sunPos = 0;
 
@@ -268,8 +269,8 @@ public class Game3D extends GameBase {
 
 	public final float[] convert3Dto2D(float x, float y, float z) {
 		float[] calcPos = Calculator.CalculatePositionP(vCameraPos, vCameraDir, x, y, z);
-		float x2d = (width / 2 - Calculator.calcFocusPos[0]) + calcPos[0] * zoom();
-		float y2d = (height / 2 - Calculator.calcFocusPos[1]) + calcPos[1] * zoom();
+		float x2d = (width / 2f - Calculator.calcFocusPos[0]) + calcPos[0] * zoom();
+		float y2d = (height / 2f - Calculator.calcFocusPos[1]) + calcPos[1] * zoom();
 		return new float[] { x2d, y2d, Calculator.t };
 	}
 
@@ -298,7 +299,10 @@ public class Game3D extends GameBase {
 		if (keys[KEY_SPACE]) moveVector.z += 1;
 		if (keys[KEY_CONTROL]) moveVector.z -= 1;
 		moveVector.normalize();
-		moveVector.mult(movementSpeed * fElapsedTime * (keys[KEY_SHIFT] ? 33 : 99));
+
+		float scalar = movementSpeed * fElapsedTime;
+		if (keys[KEY_SHIFT]) scalar *= 2;
+		moveVector.mult(scalar);
 
 		vCameraPos.add(moveVector);
 
@@ -306,19 +310,26 @@ public class Game3D extends GameBase {
 	}
 
 	private final void mouseMovement(float NewMouseX, float NewMouseY) {
-		mouseDifX = (NewMouseX - width / 2);
-		mouseDifY = (NewMouseY - height / 2) * (6 - Math.abs(vertLook) * 5);
+		mouseDifX = (NewMouseX - width / 2f);
+//		mouseDifY = (NewMouseY - height / 2f) * (6 - Math.abs(vertLook / PI) * 5);
+		mouseDifY = (NewMouseY - height / 2f);
 
 		horLook += mouseDifX / horRotSpeed;
 		vertLook -= mouseDifY / vertRotSpeed;
 
-		if (vertLook > 0.9999999f) vertLook = 0.9999999f;
-		if (vertLook < -0.9999999f) vertLook = -0.9999999f;
+//		if (vertLook > 0.9999999f) vertLook = 0.9999999f;
+//		if (vertLook < -0.9999999f) vertLook = -0.9999999f;
+
+		if (vertLook > cPI) vertLook = cPI;
+		if (vertLook < -cPI) vertLook = -cPI;
 
 		updateView();
 	}
 
+	private static final float cPI = PI * 0.9999f;
+
 	public final void updateView() {
+		float vertLook = this.vertLook / PI;
 		float r = (float) Math.sqrt(1 - (vertLook * vertLook));
 		vCameraDir.x = vCameraPos.x + r * (float) Math.cos(horLook);
 		vCameraDir.y = vCameraPos.y + r * (float) Math.sin(horLook);
@@ -327,7 +338,7 @@ public class Game3D extends GameBase {
 		Models.forEach(model -> model.markDirty());
 	}
 
-	private final void centerMouse() { moveMouseTo(width() / 2, height() / 2); }
+	private final void centerMouse() { moveMouseTo(width / 2f, height / 2f); }
 
 //	private final void centerMouse() { moveMouse((int) -difX, (int) -difY); }
 
@@ -348,7 +359,7 @@ public class Game3D extends GameBase {
 		for (int i = drawOrder.length - 1; i >= 0; i--) {
 			BaseModel current = DModels.get(drawOrder[i]);
 //			current.drawablePolygon.highlight = true;
-			if (current.draw() && current.visible() && current.contains(width / 2, height / 2)) {
+			if (current.draw() && current.visible() && current.contains(width / 2f, height / 2f)) {
 				PolygonOver = current;
 				if (highlight) current.highlight(true);
 				break;
@@ -466,6 +477,18 @@ public class Game3D extends GameBase {
 	public final float[] getRotation() { return gMatrix.getRotation(); }
 
 	public final void rotation(float[] rotation) { gMatrix.rotation(rotation); }
+
+	@Override
+	public void push() {
+		super.push();
+		gMatrix.pushMatrix();
+	}
+
+	@Override
+	public void pop() {
+		super.pop();
+		gMatrix.popMatrix();
+	}
 
 	@Override
 	public final void pushMatrix() {
