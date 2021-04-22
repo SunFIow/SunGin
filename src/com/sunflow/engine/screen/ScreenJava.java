@@ -549,4 +549,8 @@ public class ScreenJava extends Screen {
 		return bounds;
 	}
 
+//	@Override
+//	public GraphicsConfiguration getGC() { return displayDevice.getDefaultConfiguration(); }
+//	public GraphicsConfiguration getGC() { return canvas.getGraphicsConfiguration(); }
+
 }

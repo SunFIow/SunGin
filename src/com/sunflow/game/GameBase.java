@@ -6058,4 +6058,6 @@ public class GameBase implements SGFX, Runnable,
 			lookAndFeelCheck = true;
 		}
 	}
+
+//	public GraphicsConfiguration getGC() { return screen.getGC(); }
 }

@@ -23,28 +23,23 @@ public class ExampleGame2D extends GameBase {
 	private float ballVX;
 	private float ballVY;
 
-	private float test = 2.0f;
-
 	@Override
 	public void setup() {
 		title("ExampleGame 2D");
 		createCanvas(1000, 500);
 //		smooth();
 		frameRate(0);
-		showInfo(true);
+//		showInfo(true);
 		ballR = 25;
 		ballX = width / 2;
 		ballY = height / 2;
 		ballVX = 400;
 		ballVY = 200;
-
-		System.out.println(test);
-		System.out.println("test");
 	}
 
 	@Override
 	public List<String> getInfo() {
-		System.out.println(fElapsedTime);
+//		System.out.println(fElapsedTime);
 		List<String> list = super.getInfo();
 
 		list.add(0, "Position [" + ballX + "|[" + ballY + "]");

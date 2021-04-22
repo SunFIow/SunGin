@@ -220,4 +220,6 @@ public abstract class Screen {
 
 	public abstract void infoSize(float size);
 
+//	public abstract GraphicsConfiguration getGC();
+
 }

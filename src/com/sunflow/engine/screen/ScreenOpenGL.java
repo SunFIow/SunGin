@@ -385,4 +385,7 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public int getScreenY() { return getY(); }
+
+//	@Override
+//	public GraphicsConfiguration getGC() { return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration(); }
 }

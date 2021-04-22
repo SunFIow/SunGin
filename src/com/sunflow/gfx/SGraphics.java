@@ -23,7 +23,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
-import java.awt.image.VolatileImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.InputStream;
@@ -488,13 +487,45 @@ public class SGraphics extends SImage implements SGFX {
 	// JAVA2D
 
 	public Graphics2D checkImage() {
+//		System.out.println(image);
+		int wide = width * pixelDensity;
+		int high = height * pixelDensity;
 		if (image == null ||
-				((BufferedImage) image).getWidth() != width * pixelDensity ||
-				((BufferedImage) image).getHeight() != height * pixelDensity) {
-			int wide = width * pixelDensity;
-			int high = height * pixelDensity;
+				((BufferedImage) image).getWidth() != wide ||
+				((BufferedImage) image).getHeight() != high) {
 			image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
 		}
+
+//		else {
+//			if (image instanceof BufferedImage &&
+//					(((BufferedImage) image).getWidth() != width * pixelDensity ||
+//							((BufferedImage) image).getHeight() != height * pixelDensity)) {
+//				GraphicsConfiguration gc = parent.getGC();
+//				image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
+//				System.out.println(image);
+//				image = gc.createCompatibleImage(wide, high, Transparency.TRANSLUCENT);
+//				System.out.println(image);
+//			} else if (image instanceof VolatileImage) {
+//				GraphicsConfiguration gc = parent.getGC();
+//				VolatileImage vimage = (VolatileImage) image;
+//				if (vimage.getWidth() != wide || vimage.getHeight() != high || vimage.validate(gc) == VolatileImage.IMAGE_INCOMPATIBLE) {
+//					image = gc.createCompatibleVolatileImage(wide, high, Transparency.OPAQUE);
+//				}
+//			}
+//
+//		}
+//		if (primaryGraphics) {
+//			if (image == null || ((VolatileImage) image).getWidth() != wide ||
+//					((VolatileImage) image).getHeight() != high || ((VolatileImage) image).validate(parent.getGC()) == VolatileImage.IMAGE_INCOMPATIBLE) {
+//				GraphicsConfiguration gc = parent.getGC();
+//				image = gc.createCompatibleVolatileImage(wide, high, VolatileImage.OPAQUE);
+//			}
+//		} else {
+//			if (image == null || ((BufferedImage) image).getWidth() != wide ||
+//					((BufferedImage) image).getHeight() != high) {
+//				image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
+//			}
+//		}
 		return (Graphics2D) image.getGraphics();
 	}
 
@@ -3555,8 +3586,8 @@ public class SGraphics extends SImage implements SGFX {
 		if (backgroundAlpha) {
 			clearPixels(backgroundColor);
 		} else {
-//			Color bgColor = new Color(backgroundColor);
-			Color bgColor = new Color(backgroundColor, calcAlpha);
+			Color bgColor = new Color(backgroundColor);
+//			Color bgColor = new Color(backgroundColor, calcAlpha); // TODO
 			// seems to fire an additional event that causes flickering,
 			// like an extra background erase on OS X
 //	      if (canvas != null) {
@@ -3568,7 +3599,7 @@ public class SGraphics extends SImage implements SGFX {
 
 			Composite oldComposite = graphics.getComposite();
 			graphics.setComposite(defaultComposite);
-			AffineTransform at = graphics.getTransform();
+//			AffineTransform at = graphics.getTransform();
 
 			pushMatrix();
 			resetMatrix();
@@ -3584,7 +3615,7 @@ public class SGraphics extends SImage implements SGFX {
 			}
 			popMatrix();
 
-			graphics.setTransform(at);
+//			graphics.setTransform(at);
 			graphics.setComposite(oldComposite);
 		}
 	}
@@ -4069,20 +4100,25 @@ public class SGraphics extends SImage implements SGFX {
 
 	protected WritableRaster getRaster() {
 		WritableRaster raster = null;
-		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
-			/*
-			 * // 'offscreen' will probably be removed in the next release
-			 * if (useOffscreen) {
-			 * raster = offscreen.getRaster();
-			 * } else
-			 */
-			if (image instanceof VolatileImage) {
-				// when possible, we'll try VolatileImage
-				raster = ((VolatileImage) image).getSnapshot().getRaster();
-			}
-		}
+//		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
+//			/*
+//			 * // 'offscreen' will probably be removed in the next release
+//			 * if (useOffscreen) {
+//			 * raster = offscreen.getRaster();
+//			 * } else
+//			 */
+//			if (image instanceof VolatileImage) {
+//				// when possible, we'll try VolatileImage
+//				raster = ((VolatileImage) image).getSnapshot().getRaster();
+//			}
+//		}
 		if (raster == null) {
+//			if (image instanceof VolatileImage) {
+//				// when possible, we'll try VolatileImage
+//				raster = ((VolatileImage) image).getSnapshot().getRaster();
+//			} else {
 			raster = ((BufferedImage) image).getRaster();
+//			}
 		}
 
 		// On Raspberry Pi (and perhaps other platforms, the color buffer won't
