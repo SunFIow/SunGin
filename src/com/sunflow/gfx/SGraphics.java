@@ -1,32 +1,12 @@
 package com.sunflow.gfx;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Composite;
-import java.awt.CompositeContext;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Paint;
-import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Stroke;
-import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -38,12 +18,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 import com.sunflow.game.GameBase;
-import com.sunflow.logging.Log;
 import com.sunflow.math.SMatrix2D;
 import com.sunflow.math.SMatrix_D;
+import com.sunflow.math3d.SMatrix3D;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.SStyle;
 
@@ -58,8 +37,6 @@ public class SGraphics extends SImage implements SGFX {
 
 	/** Surface object that we're talking to */
 	protected SSurface surface;
-
-	public Graphics2D graphics;
 
 	/// the anti-aliasing level for renderers that support it
 	public int smooth;
@@ -119,75 +96,75 @@ public class SGraphics extends SImage implements SGFX {
 	// X, Y and Z are still stored in PConstants because of their general
 	// usefulness, and that X we'll always want to be 0, etc.
 
-//	public static final int R = 3; // actual rgb, after lighting
-//	public static final int G = 4; // fill stored here, transform in place
-//	public static final int B = 5; // TODO don't do that anymore (?)
-//	public static final int A = 6;
-//
-//	public static final int U = 7; // texture
-//	public static final int V = 8;
-//
-//	public static final int NX = 9; // normal
-//	public static final int NY = 10;
-//	public static final int NZ = 11;
-//
-//	public static final int EDGE = 12;
-//
-//	// stroke
-//
-//	/** stroke argb values */
-//	public static final int SR = 13;
-//	public static final int SG = 14;
-//	public static final int SB = 15;
-//	public static final int SA = 16;
-//
-//	/** stroke weight */
-//	public static final int SW = 17;
-//
-//	// transformations (2D and 3D)
-//
-//	public static final int TX = 18; // transformed xyzw
-//	public static final int TY = 19;
-//	public static final int TZ = 20;
-//
-//	public static final int VX = 21; // view space coords
-//	public static final int VY = 22;
-//	public static final int VZ = 23;
-//	public static final int VW = 24;
-//
-//	// material properties
-//
-//	// Ambient color (usually to be kept the same as diffuse)
-//	// fill(_) sets both ambient and diffuse.
-//	public static final int AR = 25;
-//	public static final int AG = 26;
-//	public static final int AB = 27;
-//
-//	// Diffuse is shared with fill.
-//	public static final int DR = 3; // TODO needs to not be shared, this is a material property
-//	public static final int DG = 4;
-//	public static final int DB = 5;
-//	public static final int DA = 6;
-//
-//	// specular (by default kept white)
-//	public static final int SPR = 28;
-//	public static final int SPG = 29;
-//	public static final int SPB = 30;
-//
-//	public static final int SHINE = 31;
-//
-//	// emissive (by default kept black)
-//	public static final int ER = 32;
-//	public static final int EG = 33;
-//	public static final int EB = 34;
-//
-//	// has this vertex been lit yet
-//	public static final int BEEN_LIT = 35;
-//
-//	// has this vertex been assigned a normal yet
-//	public static final int HAS_NORMAL = 36;
+	public static final int R = 3; // actual rgb, after lighting
+	public static final int G = 4; // fill stored here, transform in place
+	public static final int B = 5; // TODO don't do that anymore (?)
+	public static final int A = 6;
 
-	public static final int VERTEX_FIELD_COUNT = 2; // 37;
+	public static final int U = 7; // texture
+	public static final int V = 8;
+
+	public static final int NX = 9; // normal
+	public static final int NY = 10;
+	public static final int NZ = 11;
+
+	public static final int EDGE = 12;
+
+	// stroke
+
+	/** stroke argb values */
+	public static final int SR = 13;
+	public static final int SG = 14;
+	public static final int SB = 15;
+	public static final int SA = 16;
+
+	/** stroke weight */
+	public static final int SW = 17;
+
+	// transformations (2D and 3D)
+
+	public static final int TX = 18; // transformed xyzw
+	public static final int TY = 19;
+	public static final int TZ = 20;
+
+	public static final int VX = 21; // view space coords
+	public static final int VY = 22;
+	public static final int VZ = 23;
+	public static final int VW = 24;
+
+	// material properties
+
+	// Ambient color (usually to be kept the same as diffuse)
+	// fill(_) sets both ambient and diffuse.
+	public static final int AR = 25;
+	public static final int AG = 26;
+	public static final int AB = 27;
+
+	// Diffuse is shared with fill.
+	public static final int DR = 3; // TODO needs to not be shared, this is a material property
+	public static final int DG = 4;
+	public static final int DB = 5;
+	public static final int DA = 6;
+
+	// specular (by default kept white)
+	public static final int SPR = 28;
+	public static final int SPG = 29;
+	public static final int SPB = 30;
+
+	public static final int SHINE = 31;
+
+	// emissive (by default kept black)
+	public static final int ER = 32;
+	public static final int EG = 33;
+	public static final int EB = 34;
+
+	// has this vertex been lit yet
+	public static final int BEEN_LIT = 35;
+
+	// has this vertex been assigned a normal yet
+	public static final int HAS_NORMAL = 36;
+
+	public static final int VERTEX_FIELD_COUNT = 37;
 
 	////////////////////////////////////////////////////////////
 
@@ -280,7 +257,7 @@ public class SGraphics extends SImage implements SGFX {
 	public int ellipseMode;
 
 	/** The current shape alignment mode (read-only) */
-//	protected int shapeMode;
+//	protected int shapeMode; // TODO
 
 	/** The current image alignment (read-only) */
 	public int imageMode = CORNER;
@@ -311,6 +288,18 @@ public class SGraphics extends SImage implements SGFX {
 
 	// ........................................................
 
+	public int ambientColor;
+	public float ambientR, ambientG, ambientB;
+	public boolean setAmbient;
+
+	public int specularColor;
+	public float specularR, specularG, specularB;
+
+	public int emissiveColor;
+	public float emissiveR, emissiveG, emissiveB;
+
+	public float shininess;
+
 	// Style stack
 
 	private static final int STYLE_STACK_DEPTH = 64;
@@ -331,9 +320,10 @@ public class SGraphics extends SImage implements SGFX {
 
 	// ........................................................
 
-	private int transformCount;
-	private static final int MATRIX_STACK_DEPTH = 32;
-	AffineTransform transformStack[] = new AffineTransform[MATRIX_STACK_DEPTH];
+	protected static final int MATRIX_STACK_DEPTH = 32;
+
+	static final protected String ERROR_PUSHMATRIX_OVERFLOW = "Too many calls to pushMatrix().";
+	static final protected String ERROR_PUSHMATRIX_UNDERFLOW = "Too many calls to popMatrix(), and not enough to pushMatrix().";
 
 	// ........................................................
 
@@ -348,11 +338,6 @@ public class SGraphics extends SImage implements SGFX {
 	/** Result of the last conversion to HSB */
 	private float[] cacheHsbValue = new float[3];
 
-	private Line2D.Float line = new Line2D.Float();
-	private Ellipse2D.Float ellipse = new Ellipse2D.Float();
-	private Rectangle2D.Float rect = new Rectangle2D.Float();
-	private Arc2D.Float arc = new Arc2D.Float();
-
 	protected int shape;
 
 	// vertices
@@ -360,23 +345,61 @@ public class SGraphics extends SImage implements SGFX {
 	protected float vertices[][] = new float[DEFAULT_VERTICES][VERTEX_FIELD_COUNT];
 	protected int vertexCount;
 
-	private Composite defaultComposite;
+	// ........................................................
 
-	protected GeneralPath gpath;
-//	protected ArrayList<Shape> shapes_tmp;
+	protected boolean bezierInited = false;
+	public int bezierDetail = 20;
 
-	protected Color tintColorObject;
+	// used by both curve and bezier, so just init here
+	protected SMatrix3D bezierBasisMatrix = new SMatrix3D(-1, 3, -3, 1,
+			3, -6, 3, 0,
+			-3, 3, 0, 0,
+			1, 0, 0, 0);
 
-	protected Color fillColorObject;
-	public boolean fillGradient;
-	public Paint fillGradientObject;
+	// protected PMatrix3D bezierForwardMatrix;
+	protected SMatrix3D bezierDrawMatrix;
 
-	protected Stroke strokeObject;
-	protected Color strokeColorObject;
-	public boolean strokeGradient;
-	public Paint strokeGradientObject;
+	// ........................................................
 
-	private Font fontObject;
+	protected boolean curveInited = false;
+	public int curveDetail = 20;
+	public float curveTightness = 0;
+	// catmull-rom basis matrix, perhaps with optional s parameter
+	protected SMatrix3D curveBasisMatrix;
+	protected SMatrix3D curveDrawMatrix;
+
+	protected SMatrix3D bezierBasisInverse;
+	protected SMatrix3D curveToBezierMatrix;
+
+	// ........................................................
+
+	// spline vertices
+
+	protected float curveVertices[][];
+	protected int curveVertexCount;
+
+	// ........................................................
+
+	// precalculate sin/cos lookup tables [toxi]
+	// circle resolution is determined from the actual used radii
+	// passed to ellipse() method. this will automatically take any
+	// scale transformations into account too
+
+	// [toxi 031031]
+	// changed table's precision to 0.5 degree steps
+	// introduced new vars for more flexible code
+	static final protected float sinLUT[];
+	static final protected float cosLUT[];
+	static final protected float SINCOS_PRECISION = 0.5f;
+	static final protected int SINCOS_LENGTH = (int) (360f / SINCOS_PRECISION);
+	static {
+		sinLUT = new float[SINCOS_LENGTH];
+		cosLUT = new float[SINCOS_LENGTH];
+		for (int i = 0; i < SINCOS_LENGTH; i++) {
+			sinLUT[i] = (float) Math.sin(i * DEG_TO_RAD * SINCOS_PRECISION);
+			cosLUT[i] = (float) Math.cos(i * DEG_TO_RAD * SINCOS_PRECISION);
+		}
+	}
 
 	/**
 	 * Internal buffer used by the text() functions
@@ -389,10 +412,66 @@ public class SGraphics extends SImage implements SGFX {
 	protected int[] textBreakStart;
 	protected int[] textBreakStop;
 
-//	public SGraphics() {
-//		// In 3.1.2, giving up on the async image saving as the default
-//		hints[DISABLE_ASYNC_SAVEFRAME] = true;
-//	}
+	// ........................................................
+
+	public boolean edge = true;
+
+	// ........................................................
+
+	/// normal calculated per triangle
+	static protected final int NORMAL_MODE_AUTO = 0;
+	/// one normal manually specified per shape
+	static protected final int NORMAL_MODE_SHAPE = 1;
+	/// normals specified for each shape vertex
+	static protected final int NORMAL_MODE_VERTEX = 2;
+
+	/// Current mode for normals, one of AUTO, SHAPE, or VERTEX
+	protected int normalMode;
+
+	/// Keep track of how many calls to normal, to determine the mode.
+	// protected int normalCount;
+
+	protected boolean autoNormal;
+
+	/** Current normal vector. */
+	public float normalX, normalY, normalZ;
+
+	// ........................................................
+
+	/**
+	 * Sets whether texture coordinates passed to
+	 * vertex() calls will be based on coordinates that are
+	 * based on the IMAGE or NORMALIZED.
+	 */
+	public int textureMode = IMAGE;
+
+	/**
+	 * Current horizontal coordinate for texture, will always
+	 * be between 0 and 1, even if using textureMode(IMAGE).
+	 */
+	public float textureU;
+
+	/** Current vertical coordinate for texture, see above. */
+	public float textureV;
+
+	/** Current image being used as a texture */
+	public SImage textureImage;
+
+	// ........................................................
+
+	// [toxi031031] new & faster sphere code w/ support flexible resolutions
+	// will be set by sphereDetail() or 1st call to sphere()
+	protected float sphereX[], sphereY[], sphereZ[];
+
+	/// Number of U steps (aka "theta") around longitudinally spanning 2*pi
+	public int sphereDetailU = 0;
+	/// Number of V steps (aka "phi") along latitudinally top-to-bottom spanning pi
+	public int sphereDetailV = 0;
+
+	public SGraphics() {
+		// In 3.1.2, giving up on the async image saving as the default
+		hints[DISABLE_ASYNC_SAVEFRAME] = true;
+	}
 
 //	public SGraphics(float width, float height) {
 //		super(width, height);
@@ -444,6 +523,21 @@ public class SGraphics extends SImage implements SGFX {
 		reapplySettings = true;
 	}
 
+	public void dispose() { // ignore
+		if (primaryGraphics && asyncImageSaver != null) {
+			asyncImageSaver.dispose();
+			asyncImageSaver = null;
+		}
+	}
+
+	public SSurface createSurface() {
+		return surface = new SScreenNone(this);
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// IMAGE METADATA FOR THIS RENDERER
+
 	public void setCache(Object key, Object val) {
 		cacheMap.put(key, val);
 	}
@@ -456,110 +550,14 @@ public class SGraphics extends SImage implements SGFX {
 		cacheMap.remove(key);
 	}
 
-	public void dispose() { // ignore
-		if (primaryGraphics && asyncImageSaver != null) {
-			asyncImageSaver.dispose();
-			asyncImageSaver = null;
-		}
-	}
+	//////////////////////////////////////////////////////////////
 
-	public SSurface createSurface() {
-		return surface = new SScreenAWT(this);
-	}
+	public void beginDraw() {}
 
-	// JAVA2D
-	/**
-	 * Still need a means to get the java.awt.Image object, since getNative()
-	 * is going to return the {@link Graphics2D} object.
-	 */
-	@Override
-	public Image getImage() {
-		return image;
-	}
+	public void endDraw() {}
 
-	// JAVA2D
-	/** Returns the java.awt.Graphics2D object used by this renderer. */
-	@Override
-	public Object getNative() {
-		return graphics;
-	}
-
-	// JAVA2D
-
-	public Graphics2D checkImage() {
-//		System.out.println(image);
-		int wide = width * pixelDensity;
-		int high = height * pixelDensity;
-		if (image == null ||
-				((BufferedImage) image).getWidth() != wide ||
-				((BufferedImage) image).getHeight() != high) {
-			image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
-		}
-
-//		else {
-//			if (image instanceof BufferedImage &&
-//					(((BufferedImage) image).getWidth() != width * pixelDensity ||
-//							((BufferedImage) image).getHeight() != height * pixelDensity)) {
-//				GraphicsConfiguration gc = parent.getGC();
-//				image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
-//				System.out.println(image);
-//				image = gc.createCompatibleImage(wide, high, Transparency.TRANSLUCENT);
-//				System.out.println(image);
-//			} else if (image instanceof VolatileImage) {
-//				GraphicsConfiguration gc = parent.getGC();
-//				VolatileImage vimage = (VolatileImage) image;
-//				if (vimage.getWidth() != wide || vimage.getHeight() != high || vimage.validate(gc) == VolatileImage.IMAGE_INCOMPATIBLE) {
-//					image = gc.createCompatibleVolatileImage(wide, high, Transparency.OPAQUE);
-//				}
-//			}
-//
-//		}
-//		if (primaryGraphics) {
-//			if (image == null || ((VolatileImage) image).getWidth() != wide ||
-//					((VolatileImage) image).getHeight() != high || ((VolatileImage) image).validate(parent.getGC()) == VolatileImage.IMAGE_INCOMPATIBLE) {
-//				GraphicsConfiguration gc = parent.getGC();
-//				image = gc.createCompatibleVolatileImage(wide, high, VolatileImage.OPAQUE);
-//			}
-//		} else {
-//			if (image == null || ((BufferedImage) image).getWidth() != wide ||
-//					((BufferedImage) image).getHeight() != high) {
-//				image = new BufferedImage(wide, high, BufferedImage.TYPE_INT_ARGB);
-//			}
-//		}
-		return (Graphics2D) image.getGraphics();
-	}
-
-	public void beginDraw() {
-		graphics = checkImage();
-
-		// Calling getGraphics() seems to nuke several settings.
-		// It seems to be re-creating a new Graphics2D object each time.
-		// https://github.com/processing/processing/issues/3331
-		if (strokeObject != null) {
-			graphics.setStroke(strokeObject);
-		}
-		// https://github.com/processing/processing/issues/2617
-		if (fontObject != null) {
-			graphics.setFont(fontObject);
-		}
-		// https://github.com/processing/processing/issues/4019
-		if (blendMode != 0) {
-			blendMode(blendMode);
-		}
-		handleSmooth();
-
-		checkSettings();
-		resetMatrix(); // reset model matrix
-//		vertexCount = 0;
-	}
-
-	public void endDraw() {
-		if (primaryGraphics) {} else {
-			// TODO this is probably overkill for most tasks...
-			loadPixels();
-		}
-		setModified();
-		graphics.dispose();
+	public void flush() {
+		// no-op, mostly for P3D to write sorted stuff
 	}
 
 	protected void checkSettings() {
@@ -568,12 +566,6 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	protected void defaultSettings() {
-//		image = new BufferedImage(width, height, format);
-//		super.defaultSettings();
-//		graphics = image.createGraphics();
-
-		defaultComposite = graphics.getComposite();
-
 		colorMode(RGB, 255);
 		fill(255);
 		stroke(0);
@@ -584,10 +576,11 @@ public class SGraphics extends SImage implements SGFX {
 
 		// init shape stuff
 		shape = 0;
-		gpath = new GeneralPath();
 
 		rectMode(CORNER);
 		ellipseMode(DIAMETER);
+
+//	    autoNormal = true;
 
 		// no current font
 		textFont = null;
@@ -598,7 +591,9 @@ public class SGraphics extends SImage implements SGFX {
 		textMode = MODEL;
 
 //		background(0xffCCCCCC);
-		background(backgroundColor);
+		if (primaryGraphics) {
+			background(backgroundColor);
+		}
 
 		blendMode(BLEND);
 
@@ -664,8 +659,31 @@ public class SGraphics extends SImage implements SGFX {
 		reapplySettings = false;
 	}
 
+	//////////////////////////////////////////////////////////////
+
+	// HINTS
+
+	public void hint(int which) {
+		if (which == ENABLE_NATIVE_FONTS ||
+				which == DISABLE_NATIVE_FONTS) {
+			showWarning("hint(ENABLE_NATIVE_FONTS) no longer supported. " +
+					"Use createFont() instead.");
+		}
+//		if (which == ENABLE_KEY_REPEAT) {
+//			parent.keyRepeatEnabled = true; // TODO
+//		} else if (which == DISABLE_KEY_REPEAT) {
+//			parent.keyRepeatEnabled = false;
+//		}
+
+		if (which > 0) {
+			hints[which] = true;
+		} else {
+			hints[-which] = false;
+		}
+	}
+
 	@Override
-	public final void beginShape() { beginShape(POLYGON); }
+	public void beginShape() { beginShape(POLYGON); }
 
 	// POINTS,LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
 	/**
@@ -673,11 +691,46 @@ public class SGraphics extends SImage implements SGFX {
 	 *            POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP
 	 */
 	@Override
-	public void beginShape(int mode) {
-		shape = mode;
-		vertexCount = 0;
-		gpath.reset();
-		S_Shape.beginShape(parent);
+	public void beginShape(int mode) { shape = mode; }
+
+	@Override
+	public void edge(boolean edge) { this.edge = edge; }
+
+	@Override
+	public void normal(float nx, float ny, float nz) {
+		normalX = nx;
+		normalY = ny;
+		normalZ = nz;
+
+		// if drawing a shape and the normal hasn't been set yet,
+		// then we need to set the normals for each vertex so far
+		if (shape != 0) {
+			if (normalMode == NORMAL_MODE_AUTO) {
+				// One normal per begin/end shape
+				normalMode = NORMAL_MODE_SHAPE;
+			} else if (normalMode == NORMAL_MODE_SHAPE) {
+				// a separate normal for each vertex
+				normalMode = NORMAL_MODE_VERTEX;
+			}
+		}
+	}
+
+	@Override
+	public void textureMode(int mode) {
+		if (mode != IMAGE && mode != NORMAL) {
+			throw new RuntimeException("textureMode() only supports IMAGE and NORMAL");
+		}
+		this.textureMode = mode;
+	}
+
+	@Override
+	public void texture(SImage image) {
+		textureImage = image;
+	}
+
+	@Override
+	public void noTexture() {
+		textureImage = null;
 	}
 
 	protected void vertexCheck() {
@@ -691,113 +744,238 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public void vertex(float x, float y) {
 		vertexCheck();
+		vertexCheck();
+		float[] vertex = vertices[vertexCount];
 
-		// not everyone needs this, but just easier to store rather
-		// than adding another moving part to the code...
-		vertices[vertexCount][X] = x;
-		vertices[vertexCount][Y] = y;
-		vertexCount++;
+		curveVertexCount = 0;
 
-		switch (shape) {
-			case POINTS:
-				point(x, y);
-				break;
+		vertex[X] = x;
+		vertex[Y] = y;
+		vertex[Z] = 0;
 
-			case LINES:
-				if ((vertexCount % 2) == 0) {
-					line(vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y], x, y);
-				}
-				break;
+		vertex[EDGE] = edge ? 1 : 0;
 
-			case TRIANGLES:
-				if ((vertexCount % 3) == 0) {
-					triangle(vertices[vertexCount - 3][X],
-							vertices[vertexCount - 3][Y],
-							vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y],
-							x, y);
-					S_Shape.addShape(parent);
-				}
-				break;
-
-			case TRIANGLE_STRIP:
-				if (vertexCount >= 3) {
-					triangle(vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y],
-							vertices[vertexCount - 1][X],
-							vertices[vertexCount - 1][Y],
-							vertices[vertexCount - 3][X],
-							vertices[vertexCount - 3][Y]);
-					S_Shape.addShape(parent);
-				}
-				break;
-
-			case TRIANGLE_FAN:
-				if (vertexCount >= 3) {
-					// This is an unfortunate implementation because the stroke for an
-					// adjacent triangle will be repeated. However, if the stroke is not
-					// redrawn, it will replace the adjacent line (when it lines up
-					// perfectly) or show a faint line (when off by a small amount).
-					// The alternative would be to wait, then draw the shape as a
-					// polygon fill, followed by a series of vertices. But that's a
-					// poor method when used with PDF, DXF, or other recording objects,
-					// since discrete triangles would likely be preferred.
-					triangle(vertices[0][X],
-							vertices[0][Y],
-							vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y],
-							x, y);
-					S_Shape.addShape(parent);
-				}
-				break;
-
-			case QUAD:
-			case QUADS:
-				if ((vertexCount % 4) == 0) {
-					quad(vertices[vertexCount - 4][X],
-							vertices[vertexCount - 4][Y],
-							vertices[vertexCount - 3][X],
-							vertices[vertexCount - 3][Y],
-							vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y],
-							x, y);
-					S_Shape.addShape(parent);
-				}
-				break;
-
-			case QUAD_STRIP:
-				// 0---2---4
-				// | | |
-				// 1---3---5
-				if ((vertexCount >= 4) && ((vertexCount % 2) == 0)) {
-					quad(vertices[vertexCount - 4][X],
-							vertices[vertexCount - 4][Y],
-							vertices[vertexCount - 2][X],
-							vertices[vertexCount - 2][Y],
-							x, y,
-							vertices[vertexCount - 3][X],
-							vertices[vertexCount - 3][Y]);
-					S_Shape.addShape(parent);
-				}
-				break;
-
-			case POLYGON:
-				if (gpath.getCurrentPoint() == null) {
-					gpath.reset();
-					gpath.moveTo(x, y);
+//	    if (fill) {
+//	      vertex[R] = fillR;
+//	      vertex[G] = fillG;
+//	      vertex[B] = fillB;
+//	      vertex[A] = fillA;
+//	    }
+		boolean textured = textureImage != null;
+		if (fill || textured) {
+			if (!textured) {
+				vertex[R] = fillR;
+				vertex[G] = fillG;
+				vertex[B] = fillB;
+				vertex[A] = fillA;
+			} else {
+				if (tint) {
+					vertex[R] = tintR;
+					vertex[G] = tintG;
+					vertex[B] = tintB;
+					vertex[A] = tintA;
 				} else {
-					gpath.lineTo(x, y);
+					vertex[R] = 1;
+					vertex[G] = 1;
+					vertex[B] = 1;
+					vertex[A] = 1;
 				}
-				break;
+			}
 		}
+
+		if (stroke) {
+			vertex[SR] = strokeR;
+			vertex[SG] = strokeG;
+			vertex[SB] = strokeB;
+			vertex[SA] = strokeA;
+			vertex[SW] = strokeWeight;
+		}
+
+		if (textured) {
+			vertex[U] = textureU;
+			vertex[V] = textureV;
+		}
+
+		if (autoNormal) {
+			float norm2 = normalX * normalX + normalY * normalY + normalZ * normalZ;
+			if (norm2 < EPSILON) {
+				vertex[HAS_NORMAL] = 0;
+			} else {
+				if (Math.abs(norm2 - 1) > EPSILON) {
+					// The normal vector is not normalized.
+					float norm = MathUtils.instance.sqrt(norm2);
+					normalX /= norm;
+					normalY /= norm;
+					normalZ /= norm;
+				}
+				vertex[HAS_NORMAL] = 1;
+			}
+		} else {
+			vertex[HAS_NORMAL] = 1;
+		}
+
+		vertexCount++;
 	}
 
 	@Override
-	public void vertex(int[] v) { vertex(v[X], v[Y]); }
+	public void vertex(float x, float y, float z) {
+		vertexCheck();
+		float[] vertex = vertices[vertexCount];
+
+		// only do this if we're using an irregular (POLYGON) shape that
+		// will go through the triangulator. otherwise it'll do thinks like
+		// disappear in mathematically odd ways
+		// http://dev.processing.org/bugs/show_bug.cgi?id=444
+		if (shape == POLYGON) {
+			if (vertexCount > 0) {
+				float pvertex[] = vertices[vertexCount - 1];
+				if ((Math.abs(pvertex[X] - x) < EPSILON) &&
+						(Math.abs(pvertex[Y] - y) < EPSILON) &&
+						(Math.abs(pvertex[Z] - z) < EPSILON)) {
+					// this vertex is identical, don't add it,
+					// because it will anger the triangulator
+					return;
+				}
+			}
+		}
+
+		// User called vertex(), so that invalidates anything queued up for curve
+		// vertices. If this is internally called by curveVertexSegment,
+		// then curveVertexCount will be saved and restored.
+		curveVertexCount = 0;
+
+		vertex[X] = x;
+		vertex[Y] = y;
+		vertex[Z] = z;
+
+		vertex[EDGE] = edge ? 1 : 0;
+
+		boolean textured = textureImage != null;
+		if (fill || textured) {
+			if (!textured) {
+				vertex[R] = fillR;
+				vertex[G] = fillG;
+				vertex[B] = fillB;
+				vertex[A] = fillA;
+			} else {
+				if (tint) {
+					vertex[R] = tintR;
+					vertex[G] = tintG;
+					vertex[B] = tintB;
+					vertex[A] = tintA;
+				} else {
+					vertex[R] = 1;
+					vertex[G] = 1;
+					vertex[B] = 1;
+					vertex[A] = 1;
+				}
+			}
+
+			vertex[AR] = ambientR;
+			vertex[AG] = ambientG;
+			vertex[AB] = ambientB;
+
+			vertex[SPR] = specularR;
+			vertex[SPG] = specularG;
+			vertex[SPB] = specularB;
+			// vertex[SPA] = specularA;
+
+			vertex[SHINE] = shininess;
+
+			vertex[ER] = emissiveR;
+			vertex[EG] = emissiveG;
+			vertex[EB] = emissiveB;
+		}
+
+		if (stroke) {
+			vertex[SR] = strokeR;
+			vertex[SG] = strokeG;
+			vertex[SB] = strokeB;
+			vertex[SA] = strokeA;
+			vertex[SW] = strokeWeight;
+		}
+
+		if (textured) {
+			vertex[U] = textureU;
+			vertex[V] = textureV;
+		}
+
+		if (autoNormal) {
+			float norm2 = normalX * normalX + normalY * normalY + normalZ * normalZ;
+			if (norm2 < EPSILON) {
+				vertex[HAS_NORMAL] = 0;
+			} else {
+				if (Math.abs(norm2 - 1) > EPSILON) {
+					// The normal vector is not normalized.
+					float norm = MathUtils.instance.sqrt(norm2);
+					normalX /= norm;
+					normalY /= norm;
+					normalZ /= norm;
+				}
+				vertex[HAS_NORMAL] = 1;
+			}
+		} else {
+			vertex[HAS_NORMAL] = 1;
+		}
+
+		vertex[NX] = normalX;
+		vertex[NY] = normalY;
+		vertex[NZ] = normalZ;
+
+		vertex[BEEN_LIT] = 0;
+
+		vertexCount++;
+	}
 
 	@Override
-	public void vertex(float[] v) { vertex(v[X], v[Y]); }
+	public void vertex(int[] v) {
+		vertexCheck();
+		curveVertexCount = 0;
+		float[] vertex = vertices[vertexCount];
+		System.arraycopy(v, 0, vertex, 0, VERTEX_FIELD_COUNT);
+		vertexCount++;
+	}
+
+	@Override
+	public void vertex(float[] v) {
+		vertexCheck();
+		curveVertexCount = 0;
+		float[] vertex = vertices[vertexCount];
+		System.arraycopy(v, 0, vertex, 0, VERTEX_FIELD_COUNT);
+		vertexCount++;
+	}
+
+	@Override
+	public void vertex(float x, float y, float u, float v) {
+		vertexTexture(u, v);
+		vertex(x, y);
+	}
+
+	@Override
+	public void vertex(float x, float y, float z, float u, float v) {
+		vertexTexture(u, v);
+		vertex(x, y, z);
+	}
+
+	protected void vertexTexture(float u, float v) {
+		if (textureImage == null) {
+			throw new RuntimeException("You must first call texture() before " +
+					"using u and v coordinates with vertex()");
+		}
+		if (textureMode == IMAGE) {
+			u /= textureImage.width;
+			v /= textureImage.height;
+		}
+
+		textureU = u;
+		textureV = v;
+
+		if (textureU < 0) textureU = 0;
+		else if (textureU > 1) textureU = 1;
+
+		if (textureV < 0) textureV = 0;
+		else if (textureV > 1) textureV = 1;
+	}
 
 	@Override
 	public void endShape() { endShape(OPEN); }
@@ -807,49 +985,85 @@ public class SGraphics extends SImage implements SGFX {
 	 *            OPEN or CLOSE
 	 */
 	@Override
-	public void endShape(int mode) {
-		if (gpath.getCurrentPoint() == null || shape != POLYGON) {
-			S_Shape.endShape(parent);
-			shape = 0;
-			return;
+	public void endShape(int mode) {}
+
+	//////////////////////////////////////////////////////////////
+
+	// CLIPPING
+
+	/**
+	 * ( begin auto-generated from clip.xml )
+	 *
+	 * Limits the rendering to the boundaries of a rectangle defined
+	 * by the parameters. The boundaries are drawn based on the state
+	 * of the <b>imageMode()</b> fuction, either CORNER, CORNERS, or CENTER.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref rendering
+	 * @param a
+	 *            x-coordinate of the rectangle, by default
+	 * @param b
+	 *            y-coordinate of the rectangle, by default
+	 * @param c
+	 *            width of the rectangle, by default
+	 * @param d
+	 *            height of the rectangle, by default
+	 */
+	public void clip(float a, float b, float c, float d) {
+		if (imageMode == CORNER) {
+			if (c < 0) { // reset a negative width
+				a += c;
+				c = -c;
+			}
+			if (d < 0) { // reset a negative height
+				b += d;
+				d = -d;
+			}
+
+			clipImpl(a, b, a + c, b + d);
+
+		} else if (imageMode == CORNERS) {
+			if (c < a) { // reverse because x2 < x1
+				float temp = a;
+				a = c;
+				c = temp;
+			}
+			if (d < b) { // reverse because y2 < y1
+				float temp = b;
+				b = d;
+				d = temp;
+			}
+
+			clipImpl(a, b, c, d);
+
+		} else if (imageMode == CENTER) {
+			// c and d are width/height
+			if (c < 0) c = -c;
+			if (d < 0) d = -d;
+			float x1 = a - c / 2;
+			float y1 = b - d / 2;
+
+			clipImpl(x1, y1, x1 + c, y1 + d);
 		}
-
-		if (mode == CLOSE) gpath.closePath();
-		drawShape(gpath);
-
-		S_Shape.addShape(parent);
-		S_Shape.endShape(parent);
-
-//		boolean completeShape = true;
-//		if (shape == POINTS && vertexCount < 1) completeShape = false;
-//		if (shape == LINES && vertexCount < 2) completeShape = false;
-//		if (shape == TRIANGLES && vertexCount < 3) completeShape = false;
-////		if (shape == TRIANGLE_FAN && vertexCount < 0) completeShape = false;
-////		if (shape == TRIANGLE_STRIP && vertexCount < 0) completeShape = false;
-//		if (shape == QUADS && vertexCount < 4) completeShape = false;
-////		if (shape == QUAD_STRIP && vertexCount < 0) completeShape = false;
-//
-//		if (completeShape) SShape.addShape(this);
-//		SShape.endShape(this);
 	}
 
-//	private void testVertex() {
-//		boolean end = false;
-//		if (shape == POINTS && vertexCount == 1) end = true;
-//		if (shape == LINES && vertexCount == 2) end = true;
-//		if (shape == TRIANGLES && vertexCount == 3) end = true;
-////		if (shape == TRIANGLE_FAN && vNum == ??) end = true;
-////		if (shape == TRIANGLE_STRIP && vNum == 4) end = true;
-//		if (shape == QUADS && vertexCount == 4) end = true;
-////		if (shape == QUAD_STRIP && vNum == 4) end = true;
-//
-//		if (end) {
-//			SShape.tempShape = true;
-//			endShape(CLOSE);
-//			beginShape(shape);
-//			SShape.tempShape = false;
-//		}
-//	}
+	protected void clipImpl(float x1, float y1, float x2, float y2) {
+		showMissingWarning("clip");
+	}
+
+	/**
+	 * ( begin auto-generated from noClip.xml )
+	 *
+	 * Disables the clipping previously started by the <b>clip()</b> function.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref rendering
+	 */
+	public void noClip() {
+		showMissingWarning("noClip");
+	}
 
 	//////////////////////////////////////////////////////////////
 
@@ -873,102 +1087,532 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	protected void blendModeImpl() {
-		if (blendMode == BLEND) {
-			graphics.setComposite(defaultComposite);
-		} else {
-			Composite comp = (Composite) getCache(blendMode);
-			if (comp == null) {
-				setCache(blendMode, comp = new Composite() {
-
-					@Override
-					public CompositeContext createContext(ColorModel srcColorModel,
-							ColorModel dstColorModel,
-							RenderingHints hints) {
-						return new BlendingContext(blendMode);
-					}
-				});
-			}
-			graphics.setComposite(comp);
-		}
-	}
-
-	// Blending implementation cribbed from portions of Romain Guy's
-	// demo and terrific writeup on blending modes in Java 2D.
-	// http://www.curious-creature.org/2006/09/20/new-blendings-modes-for-java2d/
-	private static final class BlendingContext implements CompositeContext {
-//		private int mode;
-		private BiFunction<Integer, Integer, Integer> blendColorFunc;
-
-		private BlendingContext(int mode) {
-//			this.mode = mode;
-			this.blendColorFunc = getBlendColorFunc(mode);
-		}
-
-		@Override
-		public void dispose() {}
-
-		@Override
-		public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
-			// not sure if this is really necessary, since we control our buffers
-			if (src.getSampleModel().getDataType() != DataBuffer.TYPE_INT ||
-					dstIn.getSampleModel().getDataType() != DataBuffer.TYPE_INT ||
-					dstOut.getSampleModel().getDataType() != DataBuffer.TYPE_INT) {
-				throw new IllegalStateException("Source and destination must store pixels as INT.");
-			}
-
-			int width = Math.min(src.getWidth(), dstIn.getWidth());
-			int height = Math.min(src.getHeight(), dstIn.getHeight());
-
-			int[] srcPixels = new int[width];
-			int[] dstPixels = new int[width];
-
-			for (int y = 0; y < height; y++) {
-				src.getDataElements(0, y, width, 1, srcPixels);
-				dstIn.getDataElements(0, y, width, 1, dstPixels);
-				for (int x = 0; x < width; x++) {
-//					dstPixels[x] = blendColor(dstPixels[x], srcPixels[x], mode);
-					dstPixels[x] = blendColorFunc.apply(dstPixels[x], srcPixels[x]);
-				}
-				dstOut.setDataElements(0, y, width, 1, dstPixels);
-			}
+		if (blendMode != BLEND) {
+			showMissingWarning("blendMode");
 		}
 	}
 
 	//////////////////////////////////////////////////////////////
 
-	// POINT, LINE, TRIANGLE, QUAD
+	// CURVE/BEZIER VERTEX HANDLING
 
+	protected void bezierVertexCheck() {
+		bezierVertexCheck(shape, vertexCount);
+	}
+
+	protected void bezierVertexCheck(int shape, int vertexCount) {
+		if (shape == 0 || shape != POLYGON) {
+			throw new RuntimeException("beginShape() or beginShape(POLYGON) " +
+					"must be used before bezierVertex() or quadraticVertex()");
+		}
+		if (vertexCount == 0) {
+			throw new RuntimeException("vertex() must be used at least once " +
+					"before bezierVertex() or quadraticVertex()");
+		}
+	}
+
+	public void bezierVertex(float x2, float y2,
+			float x3, float y3,
+			float x4, float y4) {
+		bezierInitCheck();
+		bezierVertexCheck();
+		SMatrix3D draw = bezierDrawMatrix;
+
+		float[] prev = vertices[vertexCount - 1];
+		float x1 = prev[X];
+		float y1 = prev[Y];
+
+		float xplot1 = draw.m10 * x1 + draw.m11 * x2 + draw.m12 * x3 + draw.m13 * x4;
+		float xplot2 = draw.m20 * x1 + draw.m21 * x2 + draw.m22 * x3 + draw.m23 * x4;
+		float xplot3 = draw.m30 * x1 + draw.m31 * x2 + draw.m32 * x3 + draw.m33 * x4;
+
+		float yplot1 = draw.m10 * y1 + draw.m11 * y2 + draw.m12 * y3 + draw.m13 * y4;
+		float yplot2 = draw.m20 * y1 + draw.m21 * y2 + draw.m22 * y3 + draw.m23 * y4;
+		float yplot3 = draw.m30 * y1 + draw.m31 * y2 + draw.m32 * y3 + draw.m33 * y4;
+
+		for (int j = 0; j < bezierDetail; j++) {
+			x1 += xplot1;
+			xplot1 += xplot2;
+			xplot2 += xplot3;
+			y1 += yplot1;
+			yplot1 += yplot2;
+			yplot2 += yplot3;
+			vertex(x1, y1);
+		}
+	}
+
+	/**
+	 * ( begin auto-generated from bezierVertex.xml )
+	 *
+	 * Specifies vertex coordinates for Bezier curves. Each call to
+	 * <b>bezierVertex()</b> defines the position of two control points and one
+	 * anchor point of a Bezier curve, adding a new segment to a line or shape.
+	 * The first time <b>bezierVertex()</b> is used within a
+	 * <b>beginShape()</b> call, it must be prefaced with a call to
+	 * <b>vertex()</b> to set the first anchor point. This function must be
+	 * used between <b>beginShape()</b> and <b>endShape()</b> and only when
+	 * there is no MODE parameter specified to <b>beginShape()</b>. Using the
+	 * 3D version requires rendering with P3D (see the Environment reference
+	 * for more information).
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref shape:vertex
+	 * @param x2
+	 *            the x-coordinate of the 1st control point
+	 * @param y2
+	 *            the y-coordinate of the 1st control point
+	 * @param z2
+	 *            the z-coordinate of the 1st control point
+	 * @param x3
+	 *            the x-coordinate of the 2nd control point
+	 * @param y3
+	 *            the y-coordinate of the 2nd control point
+	 * @param z3
+	 *            the z-coordinate of the 2nd control point
+	 * @param x4
+	 *            the x-coordinate of the anchor point
+	 * @param y4
+	 *            the y-coordinate of the anchor point
+	 * @param z4
+	 *            the z-coordinate of the anchor point
+	 * @see PGraphics#curveVertex(float, float, float)
+	 * @see PGraphics#vertex(float, float, float, float, float)
+	 * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 */
+	public void bezierVertex(float x2, float y2, float z2,
+			float x3, float y3, float z3,
+			float x4, float y4, float z4) {
+		bezierInitCheck();
+		bezierVertexCheck();
+		SMatrix3D draw = bezierDrawMatrix;
+
+		float[] prev = vertices[vertexCount - 1];
+		float x1 = prev[X];
+		float y1 = prev[Y];
+		float z1 = prev[Z];
+
+		float xplot1 = draw.m10 * x1 + draw.m11 * x2 + draw.m12 * x3 + draw.m13 * x4;
+		float xplot2 = draw.m20 * x1 + draw.m21 * x2 + draw.m22 * x3 + draw.m23 * x4;
+		float xplot3 = draw.m30 * x1 + draw.m31 * x2 + draw.m32 * x3 + draw.m33 * x4;
+
+		float yplot1 = draw.m10 * y1 + draw.m11 * y2 + draw.m12 * y3 + draw.m13 * y4;
+		float yplot2 = draw.m20 * y1 + draw.m21 * y2 + draw.m22 * y3 + draw.m23 * y4;
+		float yplot3 = draw.m30 * y1 + draw.m31 * y2 + draw.m32 * y3 + draw.m33 * y4;
+
+		float zplot1 = draw.m10 * z1 + draw.m11 * z2 + draw.m12 * z3 + draw.m13 * z4;
+		float zplot2 = draw.m20 * z1 + draw.m21 * z2 + draw.m22 * z3 + draw.m23 * z4;
+		float zplot3 = draw.m30 * z1 + draw.m31 * z2 + draw.m32 * z3 + draw.m33 * z4;
+
+		for (int j = 0; j < bezierDetail; j++) {
+			x1 += xplot1;
+			xplot1 += xplot2;
+			xplot2 += xplot3;
+			y1 += yplot1;
+			yplot1 += yplot2;
+			yplot2 += yplot3;
+			z1 += zplot1;
+			zplot1 += zplot2;
+			zplot2 += zplot3;
+			vertex(x1, y1, z1);
+		}
+	}
+
+	/**
+	 * @webref shape:vertex
+	 * @param cx
+	 *            the x-coordinate of the control point
+	 * @param cy
+	 *            the y-coordinate of the control point
+	 * @param x3
+	 *            the x-coordinate of the anchor point
+	 * @param y3
+	 *            the y-coordinate of the anchor point
+	 * @see PGraphics#curveVertex(float, float, float)
+	 * @see PGraphics#vertex(float, float, float, float, float)
+	 * @see PGraphics#bezierVertex(float, float, float, float, float, float)
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 */
+	public void quadraticVertex(float cx, float cy,
+			float x3, float y3) {
+		float[] prev = vertices[vertexCount - 1];
+		float x1 = prev[X];
+		float y1 = prev[Y];
+
+		bezierVertex(x1 + ((cx - x1) * 2 / 3.0f), y1 + ((cy - y1) * 2 / 3.0f),
+				x3 + ((cx - x3) * 2 / 3.0f), y3 + ((cy - y3) * 2 / 3.0f),
+				x3, y3);
+	}
+
+	/**
+	 * @param cz
+	 *            the z-coordinate of the control point
+	 * @param z3
+	 *            the z-coordinate of the anchor point
+	 */
+	public void quadraticVertex(float cx, float cy, float cz,
+			float x3, float y3, float z3) {
+		float[] prev = vertices[vertexCount - 1];
+		float x1 = prev[X];
+		float y1 = prev[Y];
+		float z1 = prev[Z];
+
+		bezierVertex(x1 + ((cx - x1) * 2 / 3.0f), y1 + ((cy - y1) * 2 / 3.0f), z1 + ((cz - z1) * 2 / 3.0f),
+				x3 + ((cx - x3) * 2 / 3.0f), y3 + ((cy - y3) * 2 / 3.0f), z3 + ((cz - z3) * 2 / 3.0f),
+				x3, y3, z3);
+	}
+
+	protected void curveVertexCheck() {
+		curveVertexCheck(shape);
+	}
+
+	/**
+	 * Perform initialization specific to curveVertex(), and handle standard
+	 * error modes. Can be overridden by subclasses that need the flexibility.
+	 */
+	protected void curveVertexCheck(int shape) {
+		if (shape != POLYGON) {
+			throw new RuntimeException("You must use beginShape() or " +
+					"beginShape(POLYGON) before curveVertex()");
+		}
+		// to improve code init time, allocate on first use.
+		if (curveVertices == null) {
+			curveVertices = new float[128][3];
+		}
+
+		if (curveVertexCount == curveVertices.length) {
+			// Can't use PApplet.expand() cuz it doesn't do the copy properly
+			float[][] temp = new float[curveVertexCount << 1][3];
+			System.arraycopy(curveVertices, 0, temp, 0, curveVertexCount);
+			curveVertices = temp;
+		}
+		curveInitCheck();
+	}
+
+	/**
+	 * ( begin auto-generated from curveVertex.xml )
+	 *
+	 * Specifies vertex coordinates for curves. This function may only be used
+	 * between <b>beginShape()</b> and <b>endShape()</b> and only when there is
+	 * no MODE parameter specified to <b>beginShape()</b>. The first and last
+	 * points in a series of <b>curveVertex()</b> lines will be used to guide
+	 * the beginning and end of a the curve. A minimum of four points is
+	 * required to draw a tiny curve between the second and third points.
+	 * Adding a fifth point with <b>curveVertex()</b> will draw the curve
+	 * between the second, third, and fourth points. The <b>curveVertex()</b>
+	 * function is an implementation of Catmull-Rom splines. Using the 3D
+	 * version requires rendering with P3D (see the Environment reference for
+	 * more information).
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:vertex
+	 * @param x
+	 *            the x-coordinate of the vertex
+	 * @param y
+	 *            the y-coordinate of the vertex
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#beginShape(int)
+	 * @see PGraphics#endShape(int)
+	 * @see PGraphics#vertex(float, float, float, float, float)
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
+	 */
+	public void curveVertex(float x, float y) {
+		curveVertexCheck();
+		float[] v = curveVertices[curveVertexCount];
+		v[X] = x;
+		v[Y] = y;
+		curveVertexCount++;
+
+		// draw a segment if there are enough points
+		if (curveVertexCount > 3) {
+			curveVertexSegment(curveVertices[curveVertexCount - 4][X],
+					curveVertices[curveVertexCount - 4][Y],
+					curveVertices[curveVertexCount - 3][X],
+					curveVertices[curveVertexCount - 3][Y],
+					curveVertices[curveVertexCount - 2][X],
+					curveVertices[curveVertexCount - 2][Y],
+					curveVertices[curveVertexCount - 1][X],
+					curveVertices[curveVertexCount - 1][Y]);
+		}
+	}
+
+	/**
+	 * @param z
+	 *            the z-coordinate of the vertex
+	 */
+	public void curveVertex(float x, float y, float z) {
+		curveVertexCheck();
+		float[] v = curveVertices[curveVertexCount];
+		v[X] = x;
+		v[Y] = y;
+		v[Z] = z;
+		curveVertexCount++;
+
+		// draw a segment if there are enough points
+		if (curveVertexCount > 3) {
+			curveVertexSegment(curveVertices[curveVertexCount - 4][X],
+					curveVertices[curveVertexCount - 4][Y],
+					curveVertices[curveVertexCount - 4][Z],
+					curveVertices[curveVertexCount - 3][X],
+					curveVertices[curveVertexCount - 3][Y],
+					curveVertices[curveVertexCount - 3][Z],
+					curveVertices[curveVertexCount - 2][X],
+					curveVertices[curveVertexCount - 2][Y],
+					curveVertices[curveVertexCount - 2][Z],
+					curveVertices[curveVertexCount - 1][X],
+					curveVertices[curveVertexCount - 1][Y],
+					curveVertices[curveVertexCount - 1][Z]);
+		}
+	}
+
+	/**
+	 * Handle emitting a specific segment of Catmull-Rom curve. This can be
+	 * overridden by subclasses that need more efficient rendering options.
+	 */
+	protected void curveVertexSegment(float x1, float y1,
+			float x2, float y2,
+			float x3, float y3,
+			float x4, float y4) {
+		float x0 = x2;
+		float y0 = y2;
+
+		SMatrix3D draw = curveDrawMatrix;
+
+		float xplot1 = draw.m10 * x1 + draw.m11 * x2 + draw.m12 * x3 + draw.m13 * x4;
+		float xplot2 = draw.m20 * x1 + draw.m21 * x2 + draw.m22 * x3 + draw.m23 * x4;
+		float xplot3 = draw.m30 * x1 + draw.m31 * x2 + draw.m32 * x3 + draw.m33 * x4;
+
+		float yplot1 = draw.m10 * y1 + draw.m11 * y2 + draw.m12 * y3 + draw.m13 * y4;
+		float yplot2 = draw.m20 * y1 + draw.m21 * y2 + draw.m22 * y3 + draw.m23 * y4;
+		float yplot3 = draw.m30 * y1 + draw.m31 * y2 + draw.m32 * y3 + draw.m33 * y4;
+
+		// vertex() will reset splineVertexCount, so save it
+		int savedCount = curveVertexCount;
+
+		vertex(x0, y0);
+		for (int j = 0; j < curveDetail; j++) {
+			x0 += xplot1;
+			xplot1 += xplot2;
+			xplot2 += xplot3;
+			y0 += yplot1;
+			yplot1 += yplot2;
+			yplot2 += yplot3;
+			vertex(x0, y0);
+		}
+		curveVertexCount = savedCount;
+	}
+
+	/**
+	 * Handle emitting a specific segment of Catmull-Rom curve. This can be
+	 * overridden by subclasses that need more efficient rendering options.
+	 */
+	protected void curveVertexSegment(float x1, float y1, float z1,
+			float x2, float y2, float z2,
+			float x3, float y3, float z3,
+			float x4, float y4, float z4) {
+		float x0 = x2;
+		float y0 = y2;
+		float z0 = z2;
+
+		SMatrix3D draw = curveDrawMatrix;
+
+		float xplot1 = draw.m10 * x1 + draw.m11 * x2 + draw.m12 * x3 + draw.m13 * x4;
+		float xplot2 = draw.m20 * x1 + draw.m21 * x2 + draw.m22 * x3 + draw.m23 * x4;
+		float xplot3 = draw.m30 * x1 + draw.m31 * x2 + draw.m32 * x3 + draw.m33 * x4;
+
+		float yplot1 = draw.m10 * y1 + draw.m11 * y2 + draw.m12 * y3 + draw.m13 * y4;
+		float yplot2 = draw.m20 * y1 + draw.m21 * y2 + draw.m22 * y3 + draw.m23 * y4;
+		float yplot3 = draw.m30 * y1 + draw.m31 * y2 + draw.m32 * y3 + draw.m33 * y4;
+
+		// vertex() will reset splineVertexCount, so save it
+		int savedCount = curveVertexCount;
+
+		float zplot1 = draw.m10 * z1 + draw.m11 * z2 + draw.m12 * z3 + draw.m13 * z4;
+		float zplot2 = draw.m20 * z1 + draw.m21 * z2 + draw.m22 * z3 + draw.m23 * z4;
+		float zplot3 = draw.m30 * z1 + draw.m31 * z2 + draw.m32 * z3 + draw.m33 * z4;
+
+		vertex(x0, y0, z0);
+		for (int j = 0; j < curveDetail; j++) {
+			x0 += xplot1;
+			xplot1 += xplot2;
+			xplot2 += xplot3;
+			y0 += yplot1;
+			yplot1 += yplot2;
+			yplot2 += yplot3;
+			z0 += zplot1;
+			zplot1 += zplot2;
+			zplot2 += zplot3;
+			vertex(x0, y0, z0);
+		}
+		curveVertexCount = savedCount;
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SIMPLE SHAPES WITH ANALOGUES IN beginShape()
+
+	/**
+	 * ( begin auto-generated from point.xml )
+	 *
+	 * Draws a point, a coordinate in space at the dimension of one pixel. The
+	 * first parameter is the horizontal value for the point, the second value
+	 * is the vertical value for the point, and the optional third value is the
+	 * depth value. Drawing this shape in 3D with the <b>z</b> parameter
+	 * requires the P3D parameter in combination with <b>size()</b> as shown in
+	 * the above example.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:2d_primitives
+	 * @param x
+	 *            x-coordinate of the point
+	 * @param y
+	 *            y-coordinate of the point
+	 * @see PGraphics#stroke(int)
+	 */
 	@Override
 	public void point(float x, float y) {
-		if (stroke) line(x, y, x + EPSILON, y + EPSILON);
+		beginShape(POINTS);
+		vertex(x, y);
+		endShape();
 	}
 
+	/**
+	 * @param z
+	 *            z-coordinate of the point
+	 */
+	public void point(float x, float y, float z) {
+		beginShape(POINTS);
+		vertex(x, y, z);
+		endShape();
+	}
+
+	/**
+	 * ( begin auto-generated from line.xml )
+	 *
+	 * Draws a line (a direct path between two points) to the screen. The
+	 * version of <b>line()</b> with four parameters draws the line in 2D. To
+	 * color a line, use the <b>stroke()</b> function. A line cannot be filled,
+	 * therefore the <b>fill()</b> function will not affect the color of a
+	 * line. 2D lines are drawn with a width of one pixel by default, but this
+	 * can be changed with the <b>strokeWeight()</b> function. The version with
+	 * six parameters allows the line to be placed anywhere within XYZ space.
+	 * Drawing this shape in 3D with the <b>z</b> parameter requires the P3D
+	 * parameter in combination with <b>size()</b> as shown in the above example.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref shape:2d_primitives
+	 * @param x1
+	 *            x-coordinate of the first point
+	 * @param y1
+	 *            y-coordinate of the first point
+	 * @param x2
+	 *            x-coordinate of the second point
+	 * @param y2
+	 *            y-coordinate of the second point
+	 * @see PGraphics#strokeWeight(float)
+	 * @see PGraphics#strokeJoin(int)
+	 * @see PGraphics#strokeCap(int)
+	 * @see PGraphics#beginShape()
+	 */
 	@Override
 	public void line(float x1, float y1, float x2, float y2) {
-		line.setLine(x1, y1, x2, y2);
-		strokeShape(line);
+		beginShape(LINES);
+		vertex(x1, y1);
+		vertex(x2, y2);
+		endShape();
 	}
 
-	@Override
-	public void triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-//		gpath = new GeneralPath();
-		gpath.reset();
-		gpath.moveTo(x1, y1);
-		gpath.lineTo(x2, y2);
-		gpath.lineTo(x3, y3);
-		gpath.closePath();
-		drawShape(gpath);
+	/**
+	 * @param z1
+	 *            z-coordinate of the first point
+	 * @param z2
+	 *            z-coordinate of the second point
+	 */
+	public void line(float x1, float y1, float z1,
+			float x2, float y2, float z2) {
+		beginShape(LINES);
+		vertex(x1, y1, z1);
+		vertex(x2, y2, z2);
+		endShape();
 	}
 
+	/**
+	 * ( begin auto-generated from triangle.xml )
+	 *
+	 * A triangle is a plane created by connecting three points. The first two
+	 * arguments specify the first point, the middle two arguments specify the
+	 * second point, and the last two arguments specify the third point.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref shape:2d_primitives
+	 * @param x1
+	 *            x-coordinate of the first point
+	 * @param y1
+	 *            y-coordinate of the first point
+	 * @param x2
+	 *            x-coordinate of the second point
+	 * @param y2
+	 *            y-coordinate of the second point
+	 * @param x3
+	 *            x-coordinate of the third point
+	 * @param y3
+	 *            y-coordinate of the third point
+	 * @see PApplet#beginShape()
+	 */
 	@Override
-	public void quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-		gpath.reset();
-		gpath.moveTo(x1, y1);
-		gpath.lineTo(x2, y2);
-		gpath.lineTo(x3, y3);
-		gpath.lineTo(x4, y4);
-		gpath.closePath();
-		drawShape(gpath);
+	public void triangle(float x1, float y1, float x2, float y2,
+			float x3, float y3) {
+		beginShape(TRIANGLES);
+		vertex(x1, y1);
+		vertex(x2, y2);
+		vertex(x3, y3);
+		endShape();
+	}
+
+	/**
+	 * ( begin auto-generated from quad.xml )
+	 *
+	 * A quad is a quadrilateral, a four sided polygon. It is similar to a
+	 * rectangle, but the angles between its edges are not constrained to
+	 * ninety degrees. The first pair of parameters (x1,y1) sets the first
+	 * vertex and the subsequent pairs should proceed clockwise or
+	 * counter-clockwise around the defined shape.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref shape:2d_primitives
+	 * @param x1
+	 *            x-coordinate of the first corner
+	 * @param y1
+	 *            y-coordinate of the first corner
+	 * @param x2
+	 *            x-coordinate of the second corner
+	 * @param y2
+	 *            y-coordinate of the second corner
+	 * @param x3
+	 *            x-coordinate of the third corner
+	 * @param y3
+	 *            y-coordinate of the third corner
+	 * @param x4
+	 *            x-coordinate of the fourth corner
+	 * @param y4
+	 *            y-coordinate of the fourth corner
+	 */
+	@Override
+	public void quad(float x1, float y1, float x2, float y2,
+			float x3, float y3, float x4, float y4) {
+		beginShape(QUADS);
+		vertex(x1, y1);
+		vertex(x2, y2);
+		vertex(x3, y3);
+		vertex(x4, y4);
+		endShape();
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1025,8 +1669,101 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	protected void rectImpl(float x1, float y1, float x2, float y2) {
-		rect.setFrame(x1, y1, x2 - x1, y2 - y1);
-		drawShape(rect);
+		quad(x1, y1, x2, y1, x2, y2, x1, y2);
+	}
+
+	public void rect(float a, float b, float c, float d, float r) {
+		rect(a, b, c, d, r, r, r, r);
+	}
+
+	/**
+	 * @param tl
+	 *            radius for top-left corner
+	 * @param tr
+	 *            radius for top-right corner
+	 * @param br
+	 *            radius for bottom-right corner
+	 * @param bl
+	 *            radius for bottom-left corner
+	 */
+	public void rect(float a, float b, float c, float d,
+			float tl, float tr, float br, float bl) {
+		float hradius, vradius;
+		switch (rectMode) {
+			case CORNERS:
+				break;
+			case CORNER:
+				c += a;
+				d += b;
+				break;
+			case RADIUS:
+				hradius = c;
+				vradius = d;
+				c = a + hradius;
+				d = b + vradius;
+				a -= hradius;
+				b -= vradius;
+				break;
+			case CENTER:
+				hradius = c / 2.0f;
+				vradius = d / 2.0f;
+				c = a + hradius;
+				d = b + vradius;
+				a -= hradius;
+				b -= vradius;
+		}
+
+		if (a > c) {
+			float temp = a;
+			a = c;
+			c = temp;
+		}
+
+		if (b > d) {
+			float temp = b;
+			b = d;
+			d = temp;
+		}
+
+		float maxRounding = MathUtils.instance.min((c - a) / 2, (d - b) / 2);
+		if (tl > maxRounding) tl = maxRounding;
+		if (tr > maxRounding) tr = maxRounding;
+		if (br > maxRounding) br = maxRounding;
+		if (bl > maxRounding) bl = maxRounding;
+
+		rectImpl(a, b, c, d, tl, tr, br, bl);
+	}
+
+	protected void rectImpl(float x1, float y1, float x2, float y2,
+			float tl, float tr, float br, float bl) {
+		beginShape();
+//		    vertex(x1+tl, y1);
+		if (tr != 0) {
+			vertex(x2 - tr, y1);
+			quadraticVertex(x2, y1, x2, y1 + tr);
+		} else {
+			vertex(x2, y1);
+		}
+		if (br != 0) {
+			vertex(x2, y2 - br);
+			quadraticVertex(x2, y2, x2 - br, y2);
+		} else {
+			vertex(x2, y2);
+		}
+		if (bl != 0) {
+			vertex(x1 + bl, y2);
+			quadraticVertex(x1, y2, x1, y2 - bl);
+		} else {
+			vertex(x1, y2);
+		}
+		if (tl != 0) {
+			vertex(x1, y1 + tl);
+			quadraticVertex(x1, y1, x1 + tl, y1);
+		} else {
+			vertex(x1, y1);
+		}
+//		    endShape();
+		endShape(CLOSE);
 	}
 
 	@Override
@@ -1072,8 +1809,7 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	protected void ellipseImpl(float x, float y, float w, float h) {
-		ellipse.setFrame(x, y, w, h);
-		drawShape(ellipse);
+		showMissingWarning("ellipseImpl");
 	}
 
 	@Override
@@ -1148,32 +1884,809 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	private final void arcImpl(float x, float y, float w, float h, float start, float stop, int mode) {
-		start = -start * RAD_TO_DEG;
-		stop = -stop * RAD_TO_DEG;
-		float sweep = stop - start;
+		showMissingWarning("arc");
+	}
 
-		int fillMode = Arc2D.PIE;
-		int strokeMode = Arc2D.OPEN;
+	//////////////////////////////////////////////////////////////
 
-		if (mode == OPEN) {
-			fillMode = Arc2D.OPEN;
+	// BOX
 
-		} else if (mode == PIE) {
-			strokeMode = Arc2D.PIE;
+	/**
+	 * ( begin auto-generated from box.xml )
+	 *
+	 * A box is an extruded rectangle. A box with equal dimension on all sides
+	 * is a cube.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:3d_primitives
+	 * @param size
+	 *            dimension of the box in all dimensions (creates a cube)
+	 * @see PGraphics#sphere(float)
+	 */
+	public void box(float size) {
+		box(size, size, size);
+	}
 
-		} else if (mode == CHORD) {
-			fillMode = Arc2D.CHORD;
-			strokeMode = Arc2D.CHORD;
+	/**
+	 * @param w
+	 *            dimension of the box in the x-dimension
+	 * @param h
+	 *            dimension of the box in the y-dimension
+	 * @param d
+	 *            dimension of the box in the z-dimension
+	 */
+	public void box(float w, float h, float d) {
+		float x1 = -w / 2f;
+		float x2 = w / 2f;
+		float y1 = -h / 2f;
+		float y2 = h / 2f;
+		float z1 = -d / 2f;
+		float z2 = d / 2f;
+
+		// TODO not the least bit efficient, it even redraws lines
+		// along the vertices. ugly ugly ugly!
+
+		beginShape(QUADS);
+
+		// front
+		normal(0, 0, 1);
+		vertex(x1, y1, z1);
+		vertex(x2, y1, z1);
+		vertex(x2, y2, z1);
+		vertex(x1, y2, z1);
+
+		// right
+		normal(1, 0, 0);
+		vertex(x2, y1, z1);
+		vertex(x2, y1, z2);
+		vertex(x2, y2, z2);
+		vertex(x2, y2, z1);
+
+		// back
+		normal(0, 0, -1);
+		vertex(x2, y1, z2);
+		vertex(x1, y1, z2);
+		vertex(x1, y2, z2);
+		vertex(x2, y2, z2);
+
+		// left
+		normal(-1, 0, 0);
+		vertex(x1, y1, z2);
+		vertex(x1, y1, z1);
+		vertex(x1, y2, z1);
+		vertex(x1, y2, z2);
+
+		// top
+		normal(0, 1, 0);
+		vertex(x1, y1, z2);
+		vertex(x2, y1, z2);
+		vertex(x2, y1, z1);
+		vertex(x1, y1, z1);
+
+		// bottom
+		normal(0, -1, 0);
+		vertex(x1, y2, z1);
+		vertex(x2, y2, z1);
+		vertex(x2, y2, z2);
+		vertex(x1, y2, z2);
+
+		endShape();
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SPHERE
+
+	/**
+	 * ( begin auto-generated from sphereDetail.xml )
+	 *
+	 * Controls the detail used to render a sphere by adjusting the number of
+	 * vertices of the sphere mesh. The default resolution is 30, which creates
+	 * a fairly detailed sphere definition with vertices every 360/30 = 12
+	 * degrees. If you're going to render a great number of spheres per frame,
+	 * it is advised to reduce the level of detail using this function. The
+	 * setting stays active until <b>sphereDetail()</b> is called again with a
+	 * new parameter and so should <i>not</i> be called prior to every
+	 * <b>sphere()</b> statement, unless you wish to render spheres with
+	 * different settings, e.g. using less detail for smaller spheres or ones
+	 * further away from the camera. To control the detail of the horizontal
+	 * and vertical resolution independently, use the version of the functions
+	 * with two parameters.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * Code for sphereDetail() submitted by toxi [031031].
+	 * Code for enhanced u/v version from davbol [080801].
+	 *
+	 * @param res
+	 *            number of segments (minimum 3) used per full circle revolution
+	 * @webref shape:3d_primitives
+	 * @see PGraphics#sphere(float)
+	 */
+	public void sphereDetail(int res) {
+		sphereDetail(res, res);
+	}
+
+	/**
+	 * @param ures
+	 *            number of segments used longitudinally per full circle revolutoin
+	 * @param vres
+	 *            number of segments used latitudinally from top to bottom
+	 */
+	public void sphereDetail(int ures, int vres) {
+		if (ures < 3) ures = 3; // force a minimum res
+		if (vres < 2) vres = 2; // force a minimum res
+		if ((ures == sphereDetailU) && (vres == sphereDetailV)) return;
+
+		float delta = (float) SINCOS_LENGTH / ures;
+		float[] cx = new float[ures];
+		float[] cz = new float[ures];
+		// calc unit circle in XZ plane
+		for (int i = 0; i < ures; i++) {
+			cx[i] = cosLUT[(int) (i * delta) % SINCOS_LENGTH];
+			cz[i] = sinLUT[(int) (i * delta) % SINCOS_LENGTH];
+		}
+		// computing vertexlist
+		// vertexlist starts at south pole
+		int vertCount = ures * (vres - 1) + 2;
+		int currVert = 0;
+
+		// re-init arrays to store vertices
+		sphereX = new float[vertCount];
+		sphereY = new float[vertCount];
+		sphereZ = new float[vertCount];
+
+		float angle_step = (SINCOS_LENGTH * 0.5f) / vres;
+		float angle = angle_step;
+
+		// step along Y axis
+		for (int i = 1; i < vres; i++) {
+			float curradius = sinLUT[(int) angle % SINCOS_LENGTH];
+			float currY = cosLUT[(int) angle % SINCOS_LENGTH];
+			for (int j = 0; j < ures; j++) {
+				sphereX[currVert] = cx[j] * curradius;
+				sphereY[currVert] = currY;
+				sphereZ[currVert++] = cz[j] * curradius;
+			}
+			angle += angle_step;
+		}
+		sphereDetailU = ures;
+		sphereDetailV = vres;
+	}
+
+	/**
+	 * ( begin auto-generated from sphere.xml )
+	 *
+	 * A sphere is a hollow ball made from tessellated triangles.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * <P>
+	 * Implementation notes:
+	 * <P>
+	 * cache all the points of the sphere in a static array
+	 * top and bottom are just a bunch of triangles that land
+	 * in the center point
+	 * <P>
+	 * sphere is a series of concentric circles who radii vary
+	 * along the shape, based on, er.. cos or something
+	 * 
+	 * <PRE>
+	 * [toxi 031031] new sphere code. removed all multiplies with
+	 * radius, as scale() will take care of that anyway
+	 *
+	 * [toxi 031223] updated sphere code (removed modulos)
+	 * and introduced sphereAt(x,y,z,r)
+	 * to avoid additional translate()'s on the user/sketch side
+	 *
+	 * [davbol 080801] now using separate sphereDetailU/V
+	 * </PRE>
+	 *
+	 * @webref shape:3d_primitives
+	 * @param r
+	 *            the radius of the sphere
+	 * @see PGraphics#sphereDetail(int)
+	 */
+	public void sphere(float r) {
+		if ((sphereDetailU < 3) || (sphereDetailV < 2)) {
+			sphereDetail(30);
 		}
 
-		if (fill) {
-			arc.setArc(x, y, w, h, start, sweep, fillMode);
-			fillShape(arc);
+		edge(false);
+
+		// 1st ring from south pole
+		beginShape(TRIANGLE_STRIP);
+		for (int i = 0; i < sphereDetailU; i++) {
+			normal(0, -1, 0);
+			vertex(0, -r, 0);
+			normal(sphereX[i], sphereY[i], sphereZ[i]);
+			vertex(r * sphereX[i], r * sphereY[i], r * sphereZ[i]);
 		}
-		if (stroke) {
-			arc.setArc(x, y, w, h, start, sweep, strokeMode);
-			strokeShape(arc);
+		normal(0, -r, 0);
+		vertex(0, -r, 0);
+		normal(sphereX[0], sphereY[0], sphereZ[0]);
+		vertex(r * sphereX[0], r * sphereY[0], r * sphereZ[0]);
+		endShape();
+
+		int v1, v11, v2;
+
+		// middle rings
+		int voff = 0;
+		for (int i = 2; i < sphereDetailV; i++) {
+			v1 = v11 = voff;
+			voff += sphereDetailU;
+			v2 = voff;
+			beginShape(TRIANGLE_STRIP);
+			for (int j = 0; j < sphereDetailU; j++) {
+				normal(sphereX[v1], sphereY[v1], sphereZ[v1]);
+				vertex(r * sphereX[v1], r * sphereY[v1], r * sphereZ[v1++]);
+				normal(sphereX[v2], sphereY[v2], sphereZ[v2]);
+				vertex(r * sphereX[v2], r * sphereY[v2], r * sphereZ[v2++]);
+			}
+			// close each ring
+			v1 = v11;
+			v2 = voff;
+			normal(sphereX[v1], sphereY[v1], sphereZ[v1]);
+			vertex(r * sphereX[v1], r * sphereY[v1], r * sphereZ[v1]);
+			normal(sphereX[v2], sphereY[v2], sphereZ[v2]);
+			vertex(r * sphereX[v2], r * sphereY[v2], r * sphereZ[v2]);
+			endShape();
 		}
+
+		// add the northern cap
+		beginShape(TRIANGLE_STRIP);
+		for (int i = 0; i < sphereDetailU; i++) {
+			v2 = voff + i;
+			normal(sphereX[v2], sphereY[v2], sphereZ[v2]);
+			vertex(r * sphereX[v2], r * sphereY[v2], r * sphereZ[v2]);
+			normal(0, 1, 0);
+			vertex(0, r, 0);
+		}
+		normal(sphereX[voff], sphereY[voff], sphereZ[voff]);
+		vertex(r * sphereX[voff], r * sphereY[voff], r * sphereZ[voff]);
+		normal(0, 1, 0);
+		vertex(0, r, 0);
+		endShape();
+
+		edge(true);
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// BEZIER
+
+	/**
+	 * ( begin auto-generated from bezierPoint.xml )
+	 *
+	 * Evaluates the Bezier at point t for points a, b, c, d. The parameter t
+	 * varies between 0 and 1, a and d are points on the curve, and b and c are
+	 * the control points. This can be done once with the x coordinates and a
+	 * second time with the y coordinates to get the location of a bezier curve
+	 * at t.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * For instance, to convert the following example:
+	 * 
+	 * <PRE>
+	 * stroke(255, 102, 0);
+	 * line(85, 20, 10, 10);
+	 * line(90, 90, 15, 80);
+	 * stroke(0, 0, 0);
+	 * bezier(85, 20, 10, 10, 90, 90, 15, 80);
+	 *
+	 * // draw it in gray, using 10 steps instead of the default 20
+	 * // this is a slower way to do it, but useful if you need
+	 * // to do things with the coordinates at each step
+	 * stroke(128);
+	 * beginShape(LINE_STRIP);
+	 * for (int i = 0; i <= 10; i++) {
+	 * 	float t = i / 10.0f;
+	 * 	float x = bezierPoint(85, 10, 90, 15, t);
+	 * 	float y = bezierPoint(20, 10, 90, 80, t);
+	 * 	vertex(x, y);
+	 * }
+	 * endShape();
+	 * </PRE>
+	 *
+	 * @webref shape:curves
+	 * @param a
+	 *            coordinate of first point on the curve
+	 * @param b
+	 *            coordinate of first control point
+	 * @param c
+	 *            coordinate of second control point
+	 * @param d
+	 *            coordinate of second point on the curve
+	 * @param t
+	 *            value between 0 and 1
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#bezierVertex(float, float, float, float, float, float)
+	 * @see PGraphics#curvePoint(float, float, float, float, float)
+	 */
+	public float bezierPoint(float a, float b, float c, float d, float t) {
+		float t1 = 1.0f - t;
+		return (a * t1 + 3 * b * t) * t1 * t1 + (3 * c * t1 + d * t) * t * t;
+	}
+
+	/**
+	 * ( begin auto-generated from bezierTangent.xml )
+	 *
+	 * Calculates the tangent of a point on a Bezier curve. There is a good
+	 * definition of <a href="http://en.wikipedia.org/wiki/Tangent"
+	 * target="new"><em>tangent</em> on Wikipedia</a>.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * Code submitted by Dave Bollinger (davol) for release 0136.
+	 *
+	 * @webref shape:curves
+	 * @param a
+	 *            coordinate of first point on the curve
+	 * @param b
+	 *            coordinate of first control point
+	 * @param c
+	 *            coordinate of second control point
+	 * @param d
+	 *            coordinate of second point on the curve
+	 * @param t
+	 *            value between 0 and 1
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#bezierVertex(float, float, float, float, float, float)
+	 * @see PGraphics#curvePoint(float, float, float, float, float)
+	 */
+	public float bezierTangent(float a, float b, float c, float d, float t) {
+		return (3 * t * t * (-a + 3 * b - 3 * c + d) +
+				6 * t * (a - 2 * b + c) +
+				3 * (-a + b));
+	}
+
+	protected void bezierInitCheck() {
+		if (!bezierInited) {
+			bezierInit();
+		}
+	}
+
+	protected void bezierInit() {
+		// overkill to be broken out, but better parity with the curve stuff below
+		bezierDetail(bezierDetail);
+		bezierInited = true;
+	}
+
+	/**
+	 * ( begin auto-generated from bezierDetail.xml )
+	 *
+	 * Sets the resolution at which Beziers display. The default value is 20.
+	 * This function is only useful when using the P3D renderer as the default
+	 * P2D renderer does not use this information.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:curves
+	 * @param detail
+	 *            resolution of the curves
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#curveVertex(float, float, float)
+	 * @see PGraphics#curveTightness(float)
+	 */
+	public void bezierDetail(int detail) {
+		bezierDetail = detail;
+
+		if (bezierDrawMatrix == null) {
+			bezierDrawMatrix = new SMatrix3D();
+		}
+
+		// setup matrix for forward differencing to speed up drawing
+		splineForward(detail, bezierDrawMatrix);
+
+		// multiply the basis and forward diff matrices together
+		// saves much time since this needn't be done for each curve
+		// mult_spline_matrix(bezierForwardMatrix, bezier_basis, bezierDrawMatrix, 4);
+		// bezierDrawMatrix.set(bezierForwardMatrix);
+		bezierDrawMatrix.apply(bezierBasisMatrix);
+	}
+
+	public void bezier(float x1, float y1,
+			float x2, float y2,
+			float x3, float y3,
+			float x4, float y4) {
+		beginShape();
+		vertex(x1, y1);
+		bezierVertex(x2, y2, x3, y3, x4, y4);
+		endShape();
+	}
+
+	/**
+	 * ( begin auto-generated from bezier.xml )
+	 *
+	 * Draws a Bezier curve on the screen. These curves are defined by a series
+	 * of anchor and control points. The first two parameters specify the first
+	 * anchor point and the last two parameters specify the other anchor point.
+	 * The middle parameters specify the control points which define the shape
+	 * of the curve. Bezier curves were developed by French engineer Pierre
+	 * Bezier. Using the 3D version requires rendering with P3D (see the
+	 * Environment reference for more information).
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * Draw a cubic bezier curve. The first and last points are
+	 * the on-curve points. The middle two are the 'control' points,
+	 * or 'handles' in an application like Illustrator.
+	 * <P>
+	 * Identical to typing:
+	 * 
+	 * <PRE>
+	 * beginShape();
+	 * vertex(x1, y1);
+	 * bezierVertex(x2, y2, x3, y3, x4, y4);
+	 * endShape();
+	 * </PRE>
+	 * 
+	 * In Postscript-speak, this would be:
+	 * 
+	 * <PRE>
+	 * moveto(x1, y1);
+	 * curveto(x2, y2, x3, y3, x4, y4);
+	 * </PRE>
+	 * 
+	 * If you were to try and continue that curve like so:
+	 * 
+	 * <PRE>
+	 * curveto(x5, y5, x6, y6, x7, y7);
+	 * </PRE>
+	 * 
+	 * This would be done in processing by adding these statements:
+	 * 
+	 * <PRE>
+	 * bezierVertex(x5, y5, x6, y6, x7, y7)
+	 * </PRE>
+	 * 
+	 * To draw a quadratic (instead of cubic) curve,
+	 * use the control point twice by doubling it:
+	 * 
+	 * <PRE>
+	 * bezier(x1, y1, cx, cy, cx, cy, x2, y2);
+	 * </PRE>
+	 *
+	 * @webref shape:curves
+	 * @param x1
+	 *            coordinates for the first anchor point
+	 * @param y1
+	 *            coordinates for the first anchor point
+	 * @param z1
+	 *            coordinates for the first anchor point
+	 * @param x2
+	 *            coordinates for the first control point
+	 * @param y2
+	 *            coordinates for the first control point
+	 * @param z2
+	 *            coordinates for the first control point
+	 * @param x3
+	 *            coordinates for the second control point
+	 * @param y3
+	 *            coordinates for the second control point
+	 * @param z3
+	 *            coordinates for the second control point
+	 * @param x4
+	 *            coordinates for the second anchor point
+	 * @param y4
+	 *            coordinates for the second anchor point
+	 * @param z4
+	 *            coordinates for the second anchor point
+	 *
+	 * @see PGraphics#bezierVertex(float, float, float, float, float, float)
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 */
+	public void bezier(float x1, float y1, float z1,
+			float x2, float y2, float z2,
+			float x3, float y3, float z3,
+			float x4, float y4, float z4) {
+		beginShape();
+		vertex(x1, y1, z1);
+		bezierVertex(x2, y2, z2,
+				x3, y3, z3,
+				x4, y4, z4);
+		endShape();
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// CATMULL-ROM CURVE
+
+	/**
+	 * ( begin auto-generated from curvePoint.xml )
+	 *
+	 * Evalutes the curve at point t for points a, b, c, d. The parameter t
+	 * varies between 0 and 1, a and d are the control points, and b and c are
+	 * the points on the curve. This can be done once with the x coordinates and a
+	 * second time with the y coordinates to get the location of a curve at t.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:curves
+	 * @param a
+	 *            coordinate of first control point
+	 * @param b
+	 *            coordinate of first point on the curve
+	 * @param c
+	 *            coordinate of second point on the curve
+	 * @param d
+	 *            coordinate of second control point
+	 * @param t
+	 *            value between 0 and 1
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#curveVertex(float, float)
+	 * @see PGraphics#bezierPoint(float, float, float, float, float)
+	 */
+	public float curvePoint(float a, float b, float c, float d, float t) {
+		curveInitCheck();
+
+		float tt = t * t;
+		float ttt = t * tt;
+		SMatrix3D cb = curveBasisMatrix;
+
+		// not optimized (and probably need not be)
+		return (a * (ttt * cb.m00 + tt * cb.m10 + t * cb.m20 + cb.m30) +
+				b * (ttt * cb.m01 + tt * cb.m11 + t * cb.m21 + cb.m31) +
+				c * (ttt * cb.m02 + tt * cb.m12 + t * cb.m22 + cb.m32) +
+				d * (ttt * cb.m03 + tt * cb.m13 + t * cb.m23 + cb.m33));
+	}
+
+	/**
+	 * ( begin auto-generated from curveTangent.xml )
+	 *
+	 * Calculates the tangent of a point on a curve. There's a good definition
+	 * of <em><a href="http://en.wikipedia.org/wiki/Tangent"
+	 * target="new">tangent</em> on Wikipedia</a>.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * Code thanks to Dave Bollinger (Bug #715)
+	 *
+	 * @webref shape:curves
+	 * @param a
+	 *            coordinate of first point on the curve
+	 * @param b
+	 *            coordinate of first control point
+	 * @param c
+	 *            coordinate of second control point
+	 * @param d
+	 *            coordinate of second point on the curve
+	 * @param t
+	 *            value between 0 and 1
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#curveVertex(float, float)
+	 * @see PGraphics#curvePoint(float, float, float, float, float)
+	 * @see PGraphics#bezierTangent(float, float, float, float, float)
+	 */
+	public float curveTangent(float a, float b, float c, float d, float t) {
+		curveInitCheck();
+
+		float tt3 = t * t * 3;
+		float t2 = t * 2;
+		SMatrix3D cb = curveBasisMatrix;
+
+		// not optimized (and probably need not be)
+		return (a * (tt3 * cb.m00 + t2 * cb.m10 + cb.m20) +
+				b * (tt3 * cb.m01 + t2 * cb.m11 + cb.m21) +
+				c * (tt3 * cb.m02 + t2 * cb.m12 + cb.m22) +
+				d * (tt3 * cb.m03 + t2 * cb.m13 + cb.m23));
+	}
+
+	/**
+	 * ( begin auto-generated from curveDetail.xml )
+	 *
+	 * Sets the resolution at which curves display. The default value is 20.
+	 * This function is only useful when using the P3D renderer as the default
+	 * P2D renderer does not use this information.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:curves
+	 * @param detail
+	 *            resolution of the curves
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#curveVertex(float, float)
+	 * @see PGraphics#curveTightness(float)
+	 */
+	public void curveDetail(int detail) {
+		curveDetail = detail;
+		curveInit();
+	}
+
+	/**
+	 * ( begin auto-generated from curveTightness.xml )
+	 *
+	 * Modifies the quality of forms created with <b>curve()</b> and
+	 * <b>curveVertex()</b>. The parameter <b>squishy</b> determines how the
+	 * curve fits to the vertex points. The value 0.0 is the default value for
+	 * <b>squishy</b> (this value defines the curves to be Catmull-Rom splines)
+	 * and the value 1.0 connects all the points with straight lines. Values
+	 * within the range -5.0 and 5.0 will deform the curves but will leave them
+	 * recognizable and as values increase in magnitude, they will continue to deform.
+	 *
+	 * ( end auto-generated )
+	 *
+	 * @webref shape:curves
+	 * @param tightness
+	 *            amount of deformation from the original vertices
+	 * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+	 * @see PGraphics#curveVertex(float, float)
+	 */
+	public void curveTightness(float tightness) {
+		curveTightness = tightness;
+		curveInit();
+	}
+
+	protected void curveInitCheck() {
+		if (!curveInited) {
+			curveInit();
+		}
+	}
+
+	/**
+	 * Set the number of segments to use when drawing a Catmull-Rom
+	 * curve, and setting the s parameter, which defines how tightly
+	 * the curve fits to each vertex. Catmull-Rom curves are actually
+	 * a subset of this curve type where the s is set to zero.
+	 * <P>
+	 * (This function is not optimized, since it's not expected to
+	 * be called all that often. there are many juicy and obvious
+	 * opimizations in here, but it's probably better to keep the
+	 * code more readable)
+	 */
+	protected void curveInit() {
+		// allocate only if/when used to save startup time
+		if (curveDrawMatrix == null) {
+			curveBasisMatrix = new SMatrix3D();
+			curveDrawMatrix = new SMatrix3D();
+			curveInited = true;
+		}
+
+		float s = curveTightness;
+		curveBasisMatrix.set((s - 1) / 2f, (s + 3) / 2f, (-3 - s) / 2f, (1 - s) / 2f,
+				(1 - s), (-5 - s) / 2f, (s + 2), (s - 1) / 2f,
+				(s - 1) / 2f, 0, (1 - s) / 2f, 0,
+				0, 1, 0, 0);
+
+		// setup_spline_forward(segments, curveForwardMatrix);
+		splineForward(curveDetail, curveDrawMatrix);
+
+		if (bezierBasisInverse == null) {
+			bezierBasisInverse = bezierBasisMatrix.get();
+			bezierBasisInverse.invert();
+			curveToBezierMatrix = new SMatrix3D();
+		}
+
+		// TODO only needed for PGraphicsJava2D? if so, move it there
+		// actually, it's generally useful for other renderers, so keep it
+		// or hide the implementation elsewhere.
+		curveToBezierMatrix.set(curveBasisMatrix);
+		curveToBezierMatrix.preApply(bezierBasisInverse);
+
+		// multiply the basis and forward diff matrices together
+		// saves much time since this needn't be done for each curve
+		curveDrawMatrix.apply(curveBasisMatrix);
+	}
+
+	/**
+	 * ( begin auto-generated from curve.xml )
+	 *
+	 * Draws a curved line on the screen. The first and second parameters
+	 * specify the beginning control point and the last two parameters specify
+	 * the ending control point. The middle parameters specify the start and
+	 * stop of the curve. Longer curves can be created by putting a series of
+	 * <b>curve()</b> functions together or using <b>curveVertex()</b>. An
+	 * additional function called <b>curveTightness()</b> provides control for
+	 * the visual quality of the curve. The <b>curve()</b> function is an
+	 * implementation of Catmull-Rom splines. Using the 3D version requires
+	 * rendering with P3D (see the Environment reference for more information).
+	 *
+	 * ( end auto-generated )
+	 *
+	 * <h3>Advanced</h3>
+	 * As of revision 0070, this function no longer doubles the first
+	 * and last points. The curves are a bit more boring, but it's more
+	 * mathematically correct, and properly mirrored in curvePoint().
+	 * <P>
+	 * Identical to typing out:
+	 * 
+	 * <PRE>
+	 * beginShape();
+	 * curveVertex(x1, y1);
+	 * curveVertex(x2, y2);
+	 * curveVertex(x3, y3);
+	 * curveVertex(x4, y4);
+	 * endShape();
+	 * </PRE>
+	 *
+	 * @webref shape:curves
+	 * @param x1
+	 *            coordinates for the beginning control point
+	 * @param y1
+	 *            coordinates for the beginning control point
+	 * @param x2
+	 *            coordinates for the first point
+	 * @param y2
+	 *            coordinates for the first point
+	 * @param x3
+	 *            coordinates for the second point
+	 * @param y3
+	 *            coordinates for the second point
+	 * @param x4
+	 *            coordinates for the ending control point
+	 * @param y4
+	 *            coordinates for the ending control point
+	 * @see PGraphics#curveVertex(float, float)
+	 * @see PGraphics#curveTightness(float)
+	 * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+	 */
+	public void curve(float x1, float y1,
+			float x2, float y2,
+			float x3, float y3,
+			float x4, float y4) {
+		beginShape();
+		curveVertex(x1, y1);
+		curveVertex(x2, y2);
+		curveVertex(x3, y3);
+		curveVertex(x4, y4);
+		endShape();
+	}
+
+	/**
+	 * @param z1
+	 *            coordinates for the beginning control point
+	 * @param z2
+	 *            coordinates for the first point
+	 * @param z3
+	 *            coordinates for the second point
+	 * @param z4
+	 *            coordinates for the ending control point
+	 */
+	public void curve(float x1, float y1, float z1,
+			float x2, float y2, float z2,
+			float x3, float y3, float z3,
+			float x4, float y4, float z4) {
+		beginShape();
+		curveVertex(x1, y1, z1);
+		curveVertex(x2, y2, z2);
+		curveVertex(x3, y3, z3);
+		curveVertex(x4, y4, z4);
+		endShape();
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// SPLINE UTILITY FUNCTIONS (used by both Bezier and Catmull-Rom)
+
+	/**
+	 * Setup forward-differencing matrix to be used for speedy
+	 * curve rendering. It's based on using a specific number
+	 * of curve segments and just doing incremental adds for each
+	 * vertex of the segment, rather than running the mathematically
+	 * expensive cubic equation.
+	 * 
+	 * @param segments
+	 *            number of curve segments to use when drawing
+	 * @param matrix
+	 *            target object for the new matrix
+	 */
+	protected void splineForward(int segments, SMatrix3D matrix) {
+		float f = 1.0f / segments;
+		float ff = f * f;
+		float fff = ff * f;
+
+		matrix.set(0, 0, 0, 1,
+				fff, ff, f, 0,
+				6 * fff, 2 * ff, 0, 0,
+				6 * fff, 0, 0, 0);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1205,92 +2718,6 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public final void noSmooth() {
 		smooth(0);
-	}
-
-	final protected void handleSmooth() {
-		if (smooth == 0) {
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_OFF);
-			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-					RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-					RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-		} else if (smooth == 6) {
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
-			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-					RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-					RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
-		} else {
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
-			if (smooth == 1) return;
-
-			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			if (smooth == 2) return;
-
-			if (smooth == 3) { // default is bicubic
-				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-						RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-				return;
-			} else if (smooth == 4) {
-				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-						RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-				return;
-			}
-			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-					RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-		}
-	}
-
-	/**
-	 * Smoothing for Java2D is 2 for bilinear, and 3 for bicubic (the default).
-	 * Internally, smooth(1) is the default, smooth(0) is noSmooth().
-	 */
-	protected void handleSmooth2() {
-		if (smooth == 0) {
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_OFF);
-			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-					RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-
-		} else {
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
-
-			if (smooth == 1 || smooth == 3) { // default is bicubic
-				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-						RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-			} else if (smooth == 2) {
-				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-						RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-			}
-
-			// http://docs.oracle.com/javase/tutorial/2d/text/renderinghints.html
-			// Oracle Java text anti-aliasing on OS X looks like s*t compared to the
-			// text rendering with Apple's old Java 6. Below, several attempts to fix:
-			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			// Turns out this is the one that actually makes things work.
-			// Kerning is still screwed up, however.
-			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-					RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-//	    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-//	                        RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-//	    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-//	                         RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-
-//	    g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-//	                        RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-		}
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1607,55 +3034,53 @@ public class SGraphics extends SImage implements SGFX {
 	protected void imageImpl(SImage img,
 			float x, float y, float w, float h,
 			int u1, int v1, int u2, int v2) {
-		// Image not ready yet, or an error
-		if (img == null || img.width <= 0 || img.height <= 0) return;
+		boolean savedStroke = stroke;
+//	    boolean savedFill = fill;
+		int savedTextureMode = textureMode;
 
-		ImageCache cash = (ImageCache) getCache(img);
+		stroke = false;
+//	    fill = true;
+		textureMode = IMAGE;
 
-		// Nuke the cache if the image was resized
-		if (cash != null) {
-			if (img.width != cash.image.getWidth() ||
-					img.height != cash.image.getHeight()) {
-				cash = null;
-			}
-		}
-
-		if (cash == null) {
-			// System.out.println("making new image cache");
-			cash = new ImageCache(); // who);
-			setCache(img, cash);
-			img.updatePixels(); // mark the whole thing for update
-			img.setModified();
-		}
-
-		// If image previously was tinted, or the color changed
-		// or the image was tinted, and tint is now disabled
-		if ((tint && !cash.tinted) ||
-				(tint && (cash.tintedColor != tintColor)) ||
-				(!tint && cash.tinted)) {
-			// For tint change, mark all pixels as needing update.
-			img.updatePixels();
-		}
-
-		if (img.isModified()) {
-			if (img.pixels == null) {
-				// This might be a PGraphics that hasn't been drawn to yet.
-				// Can't just bail because the cache has been created above.
-				// https://github.com/processing/processing/issues/2208
-				img.pixels = new int[img.width * img.height];
-			}
-			cash.update(img, tint, tintColor);
-			img.setModified(false);
-		}
+//	    float savedFillR = fillR;
+//	    float savedFillG = fillG;
+//	    float savedFillB = fillB;
+//	    float savedFillA = fillA;
+		//
+//	    if (tint) {
+//	      fillR = tintR;
+//	      fillG = tintG;
+//	      fillB = tintB;
+//	      fillA = tintA;
+		//
+//	    } else {
+//	      fillR = 1;
+//	      fillG = 1;
+//	      fillB = 1;
+//	      fillA = 1;
+//	    }
 
 		u1 *= img.pixelDensity;
-		v1 *= img.pixelDensity;
 		u2 *= img.pixelDensity;
+		v1 *= img.pixelDensity;
 		v2 *= img.pixelDensity;
 
-		graphics.drawImage(((ImageCache) getCache(img)).image,
-				(int) x, (int) y, (int) w, (int) h,
-				u1, v1, u2, v2, null);
+		beginShape(QUADS);
+		texture(img);
+		vertex(x, y, u1, v1);
+		vertex(x, y, u1, v2);
+		vertex(x, y, u2, v2);
+		vertex(x, y, u2, v1);
+		endShape();
+
+		stroke = savedStroke;
+//	    fill = savedFill;
+		textureMode = savedTextureMode;
+
+//	    fillR = savedFillR;
+//	    fillG = savedFillG;
+//	    fillB = savedFillB;
+//	    fillA = savedFillA;
 	}
 
 	/**
@@ -1686,411 +3111,10 @@ public class SGraphics extends SImage implements SGFX {
 	 *            source rectangle.
 	 */
 	protected void imageImpl(Image img,
-			float x1, float y1, float x2, float y2,
+			float x, float y, float w, float h,
 			int u1, int v1, int u2, int v2) {
-		// Image not ready yet, or an error
-		if (img == null || img.getWidth(null) <= 0 || img.getHeight(null) <= 0) return;
-
-		ImageCache cash = (ImageCache) getCache(img);
-
-		// Nuke the cache if the image was resized
-		if (cash != null) {
-			if (img.getWidth(null) != cash.image.getWidth() ||
-					img.getHeight(null) != cash.image.getHeight()) {
-				cash = null;
-			}
-		}
-
-		if (cash == null) {
-			// System.out.println("making new image cache");
-			cash = new ImageCache(); // who);
-			setCache(img, cash);
-//			who.updatePixels(); // mark the whole thing for update
-//			who.setModified();
-		}
-
-		// If image previously was tinted, or the color changed
-		// or the image was tinted, and tint is now disabled
-//		if ((tint && !cash.tinted) ||
-//				(tint && (cash.tintedColor != tintColor)) ||
-//				(!tint && cash.tinted)) {
-//			// For tint change, mark all pixels as needing update.
-//			who.updatePixels();
-//		}
-
-//		if (who.isModified()) {
-//			if (who.pixels == null) {
-//				// This might be a PGraphics that hasn't been drawn to yet.
-//				// Can't just bail because the cache has been created above.
-//				// https://github.com/processing/processing/issues/2208
-//				who.pixels = new int[who.width * who.height];
-//			}
-		cash.update(img, tint, tintColor);
-//			who.setModified(false);
-//		}
-
-//	    u1 *= who.pixelDensity;
-//	    v1 *= who.pixelDensity;
-//	    u2 *= who.pixelDensity;
-//	    v2 *= who.pixelDensity;
-
-		graphics.drawImage(((ImageCache) getCache(img)).image,
-				(int) x1, (int) y1, (int) x2, (int) y2,
-				u1, v1, u2, v2, null);
-	}
-
-	static class ImageCache {
-		boolean tinted;
-		int tintedColor;
-		int[] tintedTemp; // one row of tinted pixels
-		BufferedImage image;
-//	    BufferedImage compat;
-
-//	    public ImageCache(PImage source) {
-////	      this.source = source;
-//	      // even if RGB, set the image type to ARGB, because the
-//	      // image may have an alpha value for its tint().
-////	      int type = BufferedImage.TYPE_INT_ARGB;
-//	      //System.out.println("making new buffered image");
-////	      image = new BufferedImage(source.width, source.height, type);
-//	    }
-
-		/**
-		 * Update the pixels of the cache image. Already determined that the tint
-		 * has changed, or the pixels have changed, so should just go through
-		 * with the update without further checks.
-		 */
-		public void update(SImage source, boolean tint, int tintColor) {
-			// int bufferType = BufferedImage.TYPE_INT_ARGB;
-			int targetType = ARGB;
-			boolean opaque = (tintColor & 0xFF000000) == 0xFF000000;
-			if (source.format == RGB) {
-				if (!tint || (tint && opaque)) {
-					// bufferType = BufferedImage.TYPE_INT_RGB;
-					targetType = RGB;
-				}
-			}
-//	      boolean wrongType = (image != null) && (image.getType() != bufferType);
-//	      if ((image == null) || wrongType) {
-//	        image = new BufferedImage(source.width, source.height, bufferType);
-//	      }
-			// Must always use an ARGB image, otherwise will write zeros
-			// in the alpha channel when drawn to the screen.
-			// https://github.com/processing/processing/issues/2030
-			if (image == null) {
-				image = new BufferedImage(source.width, source.height,
-						BufferedImage.TYPE_INT_ARGB);
-			}
-
-			WritableRaster wr = image.getRaster();
-			if (tint) {
-				if (tintedTemp == null || tintedTemp.length != source.width) {
-					tintedTemp = new int[source.width];
-				}
-				int a2 = (tintColor >> 24) & 0xff;
-//	        System.out.println("tint color is " + a2);
-//	        System.out.println("source.pixels[0] alpha is " + (source.pixels[0] >>> 24));
-				int r2 = (tintColor >> 16) & 0xff;
-				int g2 = (tintColor >> 8) & 0xff;
-				int b2 = (tintColor) & 0xff;
-
-				// if (bufferType == BufferedImage.TYPE_INT_RGB) {
-				if (targetType == RGB) {
-					// The target image is opaque, meaning that the source image has no
-					// alpha (is not ARGB), and the tint has no alpha.
-					int index = 0;
-					for (int y = 0; y < source.height; y++) {
-						for (int x = 0; x < source.width; x++) {
-							int argb1 = source.pixels[index++];
-							int r1 = (argb1 >> 16) & 0xff;
-							int g1 = (argb1 >> 8) & 0xff;
-							int b1 = (argb1) & 0xff;
-
-							// Prior to 2.1, the alpha channel was commented out here,
-							// but can't remember why (just thought unnecessary b/c of RGB?)
-							// https://github.com/processing/processing/issues/2030
-							tintedTemp[x] = 0xFF000000 |
-									(((r2 * r1) & 0xff00) << 8) |
-									((g2 * g1) & 0xff00) |
-									(((b2 * b1) & 0xff00) >> 8);
-						}
-						wr.setDataElements(0, y, source.width, 1, tintedTemp);
-					}
-					// could this be any slower?
-//	          float[] scales = { tintR, tintG, tintB };
-//	          float[] offsets = new float[3];
-//	          RescaleOp op = new RescaleOp(scales, offsets, null);
-//	          op.filter(image, image);
-
-					// } else if (bufferType == BufferedImage.TYPE_INT_ARGB) {
-				} else if (targetType == ARGB) {
-					if (source.format == RGB &&
-							(tintColor & 0xffffff) == 0xffffff) {
-						int hi = tintColor & 0xff000000;
-						int index = 0;
-						for (int y = 0; y < source.height; y++) {
-							for (int x = 0; x < source.width; x++) {
-								tintedTemp[x] = hi | (source.pixels[index++] & 0xFFFFFF);
-							}
-							wr.setDataElements(0, y, source.width, 1, tintedTemp);
-						}
-					} else {
-						int index = 0;
-						for (int y = 0; y < source.height; y++) {
-							if (source.format == RGB) {
-								int alpha = tintColor & 0xFF000000;
-								for (int x = 0; x < source.width; x++) {
-									int argb1 = source.pixels[index++];
-									int r1 = (argb1 >> 16) & 0xff;
-									int g1 = (argb1 >> 8) & 0xff;
-									int b1 = (argb1) & 0xff;
-									tintedTemp[x] = alpha |
-											(((r2 * r1) & 0xff00) << 8) |
-											((g2 * g1) & 0xff00) |
-											(((b2 * b1) & 0xff00) >> 8);
-								}
-							} else if (source.format == ARGB) {
-								for (int x = 0; x < source.width; x++) {
-									int argb1 = source.pixels[index++];
-									int a1 = (argb1 >> 24) & 0xff;
-									int r1 = (argb1 >> 16) & 0xff;
-									int g1 = (argb1 >> 8) & 0xff;
-									int b1 = (argb1) & 0xff;
-									tintedTemp[x] = (((a2 * a1) & 0xff00) << 16) |
-											(((r2 * r1) & 0xff00) << 8) |
-											((g2 * g1) & 0xff00) |
-											(((b2 * b1) & 0xff00) >> 8);
-								}
-							} else if (source.format == ALPHA) {
-								int lower = tintColor & 0xFFFFFF;
-								for (int x = 0; x < source.width; x++) {
-									int a1 = source.pixels[index++];
-									tintedTemp[x] = (((a2 * a1) & 0xff00) << 16) | lower;
-								}
-							}
-							wr.setDataElements(0, y, source.width, 1, tintedTemp);
-						}
-					}
-					// Not sure why ARGB images take the scales in this order...
-//	          float[] scales = { tintR, tintG, tintB, tintA };
-//	          float[] offsets = new float[4];
-//	          RescaleOp op = new RescaleOp(scales, offsets, null);
-//	          op.filter(image, image);
-				}
-			} else { // !tint
-				if (targetType == RGB && (source.pixels[0] >> 24 == 0)) {
-					// If it's an RGB image and the high bits aren't set, need to set
-					// the high bits to opaque because we're drawing ARGB images.
-					source.filter(OPAQUE);
-					// Opting to just manipulate the image here, since it shouldn't
-					// affect anything else (and alpha(get(x, y)) should return 0xff).
-					// Wel also make no guarantees about the values of the pixels array
-					// in a PImage and how the high bits will be set.
-				}
-				// If no tint, just shove the pixels on in there verbatim
-				wr.setDataElements(0, 0, source.width, source.height, source.pixels);
-			}
-			this.tinted = tint;
-			this.tintedColor = tintColor;
-
-//	      GraphicsConfiguration gc = parent.getGraphicsConfiguration();
-//	      compat = gc.createCompatibleImage(image.getWidth(),
-//	                                        image.getHeight(),
-//	                                        Transparency.TRANSLUCENT);
-			//
-//	      Graphics2D g = compat.createGraphics();
-//	      g.drawImage(image, 0, 0, null);
-//	      g.dispose();
-		}
-
-		private BufferedImage toBufferedImage(Image img) {
-			if (img instanceof BufferedImage) {
-				BufferedImage bimage = (BufferedImage) img;
-				if (bimage.getType() == BufferedImage.TYPE_INT_RGB ||
-						bimage.getType() == BufferedImage.TYPE_INT_ARGB)
-					return bimage;
-			}
-
-			// Create a buffered image with transparency
-			BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-
-			// Draw the image on to the buffered image
-			Graphics2D bGr = bimage.createGraphics();
-			bGr.drawImage(img, 0, 0, null);
-			bGr.dispose();
-
-			// Return the buffered image
-			return bimage;
-		}
-
-		public void update(Image source, boolean tint, int tintColor) {
-			BufferedImage bisource = toBufferedImage(source);
-			source = bisource;
-			int sourceFormat = bisource.getType();
-			int sourceWidth = bisource.getWidth();
-			int sourceHeight = bisource.getHeight();
-//			System.out.println(sourceFormat);
-//			System.out.println(sourceWidth);
-//			System.out.println(sourceHeight);
-
-			int[] sourcePixels = new int[sourceWidth * sourceHeight];
-			{
-				WritableRaster raster = bisource.getRaster();
-				raster.getDataElements(0, 0, sourceWidth, sourceHeight, sourcePixels);
-				if (raster.getNumBands() == 3) {
-					// Java won't set the high bits when RGB, returns 0 for alpha
-					// https://github.com/processing/processing/issues/2030
-					for (int i = 0; i < sourcePixels.length; i++) {
-						sourcePixels[i] = 0xff000000 | sourcePixels[i];
-					}
-				}
-			}
-
-			// int bufferType = BufferedImage.TYPE_INT_ARGB;
-			int targetType = ARGB;
-			boolean opaque = (tintColor & 0xFF000000) == 0xFF000000;
-			if (sourceFormat == RGB) {
-				if (!tint || (tint && opaque)) {
-					// bufferType = BufferedImage.TYPE_INT_RGB;
-					targetType = RGB;
-				}
-			}
-//	      boolean wrongType = (image != null) && (image.getType() != bufferType);
-//	      if ((image == null) || wrongType) {
-//	        image = new BufferedImage(source.width, source.height, bufferType);
-//	      }
-			// Must always use an ARGB image, otherwise will write zeros
-			// in the alpha channel when drawn to the screen.
-			// https://github.com/processing/processing/issues/2030
-			if (image == null) {
-				image = new BufferedImage(sourceWidth, sourceHeight,
-						BufferedImage.TYPE_INT_ARGB);
-			}
-
-			WritableRaster wr = image.getRaster();
-			if (tint) {
-				if (tintedTemp == null || tintedTemp.length != sourceWidth) {
-					tintedTemp = new int[sourceWidth];
-				}
-				int a2 = (tintColor >> 24) & 0xff;
-//	        System.out.println("tint color is " + a2);
-//	        System.out.println("source.pixels[0] alpha is " + (source.pixels[0] >>> 24));
-				int r2 = (tintColor >> 16) & 0xff;
-				int g2 = (tintColor >> 8) & 0xff;
-				int b2 = (tintColor) & 0xff;
-
-				// if (bufferType == BufferedImage.TYPE_INT_RGB) {
-				if (targetType == RGB) {
-					// The target image is opaque, meaning that the source image has no
-					// alpha (is not ARGB), and the tint has no alpha.
-					int index = 0;
-					for (int y = 0; y < sourceHeight; y++) {
-						for (int x = 0; x < sourceWidth; x++) {
-							int argb1 = sourcePixels[index++];
-							int r1 = (argb1 >> 16) & 0xff;
-							int g1 = (argb1 >> 8) & 0xff;
-							int b1 = (argb1) & 0xff;
-
-							// Prior to 2.1, the alpha channel was commented out here,
-							// but can't remember why (just thought unnecessary b/c of RGB?)
-							// https://github.com/processing/processing/issues/2030
-							tintedTemp[x] = 0xFF000000 |
-									(((r2 * r1) & 0xff00) << 8) |
-									((g2 * g1) & 0xff00) |
-									(((b2 * b1) & 0xff00) >> 8);
-						}
-						wr.setDataElements(0, y, sourceWidth, 1, tintedTemp);
-					}
-					// could this be any slower?
-//	          float[] scales = { tintR, tintG, tintB };
-//	          float[] offsets = new float[3];
-//	          RescaleOp op = new RescaleOp(scales, offsets, null);
-//	          op.filter(image, image);
-
-					// } else if (bufferType == BufferedImage.TYPE_INT_ARGB) {
-				} else if (targetType == ARGB) {
-					if (sourceFormat == RGB &&
-							(tintColor & 0xffffff) == 0xffffff) {
-						int hi = tintColor & 0xff000000;
-						int index = 0;
-						for (int y = 0; y < sourceHeight; y++) {
-							for (int x = 0; x < sourceWidth; x++) {
-								tintedTemp[x] = hi | (sourcePixels[index++] & 0xFFFFFF);
-							}
-							wr.setDataElements(0, y, sourceWidth, 1, tintedTemp);
-						}
-					} else {
-						int index = 0;
-						for (int y = 0; y < sourceHeight; y++) {
-							if (sourceFormat == RGB) {
-								int alpha = tintColor & 0xFF000000;
-								for (int x = 0; x < sourceWidth; x++) {
-									int argb1 = sourcePixels[index++];
-									int r1 = (argb1 >> 16) & 0xff;
-									int g1 = (argb1 >> 8) & 0xff;
-									int b1 = (argb1) & 0xff;
-									tintedTemp[x] = alpha |
-											(((r2 * r1) & 0xff00) << 8) |
-											((g2 * g1) & 0xff00) |
-											(((b2 * b1) & 0xff00) >> 8);
-								}
-							} else if (sourceFormat == ARGB) {
-								for (int x = 0; x < sourceWidth; x++) {
-									int argb1 = sourcePixels[index++];
-									int a1 = (argb1 >> 24) & 0xff;
-									int r1 = (argb1 >> 16) & 0xff;
-									int g1 = (argb1 >> 8) & 0xff;
-									int b1 = (argb1) & 0xff;
-									tintedTemp[x] = (((a2 * a1) & 0xff00) << 16) |
-											(((r2 * r1) & 0xff00) << 8) |
-											((g2 * g1) & 0xff00) |
-											(((b2 * b1) & 0xff00) >> 8);
-								}
-							} else if (sourceFormat == ALPHA) {
-								int lower = tintColor & 0xFFFFFF;
-								for (int x = 0; x < sourceWidth; x++) {
-									int a1 = sourcePixels[index++];
-									tintedTemp[x] = (((a2 * a1) & 0xff00) << 16) | lower;
-								}
-							}
-							wr.setDataElements(0, y, sourceWidth, 1, tintedTemp);
-						}
-					}
-					// Not sure why ARGB images take the scales in this order...
-//	          float[] scales = { tintR, tintG, tintB, tintA };
-//	          float[] offsets = new float[4];
-//	          RescaleOp op = new RescaleOp(scales, offsets, null);
-//	          op.filter(image, image);
-				}
-			} else { // !tint
-				if (targetType == RGB && (sourcePixels[0] >> 24 == 0)) {
-					// If it's an RGB image and the high bits aren't set, need to set
-					// the high bits to opaque because we're drawing ARGB images.
-//					source.filterOPAQUE();
-					for (int i = 0; i < sourcePixels.length; i++) {
-						sourcePixels[i] |= 0xff000000;
-					}
-//					sourceFormat = RGB;
-					// Opting to just manipulate the image here, since it shouldn't
-					// affect anything else (and alpha(get(x, y)) should return 0xff).
-					// Wel also make no guarantees about the values of the pixels array
-					// in a PImage and how the high bits will be set.
-				}
-				// If no tint, just shove the pixels on in there verbatim
-				wr.setDataElements(0, 0, sourceWidth, sourceHeight, sourcePixels);
-			}
-			this.tinted = tint;
-			this.tintedColor = tintColor;
-
-//	      GraphicsConfiguration gc = parent.getGraphicsConfiguration();
-//	      compat = gc.createCompatibleImage(image.getWidth(),
-//	                                        image.getHeight(),
-//	                                        Transparency.TRANSLUCENT);
-			//
-//	      Graphics2D g = compat.createGraphics();
-//	      g.drawImage(image, 0, 0, null);
-//	      g.dispose();
-		}
+		SImage simg = new SImage(img);
+		imageImpl(simg, x, y, w, h, u1, v1, u2, v2);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -2105,43 +3129,18 @@ public class SGraphics extends SImage implements SGFX {
 //	public final void shapeMode(int mode) { this.shapeMode = mode; }
 
 	@Override
-	public final void fillShape(Shape s) {
-		if (fillGradient) {
-			graphics.setPaint(fillGradientObject);
-			graphics.fill(s);
-		} else if (fill) {
-			graphics.setColor(fillColorObject);
-			graphics.fill(s);
-		}
+	public void fillShape(Shape s) {
+		showMissingWarning("fillShape");
 	}
 
 	@Override
-	public final void strokeShape(Shape s) {
-		if (strokeGradient) {
-			graphics.setPaint(strokeGradientObject);
-			graphics.draw(s);
-		} else if (stroke) {
-			graphics.setColor(strokeColorObject);
-			graphics.draw(s);
-		}
+	public void strokeShape(Shape s) {
+		showMissingWarning("strokeShape");
 	}
 
 	@Override
-	public final void drawShape(Shape s) {
-		if (fillGradient) {
-			graphics.setPaint(fillGradientObject);
-			graphics.fill(s);
-		} else if (fill) {
-			graphics.setColor(fillColorObject);
-			graphics.fill(s);
-		}
-		if (strokeGradient) {
-			graphics.setPaint(strokeGradientObject);
-			graphics.draw(s);
-		} else if (stroke) {
-			graphics.setColor(strokeColorObject);
-			graphics.draw(s);
-		}
+	public void drawShape(Shape s) {
+		showMissingWarning("drawShape");
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -2149,7 +3148,6 @@ public class SGraphics extends SImage implements SGFX {
 	// TEXT/FONTS
 
 	protected SFont createDefaultFont(float size) {
-//		return new Font("Lucida Sans", Font.PLAIN, (int) size);
 		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
 		return createFont(baseFont, size, true, null, false);
 	}
@@ -2209,25 +3207,13 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public float textAscent() {
 		if (textFont == null) defaultFontOrDeath("textAscent");
-
-		Font font = (Font) textFont.getNative();
-		if (font != null) return graphics.getFontMetrics(font).getAscent();
 		return textFont.ascent() * textSize;
-
-//		return graphics.getFontMetrics(textFont).getAscent();		
-//		return ((float) graphics.getFontMetrics(textFont).getAscent() / textFont.getSize()) * textSize;
 	}
 
 	@Override
 	public float textDescent() {
 		if (textFont == null) defaultFontOrDeath("textDescent");
-
-		Font font = (Font) textFont.getNative();
-		if (font != null) return graphics.getFontMetrics(font).getDescent();
 		return textFont.descent() * textSize;
-
-//		return graphics.getFontMetrics(textFont).getDescent();
-//		return ((float) graphics.getFontMetrics(textFont).getDescent() / textFont.getSize()) * textSize;
 	}
 
 	@Override
@@ -2248,6 +3234,11 @@ public class SGraphics extends SImage implements SGFX {
 	public void textFont(SFont which, float size) {
 		if (which == null) {
 			throw new RuntimeException(ERROR_TEXTFONT_NULL_FONT);
+		}
+		if (size <= 0) {
+			System.err.println("textFont: ignoring size " + size + " px:" +
+					"the text size must be larger than zero");
+			size = textSize;
 		}
 		textFontImpl(which, size);
 	}
@@ -2270,11 +3261,11 @@ public class SGraphics extends SImage implements SGFX {
 	public void textMode(int mode) {
 		// CENTER and MODEL overlap (they're both 3)
 		if ((mode == LEFT) || (mode == RIGHT)) {
-			Log.error("Since Processing 1.0 beta, textMode() is now textAlign().");
+			showWarning("Since Processing 1.0 beta, textMode() is now textAlign().");
 			return;
 		}
 		if (mode == SCREEN) {
-			Log.error("textMode(SCREEN) has been removed from Processing 2.0.");
+			showWarning("textMode(SCREEN) has been removed from Processing 2.0.");
 			return;
 		}
 
@@ -2290,14 +3281,14 @@ public class SGraphics extends SImage implements SGFX {
 					modeStr = "SHAPE";
 					break;
 			}
-			Log.error("textMode(" + modeStr + ") is not supported by this renderer.");
+			showWarning("textMode(" + modeStr + ") is not supported by this renderer.");
 		}
 	}
 
-	protected boolean textModeCheck(int mode) { return mode == MODEL; }
+	protected boolean textModeCheck(int mode) { return true; }
 
 	@Override
-	public final void textSize(float size) {
+	public void textSize(float size) {
 		// https://github.com/processing/processing/issues/3110
 		if (size <= 0) {
 			// Using System.err instead of showWarning to avoid running out of
@@ -2318,32 +3309,6 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	protected void handleTextSize(float size) {
-//		Font font = textFont;
-		Font font = (Font) textFont.getNative();
-
-		// don't derive again if the font size has not changed
-		if (font != null) {
-			if (font.getSize2D() != size) {
-				Map<TextAttribute, Object> map = new HashMap<>();
-				map.put(TextAttribute.SIZE, size);
-				map.put(TextAttribute.KERNING,
-						TextAttribute.KERNING_ON);
-//	     	 	map.put(TextAttribute.TRACKING,
-//	              	 	TextAttribute.TRACKING_TIGHT);
-				font = font.deriveFont(map);
-			}
-			graphics.setFont(font);
-			textFont.setNative(font);
-			fontObject = font;
-
-			/*
-			 * Map<TextAttribute, ?> attrs = font.getAttributes();
-			 * for (TextAttribute ta : attrs.keySet()) {
-			 * System.out.println(ta + " -> " + attrs.get(ta));
-			 * }
-			 */
-		}
-
 		textSize = size;
 		textLeading = (textAscent() + textDescent()) * 1.275f;
 	}
@@ -2400,17 +3365,6 @@ public class SGraphics extends SImage implements SGFX {
 	 * @return the text width of the chars [start, stop) in the buffer.
 	 */
 	protected float textWidthImpl(char buffer[], int start, int stop) {
-		if (textFont == null) defaultFontOrDeath("textWidth");
-
-		// Avoid "Zero length string passed to TextLayout constructor" error
-		if (start == stop) return 0;
-
-		Font font = (Font) textFont.getNative();
-		if (font != null) {
-			FontMetrics metrics = graphics.getFontMetrics(font);
-			return (float) metrics.getStringBounds(buffer, start, stop, graphics).getWidth();
-		}
-
 		float wide = 0;
 		for (int i = start; i < stop; i++) {
 			// could add kerning here, but it just ain't implemented
@@ -2784,65 +3738,15 @@ public class SGraphics extends SImage implements SGFX {
 	 */
 	protected void textLineImpl(char buffer[], int start, int stop,
 			float x, float y) {
-		Font font = (Font) textFont.getNative();
-//	    if (font != null && (textFont.isStream() || hints[ENABLE_NATIVE_FONTS])) {
-		if (font != null) {
-			/*
-			 * // save the current setting for text smoothing. note that this is
-			 * // different from the smooth() function, because the font smoothing
-			 * // is controlled when the font is created, not now as it's drawn.
-			 * // fixed a bug in 0116 that handled this incorrectly.
-			 * Object textAntialias =
-			 * g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
-			 * // override the current text smoothing setting based on the font
-			 * // (don't change the global smoothing settings)
-			 * g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-			 * textFont.smooth ?
-			 * RenderingHints.VALUE_ANTIALIAS_ON :
-			 * RenderingHints.VALUE_ANTIALIAS_OFF);
-			 */
-			Object antialias = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-			if (antialias == null) {
-				// if smooth() and noSmooth() not called, this will be null (0120)
-				antialias = RenderingHints.VALUE_ANTIALIAS_DEFAULT;
-			}
+		for (int index = start; index < stop; index++) {
+			textCharImpl(buffer[index], x, y);
 
-			// override the current smoothing setting based on the font
-			// also changes global setting for antialiasing, but this is because it's
-			// not possible to enable/disable them independently in some situations.
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					textFont.isSmooth() ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
-
-			graphics.setColor(fillColorObject);
-
-			int length = stop - start;
-			if (length != 0) {
-				graphics.drawChars(buffer, start, length, (int) (x + 0.5f), (int) (y + 0.5f));
-				// better to use round here? also, drawChars now just calls drawString
-//	      g2.drawString(new String(buffer, start, stop - start), Math.round(x), Math.round(y));
-
-				// better to use drawString() with floats? (nope, draws the same)
-				// g2.drawString(new String(buffer, start, length), x, y);
-
-				// this didn't seem to help the scaling issue, and creates garbage
-				// because of a fairly heavyweight new temporary object
-//	      java.awt.font.GlyphVector gv =
-//	        font.createGlyphVector(g2.getFontRenderContext(), new String(buffer, start, stop - start));
-//	      g2.drawGlyphVector(gv, x, y);
-			}
-
-			// return to previous smoothing state if it was changed
-			// g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textAntialias);
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialias);
-
-		} else { // otherwise just do the default
-			for (int index = start; index < stop; index++) {
-				textCharImpl(buffer[index], x, y);
-
-				// this doesn't account for kerning
-				x += textWidth(buffer[index]);
-			}
+			// this doesn't account for kerning
+			x += textWidth(buffer[index]);
 		}
+//	      textX = x;
+//	      textY = y;
+//	      textZ = 0;  // this will get set by the caller if non-zero
 	}
 
 	private static String hex(int value, int digits) {
@@ -2922,79 +3826,80 @@ public class SGraphics extends SImage implements SGFX {
 	// MATRIX STACK
 
 	@Override
-	public final void push() {
-		pushStyle();
-		pushMatrix();
-	}
+	public void push() { pushStyle(); pushMatrix(); }
 
 	@Override
-	public final void pop() {
-		popStyle();
-		popMatrix();
-	}
+	public void pop() { popStyle(); popMatrix(); }
 
 	@Override
-	public void pushMatrix() {
-		if (transformCount == transformStack.length) {
-			throw new RuntimeException("pushMatrix() cannot use push more than " +
-					transformStack.length + " times");
-		}
-		transformStack[transformCount] = graphics.getTransform();
-		transformCount++;
-	}
+	public void pushMatrix() { showMethodWarning("pushMatrix"); }
 
 	@Override
-	public void popMatrix() {
-		if (transformCount == 0) {
-			throw new RuntimeException("missing a pushMatrix() " +
-					"to go with that popMatrix()");
-		}
-		transformCount--;
-		graphics.setTransform(transformStack[transformCount]);
-	}
+	public void popMatrix() { showMethodWarning("popMatrix"); }
 
 	//////////////////////////////////////////////////////////////
 
 	// MATRIX TRANSFORMS
 
 	@Override
-	public final void translate(float x, float y) { graphics.translate(x, y); }
+	public void translate(float x, float y) { showMissingWarning("translate"); }
 
 	@Override
-	public final void rotate(float theta) { graphics.rotate(theta); }
+	public void rotate(float theta) { showMissingWarning("rotate"); }
 
 	@Override
-	public final void rotate(float theta, float x, float y) { graphics.rotate(theta, x, y); }
+	public void rotateX(float angle) { showMethodWarning("rotateX"); }
 
 	@Override
-	public final void scale(float xy) { graphics.scale(xy, xy); };
+	public void rotateY(float angle) { showMethodWarning("rotateY"); }
 
 	@Override
-	public final void scale(float x, float y) { graphics.scale(x, y); };
+	public void rotateZ(float angle) { showMethodWarning("rotateZ"); }
 
 	@Override
-	public final void shear(float x, float y) { graphics.shear(x, y); };
+	public void rotate(float theta, float x, float y) { showMissingWarning("rotate"); }
 
 	@Override
-	public void shearX(float angle) { graphics.shear(Math.tan(angle), 0); }
+	public void rotate(float theta, float x, float y, float z) { showMissingWarning("rotate"); }
 
 	@Override
-	public void shearY(float angle) { graphics.shear(0, Math.tan(angle)); }
+	public void scale(float xy) { showMissingWarning("scale"); };
 
 	@Override
-	public final void transform(AffineTransform affineTransform) { graphics.transform(affineTransform); };
+	public void scale(float x, float y) { showMissingWarning("scale"); };
 
 	@Override
-	public final void setTransform(AffineTransform affineTransform) { graphics.setTransform(affineTransform); };
+	public void scale(float x, float y, float z) { showMissingWarning("scale"); }
+
+	@Override
+	public void shear(float x, float y) { showMissingWarning("shear"); };
+
+	@Override
+	public void shearX(float angle) { showMissingWarning("shearX"); }
+
+	@Override
+	public void shearY(float angle) { showMissingWarning("shearY"); }
+
+	@Override
+	public void transform(AffineTransform affineTransform) { showMissingWarning("transform"); };
+
+	@Override
+	public void setTransform(AffineTransform affineTransform) { showMissingWarning("setTransform"); };
 
 	//////////////////////////////////////////////////////////////
 
 	// MATRIX MORE
 
 	@Override
-	public void resetMatrix() {
-		graphics.setTransform(new AffineTransform());
-		graphics.scale(pixelDensity, pixelDensity);
+	public void resetMatrix() { showMethodWarning("resetMatrix"); }
+
+	@Override
+	public void applyMatrix(SMatrix_D source) {
+		if (source instanceof SMatrix2D) {
+			applyMatrix((SMatrix2D) source);
+		} else if (source instanceof SMatrix3D) {
+			applyMatrix(source);
+		}
 	}
 
 	@Override
@@ -3006,9 +3911,24 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public void applyMatrix(float n00, float n01, float n02,
 			float n10, float n11, float n12) {
-		graphics.transform(new AffineTransform(n00, n10, n01, n11, n02, n12));
+		showMissingWarning("applyMatrix");
 	}
 
+	@Override
+	public void applyMatrix(SMatrix3D source) {
+		applyMatrix(source.m00, source.m01, source.m02, source.m03,
+				source.m10, source.m11, source.m12, source.m13,
+				source.m20, source.m21, source.m22, source.m23,
+				source.m30, source.m31, source.m32, source.m33);
+	}
+
+	@Override
+	public void applyMatrix(float n00, float n01, float n02, float n03,
+			float n10, float n11, float n12, float n13,
+			float n20, float n21, float n22, float n23,
+			float n30, float n31, float n32, float n33) {
+		showMissingWarning("applyMatrix");
+	}
 	//////////////////////////////////////////////////////////////
 
 	// MATRIX GET/SET
@@ -3016,63 +3936,103 @@ public class SGraphics extends SImage implements SGFX {
 	@Override
 	public SMatrix_D getMatrix() { return getMatrix((SMatrix2D) null); }
 
-	double[] transform = new double[6];
-
+	/**
+	 * Copy the current transformation matrix into the specified target.
+	 * Pass in null to create a new matrix.
+	 */
 	@Override
 	public SMatrix2D getMatrix(SMatrix2D target) {
-		if (target == null) {
-			target = new SMatrix2D();
-		}
-		graphics.getTransform().getMatrix(transform);
-		target.set((float) transform[0], (float) transform[2], (float) transform[4],
-				(float) transform[1], (float) transform[3], (float) transform[5]);
-		return target;
+		showMissingWarning("getMatrix");
+		return null;
 	}
 
+	/**
+	 * Copy the current transformation matrix into the specified target.
+	 * Pass in null to create a new matrix.
+	 */
+	@Override
+	public SMatrix3D getMatrix(SMatrix3D target) {
+		showMissingWarning("getMatrix");
+		return null;
+	}
+
+	/**
+	 * Set the current transformation matrix to the contents of another.
+	 */
+	@Override
+	public void setMatrix(SMatrix_D source) {
+		if (source instanceof SMatrix2D) {
+			setMatrix((SMatrix2D) source);
+		} else if (source instanceof SMatrix3D) {
+			setMatrix(source);
+		}
+	}
+
+	/**
+	 * Set the current transformation to the contents of the specified source.
+	 */
 	@Override
 	public void setMatrix(SMatrix2D source) {
-		graphics.setTransform(new AffineTransform(source.m00, source.m10,
-				source.m01, source.m11,
-				source.m02, source.m12));
+		showMissingWarning("setMatrix");
+	}
+
+	/**
+	 * Set the current transformation to the contents of the specified source.
+	 */
+	@Override
+	public void setMatrix(SMatrix3D source) {
+		showMissingWarning("setMatrix");
 	}
 
 	@Override
-	public void printMatrix() {
-		getMatrix((SMatrix2D) null).print();
-	}
+	public void printMatrix() { showMethodWarning("printMatrix"); }
 
 	//////////////////////////////////////////////////////////////
 
 	// SCREEN and MODEL transforms
 
 	@Override
-	public float screenX(float x, float y) {
-		graphics.getTransform().getMatrix(transform);
-		return (float) transform[0] * x + (float) transform[2] * y + (float) transform[4];
-	}
+	public float screenX(float x, float y) { showMissingWarning("screenX"); return 0; }
 
 	@Override
-	public float screenY(float x, float y) {
-		graphics.getTransform().getMatrix(transform);
-		return (float) transform[1] * x + (float) transform[3] * y + (float) transform[5];
-	}
+	public float screenY(float x, float y) { showMissingWarning("screenY"); return 0; }
+
+	/**
+	 * @param z
+	 *            3D z-coordinate to be mapped
+	 */
+	@Override
+	public float screenX(float x, float y, float z) { showMissingWarning("screenX"); return 0; }
+
+	/**
+	 * @param z
+	 *            3D z-coordinate to be mapped
+	 */
+	@Override
+	public float screenY(float x, float y, float z) { showMissingWarning("screenY"); return 0; }
+
+	@Override
+	public float screenZ(float x, float y, float z) { showMissingWarning("screenZ"); return 0; }
 
 	//////////////////////////////////////////////////////////////
 
 	// STYLE
 
 	@Override
-	public final void pushStyle() {
+	public void pushStyle() {
 		if (styleStackDepth == styleStack.length) {
-			throw new RuntimeException("pushStyle() cannot use push more than " +
-					styleStack.length + " times");
+			styleStack = (SStyle[]) GameBase.expand(styleStack);
 		}
-		styleStack[styleStackDepth] = getStyle();
+		SStyle s = styleStack[styleStackDepth];
+		if (s == null) {
+			styleStack[styleStackDepth] = s = new SStyle();
+		}
 		styleStackDepth++;
+		getStyle(s);
 	}
 
 	@Override
-	public final void popStyle() {
+	public void popStyle() {
 		if (styleStackDepth == 0) {
 			throw new RuntimeException("Too many popStyle() without enough pushStyle()");
 		}
@@ -3081,49 +4041,7 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	@Override
-	public final SStyle getStyle() { return getStyle(null); }
-
-	@Override
-	public final SStyle getStyle(SStyle s) {
-		if (s == null) s = new SStyle();
-
-		s.smooth = smooth;
-
-		s.imageMode = imageMode;
-		s.rectMode = rectMode;
-		s.ellipseMode = ellipseMode;
-//		s.shapeMode = shapeMode;
-
-		s.blendMode = blendMode;
-
-		s.colorMode = colorMode;
-		s.colorModeX = colorModeX;
-		s.colorModeY = colorModeY;
-		s.colorModeZ = colorModeZ;
-		s.colorModeA = colorModeA;
-
-		s.tint = tint;
-		s.tintColor = tintColor;
-		s.fill = fill;
-		s.fillColor = fillColor;
-		s.stroke = stroke;
-		s.strokeColor = strokeColor;
-		s.strokeWeight = strokeWeight;
-		s.strokeCap = strokeCap;
-		s.strokeJoin = strokeJoin;
-
-		s.textFont = textFont;
-		s.textAlign = textAlign;
-		s.textAlignY = textAlignY;
-		s.textMode = textMode;
-		s.textSize = textSize;
-		s.textLeading = textLeading;
-
-		return s;
-	}
-
-	@Override
-	public final void style(SStyle s) {
+	public void style(SStyle s) {
 		smooth(s.smooth);
 
 		imageMode(s.imageMode);
@@ -3154,6 +4072,12 @@ public class SGraphics extends SImage implements SGFX {
 		strokeCap(s.strokeCap);
 		strokeJoin(s.strokeJoin);
 
+//		colorMode(RGB, 1);
+//	    ambient(s.ambientR, s.ambientG, s.ambientB);
+//	    emissive(s.emissiveR, s.emissiveG, s.emissiveB);
+//	    specular(s.specularR, s.specularG, s.specularB);
+//	    shininess(s.shininess);
+
 		colorMode(s.colorMode,
 				s.colorModeX, s.colorModeY, s.colorModeZ, s.colorModeA);
 
@@ -3165,45 +4089,75 @@ public class SGraphics extends SImage implements SGFX {
 		textMode(s.textMode);
 	}
 
+	@Override
+	public SStyle getStyle() { return getStyle(null); }
+
+	@Override
+	public SStyle getStyle(SStyle s) {
+		if (s == null) s = new SStyle();
+
+		s.smooth = smooth;
+
+		s.imageMode = imageMode;
+		s.rectMode = rectMode;
+		s.ellipseMode = ellipseMode;
+//		s.shapeMode = shapeMode;
+
+		s.blendMode = blendMode;
+
+		s.colorMode = colorMode;
+		s.colorModeX = colorModeX;
+		s.colorModeY = colorModeY;
+		s.colorModeZ = colorModeZ;
+		s.colorModeA = colorModeA;
+
+		s.tint = tint;
+		s.tintColor = tintColor;
+		s.fill = fill;
+		s.fillColor = fillColor;
+		s.stroke = stroke;
+		s.strokeColor = strokeColor;
+		s.strokeWeight = strokeWeight;
+		s.strokeCap = strokeCap;
+		s.strokeJoin = strokeJoin;
+
+//	    s.ambientR = ambientR;
+//	    s.ambientG = ambientG;
+//	    s.ambientB = ambientB;
+//	    s.specularR = specularR;
+//	    s.specularG = specularG;
+//	    s.specularB = specularB;
+//	    s.emissiveR = emissiveR;
+//	    s.emissiveG = emissiveG;
+//	    s.emissiveB = emissiveB;
+//	    s.shininess = shininess;
+
+		s.textFont = textFont;
+		s.textAlign = textAlign;
+		s.textAlignY = textAlignY;
+		s.textMode = textMode;
+		s.textSize = textSize;
+		s.textLeading = textLeading;
+
+		return s;
+	}
 	//////////////////////////////////////////////////////////////
 
 	// STROKE CAP/JOIN/WEIGHT
 
 	@Override
-	public final void strokeWeight(float weight) {
+	public void strokeWeight(float weight) {
 		strokeWeight = weight;
-		strokeImpl();
 	}
 
 	@Override
-	public final void strokeJoin(int join) {
+	public void strokeJoin(int join) {
 		strokeJoin = join;
-		strokeImpl();
 	}
 
 	@Override
-	public final void strokeCap(int cap) {
+	public void strokeCap(int cap) {
 		strokeCap = cap;
-		strokeImpl();
-	}
-
-	protected final void strokeImpl() {
-		int cap = BasicStroke.CAP_BUTT;
-		if (strokeCap == ROUND) {
-			cap = BasicStroke.CAP_ROUND;
-		} else if (strokeCap == PROJECT) {
-			cap = BasicStroke.CAP_SQUARE;
-		}
-
-		int join = BasicStroke.JOIN_BEVEL;
-		if (strokeJoin == MITER) {
-			join = BasicStroke.JOIN_MITER;
-		} else if (strokeJoin == ROUND) {
-			join = BasicStroke.JOIN_ROUND;
-		}
-
-		strokeObject = new BasicStroke(strokeWeight, cap, join);
-		graphics.setStroke(strokeObject);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3211,14 +4165,14 @@ public class SGraphics extends SImage implements SGFX {
 	// STROKE COLOR
 
 	@Override
-	public final void noStroke() { stroke = false; }
+	public void noStroke() { stroke = false; }
 
 	/**
 	 * @param rgb
 	 *            color value in hexadecimal notation
 	 */
 	@Override
-	public final void stroke(int rgb) {
+	public void stroke(int rgb) {
 		colorCalc(rgb);
 		strokeFromCalc();
 	}
@@ -3228,7 +4182,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            opacity of the stroke
 	 */
 	@Override
-	public final void stroke(int rgb, float alpha) {
+	public void stroke(int rgb, float alpha) {
 		colorCalc(rgb, alpha);
 		strokeFromCalc();
 	}
@@ -3238,13 +4192,13 @@ public class SGraphics extends SImage implements SGFX {
 	 *            specifies a value between white and black
 	 */
 	@Override
-	public final void stroke(float gray) {
+	public void stroke(float gray) {
 		colorCalc(gray);
 		strokeFromCalc();
 	}
 
 	@Override
-	public final void stroke(float gray, float alpha) {
+	public void stroke(float gray, float alpha) {
 		colorCalc(gray, alpha);
 		strokeFromCalc();
 	}
@@ -3259,18 +4213,18 @@ public class SGraphics extends SImage implements SGFX {
 	 * @webref color:setting
 	 */
 	@Override
-	public final void stroke(float v1, float v2, float v3) {
+	public void stroke(float v1, float v2, float v3) {
 		colorCalc(v1, v2, v3);
 		strokeFromCalc();
 	}
 
 	@Override
-	public final void stroke(float v1, float v2, float v3, float alpha) {
+	public void stroke(float v1, float v2, float v3, float alpha) {
 		colorCalc(v1, v2, v3, alpha);
 		strokeFromCalc();
 	}
 
-	private final void strokeFromCalc() {
+	protected void strokeFromCalc() {
 		stroke = true;
 		strokeR = calcR;
 		strokeG = calcG;
@@ -3282,9 +4236,6 @@ public class SGraphics extends SImage implements SGFX {
 		strokeAi = calcAi;
 		strokeColor = calcColor;
 		strokeAlpha = calcAlpha;
-
-		strokeColorObject = new Color(strokeColor, true);
-		strokeGradient = false;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3373,8 +4324,6 @@ public class SGraphics extends SImage implements SGFX {
 		tintAi = calcAi;
 		tintColor = calcColor;
 		tintAlpha = calcAlpha;
-
-		tintColorObject = new Color(tintColor, true);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3382,7 +4331,7 @@ public class SGraphics extends SImage implements SGFX {
 	// FILL COLOR
 
 	@Override
-	public final void noFill() {
+	public void noFill() {
 		fill = false;
 	}
 
@@ -3391,7 +4340,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            color value in hexadecimal notation
 	 */
 	@Override
-	public final void fill(int rgb) {
+	public void fill(int rgb) {
 		colorCalc(rgb);
 		fillFromCalc();
 	}
@@ -3401,7 +4350,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            opacity of the fill
 	 */
 	@Override
-	public final void fill(int rgb, float alpha) {
+	public void fill(int rgb, float alpha) {
 		colorCalc(rgb, alpha);
 		fillFromCalc();
 	}
@@ -3411,13 +4360,13 @@ public class SGraphics extends SImage implements SGFX {
 	 *            number specifying value between white and black
 	 */
 	@Override
-	public final void fill(float gray) {
+	public void fill(float gray) {
 		colorCalc(gray);
 		fillFromCalc();
 	}
 
 	@Override
-	public final void fill(float gray, float alpha) {
+	public void fill(float gray, float alpha) {
 		colorCalc(gray, alpha);
 		fillFromCalc();
 	}
@@ -3431,18 +4380,18 @@ public class SGraphics extends SImage implements SGFX {
 	 *            blue or brightness value (depending on current color mode)
 	 */
 	@Override
-	public final void fill(float v1, float v2, float v3) {
+	public void fill(float v1, float v2, float v3) {
 		colorCalc(v1, v2, v3);
 		fillFromCalc();
 	}
 
 	@Override
-	public final void fill(float v1, float v2, float v3, float alpha) {
+	public void fill(float v1, float v2, float v3, float alpha) {
 		colorCalc(v1, v2, v3, alpha);
 		fillFromCalc();
 	}
 
-	private final void fillFromCalc() {
+	protected void fillFromCalc() {
 		fill = true;
 		fillR = calcR;
 		fillG = calcG;
@@ -3454,9 +4403,6 @@ public class SGraphics extends SImage implements SGFX {
 		fillAi = calcAi;
 		fillColor = calcColor;
 		fillAlpha = calcAlpha;
-
-		fillColorObject = new Color(fillColor, true);
-		fillGradient = false;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3467,7 +4413,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            color value in hexadecimal notation
 	 */
 	@Override
-	public final void background(int rgb) {
+	public void background(int rgb) {
 		colorCalc(rgb);
 		backgroundFromCalc();
 	}
@@ -3477,7 +4423,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            opacity of the background
 	 */
 	@Override
-	public final void background(int rgb, float alpha) {
+	public void background(int rgb, float alpha) {
 		colorCalc(rgb, alpha);
 		backgroundFromCalc();
 	}
@@ -3487,13 +4433,13 @@ public class SGraphics extends SImage implements SGFX {
 	 *            specifies a value between white and black
 	 */
 	@Override
-	public final void background(float gray) {
+	public void background(float gray) {
 		colorCalc(gray);
 		backgroundFromCalc();
 	}
 
 	@Override
-	public final void background(float gray, float alpha) {
+	public void background(float gray, float alpha) {
 		if (format == RGB) {
 			background(gray); // ignore alpha for main drawing surface
 
@@ -3512,21 +4458,21 @@ public class SGraphics extends SImage implements SGFX {
 	 *            blue or brightness value (depending on the current color mode)
 	 */
 	@Override
-	public final void background(float v1, float v2, float v3) {
+	public void background(float v1, float v2, float v3) {
 		colorCalc(v1, v2, v3);
 		backgroundFromCalc();
 	}
 
 	@Override
-	public final void background(float v1, float v2, float v3, float alpha) {
+	public void background(float v1, float v2, float v3, float alpha) {
 		colorCalc(v1, v2, v3, alpha);
 		backgroundFromCalc();
 	}
 
 	@Override
-	public final void clear() { background(0, 0, 0, 0); }
+	public void clear() { background(0, 0, 0, 0); }
 
-	protected final void backgroundFromCalc() {
+	protected void backgroundFromCalc() {
 		backgroundR = calcR;
 		backgroundG = calcG;
 		backgroundB = calcB;
@@ -3582,67 +4528,15 @@ public class SGraphics extends SImage implements SGFX {
 		set(0, 0, image);
 	}
 
-	private final void backgroundImpl() {
-		if (backgroundAlpha) {
-			clearPixels(backgroundColor);
-		} else {
-			Color bgColor = new Color(backgroundColor);
-//			Color bgColor = new Color(backgroundColor, calcAlpha); // TODO
-			// seems to fire an additional event that causes flickering,
-			// like an extra background erase on OS X
-//	      if (canvas != null) {
-//	        canvas.setBackground(bgColor);
-//	      }
-			// new Exception().printStackTrace(System.out);
-			// in case people do transformations before background(),
-			// need to handle this with a push/reset/pop
-
-			Composite oldComposite = graphics.getComposite();
-			graphics.setComposite(defaultComposite);
-//			AffineTransform at = graphics.getTransform();
-
-			pushMatrix();
-			resetMatrix();
-			graphics.setColor(bgColor); // , backgroundAlpha));
-//	      	g2.fillRect(0, 0, width, height);
-			// On a hi-res display, image may be larger than width/height
-			if (image != null) {
-				// image will be null in subclasses (i.e. PDF)
-				graphics.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
-			} else {
-				// hope for the best if image is null
-				graphics.fillRect(0, 0, width, height);
-			}
-			popMatrix();
-
-//			graphics.setTransform(at);
-			graphics.setComposite(oldComposite);
-		}
-	}
-
-	int[] clearPixels;
-
-	protected void clearPixels(int color) {
-		// On a hi-res display, image may be larger than width/height
-		int imageWidth = image.getWidth(null);
-		int imageHeight = image.getHeight(null);
-
-		// Create a small array that can be used to set the pixels several times.
-		// Using a single-pixel line of length 'width' is a tradeoff between
-		// speed (setting each pixel individually is too slow) and memory
-		// (an array for width*height would waste lots of memory if it stayed
-		// resident, and would terrify the gc if it were re-created on each trip
-		// to background().
-//	    WritableRaster raster = ((BufferedImage) image).getRaster();
-//	    WritableRaster raster = image.getRaster();
-		WritableRaster raster = getRaster();
-		if ((clearPixels == null) || (clearPixels.length < imageWidth)) {
-			clearPixels = new int[imageWidth];
-		}
-		Arrays.fill(clearPixels, 0, imageWidth, backgroundColor);
-		for (int i = 0; i < imageHeight; i++) {
-			raster.setDataElements(0, i, imageWidth, 1, clearPixels);
-		}
+	protected void backgroundImpl() {
+		pushStyle();
+		pushMatrix();
+		resetMatrix();
+		noStroke();
+		fill(backgroundColor);
+		rect(0, 0, width, height);
+		popMatrix();
+		popStyle();
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3654,7 +4548,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
 	 */
 	@Override
-	public final void colorMode(int mode) {
+	public void colorMode(int mode) {
 		colorMode(mode, colorModeX, colorModeY, colorModeZ, colorModeA);
 	}
 
@@ -3663,7 +4557,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            range for all color elements
 	 */
 	@Override
-	public final void colorMode(int mode, float max) {
+	public void colorMode(int mode, float max) {
 		colorMode(mode, max, max, max, max);
 	}
 
@@ -3676,7 +4570,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            range for the blue or brightness depending on the current color mode
 	 */
 	@Override
-	public final void colorMode(int mode, float max1, float max2, float max3) {
+	public void colorMode(int mode, float max1, float max2, float max3) {
 		colorMode(mode, max1, max2, max3, colorModeA);
 	}
 
@@ -3685,7 +4579,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *            range for the alpha
 	 */
 	@Override
-	public final void colorMode(int mode,
+	public void colorMode(int mode,
 			float max1, float max2, float max3, float maxA) {
 		colorMode = mode;
 
@@ -3718,7 +4612,7 @@ public class SGraphics extends SImage implements SGFX {
 	// covered by this based PGraphics class, leaving only a single function
 	// to override/implement in the subclass.
 
-	private final void colorCalc(int rgb) {
+	protected void colorCalc(int rgb) {
 		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) {
 			colorCalc((float) rgb);
 		} else {
@@ -3726,7 +4620,7 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	private final void colorCalc(int rgb, float alpha) {
+	protected void colorCalc(int rgb, float alpha) {
 		if (((rgb & 0xff000000) == 0) && (rgb <= colorModeX)) { // see above
 			colorCalc((float) rgb, alpha);
 		} else {
@@ -3734,11 +4628,11 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	private final void colorCalc(float gray) {
+	protected void colorCalc(float gray) {
 		colorCalc(gray, colorModeA);
 	}
 
-	private final void colorCalc(float gray, float alpha) {
+	protected void colorCalc(float gray, float alpha) {
 		if (gray > colorModeX) gray = colorModeX;
 		if (alpha > colorModeA) alpha = colorModeA;
 
@@ -3758,11 +4652,11 @@ public class SGraphics extends SImage implements SGFX {
 		calcAlpha = (calcAi != 255);
 	}
 
-	private final void colorCalc(float x, float y, float z) {
+	protected void colorCalc(float x, float y, float z) {
 		colorCalc(x, y, z, colorModeA);
 	}
 
-	private final void colorCalc(float x, float y, float z, float a) {
+	protected void colorCalc(float x, float y, float z, float a) {
 		if (x > colorModeX) x = colorModeX;
 		if (y > colorModeY) y = colorModeY;
 		if (z > colorModeZ) z = colorModeZ;
@@ -3848,7 +4742,7 @@ public class SGraphics extends SImage implements SGFX {
 		calcAlpha = (calcAi != 255);
 	}
 
-	private final void colorCalcARGB(int argb, float alpha) {
+	protected void colorCalcARGB(int argb, float alpha) {
 		if (alpha == colorModeA) {
 			calcAi = (argb >> 24) & 0xff;
 			calcColor = argb;
@@ -4001,7 +4895,7 @@ public class SGraphics extends SImage implements SGFX {
 	// COLOR DATATYPE INTERPOLATION
 
 	@Override
-	public final int lerpColor(int c1, int c2, float amt) {
+	public int lerpColor(int c1, int c2, float amt) {
 		return lerpColor(c1, c2, amt, colorMode);
 	}
 
@@ -4013,7 +4907,7 @@ public class SGraphics extends SImage implements SGFX {
 	 *           Interpolate between two colors. Like lerp(), but for the
 	 *           individual color components of a color supplied as an int value.
 	 */
-	public final static int lerpColor(int c1, int c2, float amt, int mode) {
+	public static int lerpColor(int c1, int c2, float amt, int mode) {
 		if (amt < 0) amt = 0;
 		if (amt > 1) amt = 1;
 
@@ -4072,13 +4966,75 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	public static void showWarning(String msg, Object... args) { showWarning(String.format(msg, args)); }
+	/**
+	 * Version of showWarning() that takes a parsed String.
+	 */
+	static public void showWarning(String msg, Object... args) { // ignore
+		showWarning(String.format(msg, args));
+	}
 
+	/**
+	 * Display a warning that the specified method is only available with 3D.
+	 * 
+	 * @param method
+	 *            The method name (no parentheses)
+	 */
+	static public void showDepthWarning(String method) {
+		showWarning(method + "() can only be used with a renderer that " +
+				"supports 3D, such as P3D.");
+	}
+
+	/**
+	 * Display a warning that the specified method that takes x, y, z parameters
+	 * can only be used with x and y parameters in this renderer.
+	 * 
+	 * @param method
+	 *            The method name (no parentheses)
+	 */
+	static public void showDepthWarningXYZ(String method) {
+		showWarning(method + "() with x, y, and z coordinates " +
+				"can only be used with a renderer that " +
+				"supports 3D, such as P3D. " +
+				"Use a version without a z-coordinate instead.");
+	}
+
+	/**
+	 * Display a warning that the specified method is simply unavailable.
+	 */
+	static public void showMethodWarning(String method) {
+		showWarning(method + "() is not available with this renderer.");
+	}
+
+	/**
+	 * Error that a particular variation of a method is unavailable (even though
+	 * other variations are). For instance, if vertex(x, y, u, v) is not
+	 * available, but vertex(x, y) is just fine.
+	 */
+	static public void showVariationWarning(String str) {
+		showWarning(str + " is not available with this renderer.");
+	}
+
+	/**
+	 * Display a warning that the specified method is not implemented, meaning
+	 * that it could be either a completely missing function, although other
+	 * variations of it may still work properly.
+	 */
+	static public void showMissingWarning(String method) {
+		showWarning(method + "(), or this particular variation of it, " +
+				"is not available with this renderer.");
+	}
+
+	/**
+	 * Show an renderer-related exception that halts the program. Currently just
+	 * wraps the message as a RuntimeException and throws it, but might do
+	 * something more specific might be used in the future.
+	 */
 	public static void showException(String msg) { throw new RuntimeException(msg); }
 
 	/**
 	 * Same as below, but defaults to a 12 point font, just as MacWrite intended.
 	 */
+
 	protected void defaultFontOrDeath(String method) { defaultFontOrDeath(method, 12); }
 
 	/**
@@ -4086,6 +5042,7 @@ public class SGraphics extends SImage implements SGFX {
 	 * an exception that halts the program because textFont() has not been used
 	 * prior to the specified method.
 	 */
+
 	protected void defaultFontOrDeath(String method, float size) {
 		if (parent != null) {
 			textFont = createDefaultFont(size);
@@ -4094,230 +5051,6 @@ public class SGraphics extends SImage implements SGFX {
 		}
 	}
 
-	//////////////////////////////////////////////////////////////
-
-	// SIMAGE METHODS
-
-	protected WritableRaster getRaster() {
-		WritableRaster raster = null;
-//		if (primaryGraphics) { // TODO Can image ever be an VolatileImage ?
-//			/*
-//			 * // 'offscreen' will probably be removed in the next release
-//			 * if (useOffscreen) {
-//			 * raster = offscreen.getRaster();
-//			 * } else
-//			 */
-//			if (image instanceof VolatileImage) {
-//				// when possible, we'll try VolatileImage
-//				raster = ((VolatileImage) image).getSnapshot().getRaster();
-//			}
-//		}
-		if (raster == null) {
-//			if (image instanceof VolatileImage) {
-//				// when possible, we'll try VolatileImage
-//				raster = ((VolatileImage) image).getSnapshot().getRaster();
-//			} else {
-			raster = ((BufferedImage) image).getRaster();
-//			}
-		}
-
-		// On Raspberry Pi (and perhaps other platforms, the color buffer won't
-		// necessarily be the int array that we'd like. Need to convert it here.
-		// Not that this would probably mean getRaster() would need to work more
-		// like loadRaster/updateRaster because the pixels will need to be
-		// temporarily moved to (and later from) a buffer that's understood by
-		// the rest of the Processing source.
-		// https://github.com/processing/processing/issues/2010
-		if (raster.getTransferType() != DataBuffer.TYPE_INT) {
-			System.err.println("See https://github.com/processing/processing/issues/2010");
-			throw new RuntimeException("Pixel operations are not supported on this device.");
-		}
-		return raster;
-	}
-
-	@Override
-	public void loadPixels() {
-		if (pixels == null || (pixels.length != pixelWidth * pixelHeight)) {
-			pixels = new int[pixelWidth * pixelHeight];
-		}
-
-		WritableRaster raster = getRaster();
-		raster.getDataElements(0, 0, pixelWidth, pixelHeight, pixels);
-		if (raster.getNumBands() == 3) {
-			// Java won't set the high bits when RGB, returns 0 for alpha
-			// https://github.com/processing/processing/issues/2030
-			for (int i = 0; i < pixels.length; i++) {
-				pixels[i] = 0xff000000 | pixels[i];
-			}
-		}
-		// ((BufferedImage) image).getRGB(0, 0, width, height, pixels, 0, width);
-//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-//	    WritableRaster raster = image.getRaster();
-	}
-
-	/**
-	 * Update the pixels[] buffer to the PGraphics image.
-	 * <P>
-	 * Unlike in PImage, where updatePixels() only requests that the
-	 * update happens, in PGraphicsJava2D, this will happen immediately.
-	 */
-	@Override
-	public void updatePixels(int x, int y, int w, int h) {
-		// if ((x == 0) && (y == 0) && (c == width) && (d == height)) {
-//	    System.err.format("%d %d %d %d .. w/h = %d %d .. pw/ph = %d %d %n", x, y, c, d, width, height, pixelWidth, pixelHeight);
-		if ((x != 0) || (y != 0) || (w != pixelWidth) || (h != pixelHeight)) {
-			// Show a warning message, but continue anyway.
-			showWarning("updatePixels(x, y, w, h) is not available with this renderer.");
-//	      new Exception().printStackTrace(System.out);
-		}
-//	    updatePixels();
-		if (pixels != null) {
-			getRaster().setDataElements(0, 0, pixelWidth, pixelHeight, pixels);
-		}
-		modified = true;
-	}
-
-	//////////////////////////////////////////////////////////////
-
-	// GET/SET
-
-	static int getset[] = new int[1];
-
-	// JAVA2D
-	@Override
-	public int get(int x, int y) {
-		if ((x < 0) || (y < 0) || (x >= width) || (y >= height)) return 0;
-		// return ((BufferedImage) image).getRGB(x, y);
-//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-		WritableRaster raster = getRaster();
-		raster.getDataElements(x, y, getset);
-		if (raster.getNumBands() == 3) {
-			// https://github.com/processing/processing/issues/2030
-			return getset[0] | 0xff000000;
-		}
-		return getset[0];
-	}
-
-	// JAVA2D
-	@Override
-	protected void getImpl(int sourceX, int sourceY,
-			int sourceWidth, int sourceHeight,
-			SImage target, int targetX, int targetY) {
-		// last parameter to getRGB() is the scan size of the *target* buffer
-		// ((BufferedImage) image).getRGB(x, y, w, h, output.pixels, 0, w);
-//	    WritableRaster raster =
-//	      ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-		WritableRaster raster = getRaster();
-
-		if (sourceWidth == target.pixelWidth && sourceHeight == target.pixelHeight) {
-			raster.getDataElements(sourceX, sourceY, sourceWidth, sourceHeight, target.pixels);
-			// https://github.com/processing/processing/issues/2030
-			if (raster.getNumBands() == 3) {
-				target.filter(OPAQUE);
-			}
-
-		} else {
-			// TODO optimize, incredibly inefficient to reallocate this much memory
-			int[] temp = new int[sourceWidth * sourceHeight];
-			raster.getDataElements(sourceX, sourceY, sourceWidth, sourceHeight, temp);
-
-			// Copy the temporary output pixels over to the outgoing image
-			int sourceOffset = 0;
-			int targetOffset = targetY * target.pixelWidth + targetX;
-			for (int y = 0; y < sourceHeight; y++) {
-				if (raster.getNumBands() == 3) {
-					for (int i = 0; i < sourceWidth; i++) {
-						// Need to set the high bits for this feller
-						// https://github.com/processing/processing/issues/2030
-						target.pixels[targetOffset + i] = 0xFF000000 | temp[sourceOffset + i];
-					}
-				} else {
-					System.arraycopy(temp, sourceOffset, target.pixels, targetOffset, sourceWidth);
-				}
-				sourceOffset += sourceWidth;
-				targetOffset += target.pixelWidth;
-			}
-		}
-	}
-
-	// JAVA2D
-	@Override
-	public void pixel(int x, int y) { pixel(x, y, strokeColor); }
-
-	// JAVA2D
-	@Override
-	public void pixel(int x, int y, int argb) {
-		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
-//	    ((BufferedImage) image).setRGB(x, y, argb);
-		getset[0] = argb;
-//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-//	    WritableRaster raster = image.getRaster();
-		getRaster().setDataElements(x, y, getset);
-	}
-
-	// JAVA2D
-	@Override
-	public void set(int x, int y, int argb) {
-		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
-//	    ((BufferedImage) image).setRGB(x, y, argb);
-		getset[0] = argb;
-//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-//	    WritableRaster raster = image.getRaster();
-		getRaster().setDataElements(x, y, getset);
-	}
-
-	// JAVA2D
-	@Override
-	protected void setImpl(SImage sourceImage,
-			int sourceX, int sourceY,
-			int sourceWidth, int sourceHeight,
-			int targetX, int targetY) {
-		WritableRaster raster = getRaster();
-//	      ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-
-		if ((sourceX == 0) && (sourceY == 0) &&
-				(sourceWidth == sourceImage.pixelWidth) &&
-				(sourceHeight == sourceImage.pixelHeight)) {
-//	      System.out.format("%d %d  %dx%d  %d%n", targetX, targetY,
-//	                             sourceImage.width, sourceImage.height,
-//	                             sourceImage.pixels.length);
-			raster.setDataElements(targetX, targetY,
-					sourceImage.pixelWidth, sourceImage.pixelHeight,
-					sourceImage.pixels);
-		} else {
-			// TODO optimize, incredibly inefficient to reallocate this much memory
-			SImage temp = sourceImage.get(sourceX, sourceY, sourceWidth, sourceHeight);
-			raster.setDataElements(targetX, targetY, temp.pixelWidth, temp.pixelHeight, temp.pixels);
-		}
-	}
-
-	//////////////////////////////////////////////////////////////
-
-	// COPY
-
-	// JAVA2D
-	@Override
-	public void copy(int sx, int sy, int sw, int sh,
-			int dx, int dy, int dw, int dh) {
-		if ((sw != dw) || (sh != dh)) {
-			graphics.drawImage(image, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, null);
-
-		} else {
-			dx = dx - sx; // java2d's "dx" is the delta, not dest
-			dy = dy - sy;
-			graphics.copyArea(sx, sy, sw, sh, dx, dy);
-		}
-	}
-
-	// JAVA2D
-	@Override
-	public void copy(SImage src,
-			int sx, int sy, int sw, int sh,
-			int dx, int dy, int dw, int dh) {
-		graphics.drawImage((Image) src.getNative(),
-				dx, dy, dx + dw, dy + dh,
-				sx, sy, sx + sw, sy + sh, null);
-	}
 	//////////////////////////////////////////////////////////////
 
 	// ASYNC IMAGE SAVING
@@ -4492,5 +5225,8 @@ public class SGraphics extends SImage implements SGFX {
 		}
 
 	}
+
+	@Override
+	public void pixel(int x, int y) { pixel(x, y, strokeColor); }
 
 }

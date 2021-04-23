@@ -35,7 +35,7 @@ import java.awt.image.BufferedImage;
  */
 public interface SConstants {
 
-	static final String JAVA2D = "com.sunflow.gfx.SGraphics";
+	static final String JAVA2D = "com.sunflow.gfx.SGraphicsJava2D";
 
 //	static final String P2D = "processing.opengl.PGraphics2D";
 //	static final String P3D = "processing.opengl.PGraphics3D"

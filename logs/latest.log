@@ -1,14 +1,1 @@
-[21 Apr 2021 02:57:13.193] [main/INFO] [com.sunflow.logging.Log/]: starting 2D Game
-[21 Apr 2021 02:57:13.430] [main/FATAL] [com.sunflow.logging.Log/]: Uncaught Exception
-java.lang.NullPointerException
-	at com.sunflow.gfx.SGraphics.checkImage(SGraphics.java:495)
-	at com.sunflow.gfx.SGraphics.beginDraw(SGraphics.java:534)
-	at com.sunflow.game.GameBase.createCanvas(GameBase.java:788)
-	at com.sunflow.game.GameBase.createCanvas(GameBase.java:776)
-	at com.sunflow.examples.ExampleGame2D.setup(ExampleGame2D.java:29)
-	at com.sunflow.game.GameBase.init(GameBase.java:813)
-	at com.sunflow.game.GameBase.run(GameBase.java:804)
-	at java.lang.Thread.run(Unknown Source)
-	at com.sunflow.game.GameBase.start(GameBase.java:760)
-	at com.sunflow.examples.ExampleGame2D.main(ExampleGame2D.java:17)
-
+[23 Apr 2021 04:48:09.632] [main/INFO] [com.sunflow.logging.Log/]: starting 2D Game

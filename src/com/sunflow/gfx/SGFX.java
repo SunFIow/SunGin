@@ -6,6 +6,7 @@ import java.awt.geom.AffineTransform;
 
 import com.sunflow.math.SMatrix2D;
 import com.sunflow.math.SMatrix_D;
+import com.sunflow.math3d.SMatrix3D;
 import com.sunflow.util.SStyle;
 
 public interface SGFX {
@@ -50,11 +51,27 @@ public interface SGFX {
 	 */
 	void beginShape(int mode);
 
+	void edge(boolean edge);
+
+	void normal(float nx, float ny, float nz);
+
+	void textureMode(int mode);
+
+	void texture(SImage texture);
+
+	void noTexture();
+
 	void vertex(float x, float y);
+
+	void vertex(float x, float y, float z);
 
 	void vertex(int[] v);
 
 	void vertex(float[] v);
+
+	void vertex(float x, float y, float u, float v);
+
+	void vertex(float x, float y, float z, float u, float v);
 
 	void endShape();
 
@@ -417,11 +434,21 @@ public interface SGFX {
 
 	void rotate(float theta);
 
+	void rotateX(float theta);
+
+	void rotateY(float theta);
+
+	void rotateZ(float theta);
+
 	void rotate(float theta, float x, float y);
+
+	void rotate(float theta, float x, float y, float z);
 
 	void scale(float xy);
 
 	void scale(float x, float y);
+
+	void scale(float x, float y, float z);
 
 	void shear(float x, float y);
 
@@ -435,22 +462,43 @@ public interface SGFX {
 
 	void resetMatrix();
 
+	void applyMatrix(SMatrix_D source);
+
 	void applyMatrix(SMatrix2D source);
 
 	void applyMatrix(float n00, float n01, float n02,
 			float n10, float n11, float n12);
 
+	void applyMatrix(SMatrix3D source);
+
+	void applyMatrix(float n00, float n01, float n02, float n03,
+			float n10, float n11, float n12, float n13,
+			float n20, float n21, float n22, float n23,
+			float n30, float n31, float n32, float n33);
+
 	SMatrix_D getMatrix();
 
 	SMatrix2D getMatrix(SMatrix2D target);
 
+	SMatrix3D getMatrix(SMatrix3D target);
+
+	void setMatrix(SMatrix_D source);
+
 	void setMatrix(SMatrix2D source);
+
+	void setMatrix(SMatrix3D source);
 
 	void printMatrix();
 
 	float screenX(float x, float y);
 
 	float screenY(float x, float y);
+
+	float screenX(float x, float y, float z);
+
+	float screenY(float x, float y, float z);
+
+	float screenZ(float x, float y, float z);
 
 	void pushStyle();
 

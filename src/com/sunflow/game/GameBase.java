@@ -109,6 +109,7 @@ import com.sunflow.engine.screen.ScreenOpenGL;
 import com.sunflow.gfx.SFont;
 import com.sunflow.gfx.SGFX;
 import com.sunflow.gfx.SGraphics;
+import com.sunflow.gfx.SGraphicsJava2D;
 import com.sunflow.gfx.SImage;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
@@ -117,6 +118,7 @@ import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.math.SMatrix2D;
 import com.sunflow.math.SMatrix_D;
 import com.sunflow.math.SVector;
+import com.sunflow.math3d.SMatrix3D;
 import com.sunflow.util.GameUtils;
 import com.sunflow.util.GeometryUtils;
 import com.sunflow.util.LogUtils;
@@ -783,8 +785,8 @@ public class GameBase implements SGFX, Runnable,
 //		setPrimary(true);
 //		setSize(width(), height());
 //		graphics = checkImage();
+
 		g = createPrimaryGraphics();
-		g.beginDraw();
 
 		defaultSettings();
 		screen.show();
@@ -841,7 +843,7 @@ public class GameBase implements SGFX, Runnable,
 
 		push();
 		draw();
-		draw(g.graphics);
+		draw(((SGraphicsJava2D) g).graphics);
 		pop();
 
 		postDraw();
@@ -3378,13 +3380,37 @@ public class GameBase implements SGFX, Runnable,
 	public void beginShape(int mode) { g.beginShape(mode); }
 
 	@Override
+	public void edge(boolean edge) { g.edge(edge); }
+
+	@Override
+	public void normal(float x, float y, float z) { g.normal(x, y, z); }
+
+	@Override
+	public void textureMode(int mode) { g.textureMode(mode); }
+
+	@Override
+	public void texture(SImage texture) { g.texture(texture); }
+
+	@Override
+	public void noTexture() { g.noTexture(); }
+
+	@Override
 	public void vertex(float x, float y) { g.vertex(x, y); }
+
+	@Override
+	public void vertex(float x, float y, float z) { g.vertex(x, y, z); }
 
 	@Override
 	public void vertex(int[] v) { g.vertex(v); }
 
 	@Override
 	public void vertex(float[] v) { g.vertex(v); }
+
+	@Override
+	public void vertex(float x, float y, float u, float v) { g.vertex(x, y, u, v); }
+
+	@Override
+	public void vertex(float x, float y, float z, float u, float v) { g.vertex(x, y, z, u, v); }
 
 	@Override
 	public void endShape() { g.endShape(); }
@@ -3546,13 +3572,28 @@ public class GameBase implements SGFX, Runnable,
 	public void rotate(float theta) { g.rotate(theta); }
 
 	@Override
+	public void rotateX(float theta) { g.rotateX(theta); }
+
+	@Override
+	public void rotateY(float theta) { g.rotateY(theta); }
+
+	@Override
+	public void rotateZ(float theta) { g.rotateZ(theta); }
+
+	@Override
 	public void rotate(float theta, float x, float y) { g.rotate(theta, x, y); }
+
+	@Override
+	public void rotate(float theta, float x, float y, float z) { g.rotate(theta, x, y, z); }
 
 	@Override
 	public void scale(float xy) { g.scale(xy); }
 
 	@Override
 	public void scale(float x, float y) { g.scale(x, y); }
+
+	@Override
+	public void scale(float x, float y, float z) { g.scale(x, y, z); }
 
 	@Override
 	public void shear(float x, float y) { g.shear(x, y); }
@@ -3573,10 +3614,35 @@ public class GameBase implements SGFX, Runnable,
 	public void resetMatrix() { g.resetMatrix(); }
 
 	@Override
+	public void applyMatrix(SMatrix_D source) { g.applyMatrix(source); }
+
+	@Override
 	public void applyMatrix(SMatrix2D source) { g.applyMatrix(source); }
 
 	@Override
-	public void applyMatrix(float n00, float n01, float n02, float n10, float n11, float n12) { g.applyMatrix(n00, n01, n02, n10, n11, n12); }
+	public void applyMatrix(
+			float n00, float n01, float n02,
+			float n10, float n11, float n12) {
+		g.applyMatrix(
+				n00, n01, n02,
+				n10, n11, n12);
+	}
+
+	@Override
+	public void applyMatrix(SMatrix3D source) { g.applyMatrix(source); }
+
+	@Override
+	public void applyMatrix(
+			float n00, float n01, float n02, float n03,
+			float n10, float n11, float n12, float n13,
+			float n20, float n21, float n22, float n23,
+			float n30, float n31, float n32, float n33) {
+		g.applyMatrix(
+				n00, n01, n02, n03,
+				n10, n11, n12, n13,
+				n20, n21, n22, n23,
+				n30, n31, n32, n33);
+	}
 
 	@Override
 	public SMatrix_D getMatrix() { return g.getMatrix(); }
@@ -3585,7 +3651,16 @@ public class GameBase implements SGFX, Runnable,
 	public SMatrix2D getMatrix(SMatrix2D target) { return g.getMatrix(target); }
 
 	@Override
+	public SMatrix3D getMatrix(SMatrix3D target) { return g.getMatrix(target); }
+
+	@Override
+	public void setMatrix(SMatrix_D source) { g.setMatrix(source); }
+
+	@Override
 	public void setMatrix(SMatrix2D source) { g.setMatrix(source); }
+
+	@Override
+	public void setMatrix(SMatrix3D source) { g.setMatrix(source); }
 
 	@Override
 	public void printMatrix() { g.printMatrix(); }
@@ -3595,6 +3670,15 @@ public class GameBase implements SGFX, Runnable,
 
 	@Override
 	public float screenY(float x, float y) { return g.screenY(x, y); }
+
+	@Override
+	public float screenX(float x, float y, float z) { return g.screenX(x, y, z); }
+
+	@Override
+	public float screenY(float x, float y, float z) { return g.screenY(x, y, z); }
+
+	@Override
+	public float screenZ(float x, float y, float z) { return g.screenZ(x, y, z); }
 
 	@Override
 	public void pushStyle() { g.pushStyle(); }
@@ -6058,6 +6142,5 @@ public class GameBase implements SGFX, Runnable,
 			lookAndFeelCheck = true;
 		}
 	}
-
 //	public GraphicsConfiguration getGC() { return screen.getGC(); }
 }

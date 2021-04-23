@@ -143,10 +143,10 @@ public abstract class S_Shape {
 
 		public static Shape3D getShape(Game3D screen, Shape3D s) {
 			if (s == null) s = new Shape3D();
-			s.path = (GeneralPath) screen.getGraphics().gpath.clone();
+			s.path = (GeneralPath) ((SGraphicsJava2D) screen.getGraphics()).gpath.clone();
 			s.vertices = screen.vertices;
 			s.style = screen.getStyle();
-			s.transform = screen.getGraphics().graphics.getTransform();
+			s.transform = ((SGraphicsJava2D) screen.getGraphics()).graphics.getTransform();
 			s.m_transform = screen.gMatrix.getTransform();
 			return s;
 		}
@@ -184,9 +184,9 @@ public abstract class S_Shape {
 
 		public static Shape2D getShape(GameBase screen, Shape2D s) {
 			if (s == null) s = new Shape2D();
-			s.path = (GeneralPath) screen.getGraphics().gpath.clone();
+			s.path = (GeneralPath) ((SGraphicsJava2D) screen.getGraphics()).gpath.clone();
 			s.style = screen.getStyle();
-			s.transform = screen.getGraphics().graphics.getTransform();
+			s.transform = ((SGraphicsJava2D) screen.getGraphics()).graphics.getTransform();
 			return s;
 		}
 	}
