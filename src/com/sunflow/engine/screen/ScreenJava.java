@@ -106,6 +106,38 @@ public class ScreenJava extends Screen {
 //	        }
 			}
 		}
+
+		@Override
+		public void update(Graphics g) {
+//	      System.out.println("updating");
+			paint(g);
+		}
+
+		@Override
+		public void paint(Graphics screen) {
+//	      System.out.println("painting");
+//	      if (useStrategy) {
+			render();
+			/*
+			 * if (graphics != null) {
+			 * System.out.println("drawing to screen " + canvas);
+			 * screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+			 * }
+			 */
+
+//	      } else {
+////	        new Exception("painting").printStackTrace(System.out);
+////	        if (graphics.image != null) { // && !sketch.insideDraw) {
+//	        if (onscreen != null) {
+////	          synchronized (graphics.image) {
+//	          // Needs the width/height to be set so that retina images are properly scaled down
+////	          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+//	          synchronized (offscreenLock) {
+//	            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
+//	          }
+//	        }
+//	      }
+		}
 	}
 
 	@Override
@@ -118,10 +150,10 @@ public class ScreenJava extends Screen {
 	}
 
 	@Override
-	public boolean render() {
+	synchronized protected void render() {
 		if (!isCreated || !canvas.isDisplayable() || game.getGraphics().image == null) {
 			System.out.println("not created");
-			return false;
+			return;
 		}
 
 		BufferStrategy strategy = canvas.getBufferStrategy();
@@ -149,19 +181,16 @@ public class ScreenJava extends Screen {
 			// Repeat the rendering if the drawing buffer was lost
 		} while (strategy.contentsLost());
 		// }
-		return true;
 	}
 
-	@Override
-	public void preDraw() {
-		super.preDraw();
-	}
+//	@Override
+//	public void preDraw() {}
 
 	@Override
 	public void postDraw() {
-		super.postDraw();
 		S_Shape.drawAll(game);
 		if (showOverlay) drawOverlay();
+		super.postDraw();
 	}
 
 	@Override

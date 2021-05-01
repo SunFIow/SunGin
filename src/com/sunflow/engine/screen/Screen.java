@@ -101,11 +101,11 @@ public abstract class Screen {
 		mouse.updateScreenPosition(mSP.x, mSP.y);
 	}
 
-	public abstract boolean render();
+	protected abstract void render();
 
 	public void preDraw() {}
 
-	public void postDraw() {}
+	public void postDraw() { render(); }
 
 	public void setTitle(String title) { this.title = title; }
 

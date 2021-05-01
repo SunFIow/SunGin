@@ -531,7 +531,7 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	public SSurface createSurface() {
-		return surface = new SScreenNone(this);
+		return surface = new SSurfaceNone(this);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -743,7 +743,6 @@ public class SGraphics extends SImage implements SGFX {
 
 	@Override
 	public void vertex(float x, float y) {
-		vertexCheck();
 		vertexCheck();
 		float[] vertex = vertices[vertexCount];
 
@@ -5049,6 +5048,48 @@ public class SGraphics extends SImage implements SGFX {
 		} else {
 			throw new RuntimeException("Use textFont() before " + method + "()");
 		}
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	// RENDERER SUPPORT QUERIES
+
+	/**
+	 * Return true if this renderer should be drawn to the screen. Defaults to
+	 * returning true, since nearly all renderers are on-screen beasts. But can
+	 * be overridden for subclasses like PDF so that a window doesn't open up.
+	 * <br/>
+	 * <br/>
+	 * A better name? showFrame, displayable, isVisible, visible, shouldDisplay,
+	 * what to call this?
+	 */
+	public boolean displayable() { // ignore
+		return true;
+	}
+
+	/**
+	 * Return true if this renderer supports 2D drawing. Defaults to true.
+	 */
+	public boolean is2D() { // ignore
+		return true;
+	}
+
+	/**
+	 * Return true if this renderer supports 3D drawing. Defaults to false.
+	 */
+	public boolean is3D() { // ignore
+		return false;
+	}
+
+	/**
+	 * Return true if this renderer does rendering through OpenGL. Defaults to false.
+	 */
+	public boolean isGL() { // ignore
+		return false;
+	}
+
+	public boolean is2X() {
+		return pixelDensity == 2;
 	}
 
 	//////////////////////////////////////////////////////////////

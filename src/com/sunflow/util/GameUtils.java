@@ -168,18 +168,20 @@ public interface GameUtils {
 	}
 
 	default String[] loadFileAsStringArray(String fileName) {
-		ArrayList<String> strs = new ArrayList<>();
 		try {
+			ArrayList<String> strs = new ArrayList<>();
 			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line = "";
 			while ((line = br.readLine()) != null) {
 				strs.add(line);
 			}
 			br.close();
+
+			return strs.toArray(new String[0]);
 		} catch (IOException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			return null;
 		}
-		return strs.toArray(new String[0]);
 	}
 
 	default Pair<SVector, Float> getClosest(SVector pos, SVector[] list) {

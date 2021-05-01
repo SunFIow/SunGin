@@ -186,4 +186,5 @@ public class GraphicsMatrix {
 	public final SMatrix getRotationMatrixZ() { return rotZ; }
 
 	public final SMatrix[] getRotationMatrix() { return new SMatrix[] { rotX, rotY, rotZ }; }
+
 }

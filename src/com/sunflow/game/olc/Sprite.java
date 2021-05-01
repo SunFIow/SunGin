@@ -40,6 +40,8 @@ public class Sprite implements GameUtils, SConstants {
 
 	public void flipX() {
 		SGraphics gr = createGraphics(img.width, img.height);
+		gr.beginDraw();
+		gr.loadPixels();
 		gr.image(img, img.width, 0, -img.width, img.height);
 //		img.image = gr.image;
 		img.set(0, 0, gr);
@@ -48,6 +50,8 @@ public class Sprite implements GameUtils, SConstants {
 
 	public void flipY() {
 		SGraphics gr = createGraphics(img.width, img.height);
+		gr.beginDraw();
+		gr.loadPixels();
 		gr.image(img, 0, img.height, img.width, -img.height);
 //		img.image = gr.image;
 		img.set(0, 0, gr);
@@ -56,6 +60,8 @@ public class Sprite implements GameUtils, SConstants {
 
 	public void flip() {
 		SGraphics gr = createGraphics(img.width, img.height);
+		gr.beginDraw();
+		gr.loadPixels();
 		gr.image(img, img.width, img.height, -img.width, -img.height);
 //		img.image = gr.image;
 		img.set(0, 0, gr);

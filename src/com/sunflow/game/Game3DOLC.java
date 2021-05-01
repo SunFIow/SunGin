@@ -53,8 +53,7 @@ public class Game3DOLC extends GameBase {
 	protected PipeLineRenderer renderer;
 
 	@Override
-	final void privatePreSetup() {
-
+	void init() {
 		isCameraActivated = true;
 //		vCameraPos = new SVector(197.0f, 198.0f, -980f);
 		vCameraPos = new SVector(0.0f, 0.0f, -4.0f);
@@ -81,7 +80,7 @@ public class Game3DOLC extends GameBase {
 //		shapes = new ArrayList<>();
 		updateView();
 
-		super.privatePreSetup();
+		super.init();
 	}
 
 	@Override
@@ -112,7 +111,7 @@ public class Game3DOLC extends GameBase {
 	}
 
 	@Override
-	protected final void preDraw() {
+	void preDraw() {
 		super.preDraw();
 
 		cameraMovement();
@@ -168,6 +167,7 @@ public class Game3DOLC extends GameBase {
 		}
 	}
 
+	@Override
 	public final void vertex(float x, float y, float z) {
 		SVector applied = apply(x, y, z);
 		SVector pos2d = convert3Dto2D(applied);
@@ -299,12 +299,16 @@ public class Game3DOLC extends GameBase {
 	@Override
 	public final void scale(float n) { scale(n, n, n); };
 
+	@Override
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };
 
+	@Override
 	public final void rotateX(float angle) { gMatrix.rotateX(angle); }
 
+	@Override
 	public final void rotateY(float angle) { gMatrix.rotateY(angle); }
 
+	@Override
 	public final void rotateZ(float angle) { gMatrix.rotateZ(angle); }
 
 	public final void rotateXTo(float angle) { gMatrix.rotateXTo(angle); }

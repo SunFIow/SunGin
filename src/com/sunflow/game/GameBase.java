@@ -111,6 +111,7 @@ import com.sunflow.gfx.SGFX;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.SGraphicsJava2D;
 import com.sunflow.gfx.SImage;
+import com.sunflow.gfx.SSurface;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
 import com.sunflow.logging.Log;
@@ -222,6 +223,10 @@ public class GameBase implements SGFX, Runnable,
 	}
 
 //	protected GameBase game;
+
+	protected SSurface surface;
+
+	public SSurface getSurface() { return surface; }
 
 	protected SGraphics g;
 
@@ -514,7 +519,7 @@ public class GameBase implements SGFX, Runnable,
 //		    }
 		sketch.sketchPath = folder;
 
-//	    sketch.handleSettings();
+		sketch.handleSettings();
 
 		sketch.external = external;
 
@@ -522,25 +527,101 @@ public class GameBase implements SGFX, Runnable,
 			sketch.windowColor = windowColor;
 		}
 
-//		final SSurface surface = sketch.initSurface(); // TODO
+		final SSurface surface = sketch.initSurface(); // TODO
 
-//	    if (present) {
-//	      if (hideStop) {
-//	        stopColor = 0;  // they'll get the hint
-//	      }
-//	      surface.placePresent(stopColor);
-//	    } else {
-//	      surface.placeWindow(location, editorLocation);
-//	    }
+		if (present) {
+			if (hideStop) {
+				stopColor = 0; // they'll get the hint
+			}
+			surface.placePresent(stopColor);
+		} else {
+			surface.placeWindow(location, editorLocation);
+		}
+
+		// not always running externally when in present mode
+		// moved above setVisible() in 3.0 alpha 11
+		if (sketch.external) {
+			surface.setupExternalMessages();
+		}
 //
-//	    // not always running externally when in present mode
-//	    // moved above setVisible() in 3.0 alpha 11
-//	    if (sketch.external) {
-//	      surface.setupExternalMessages();
-//	    }
+		sketch.showSurface();
+		sketch.startSurface();
+	}
+
+	/** Danger: available for advanced subclassing, but here be dragons. */
+	protected void showSurface() {
+		if (getGraphics().displayable()) {
+//			surface.setVisible(true);
+		}
+	}
+
+	/** See warning in showSurface() */
+	protected void startSurface() {
+//		surface.startThread();
+	}
+
+	protected SSurface initSurface() {
+		g = createPrimaryGraphics();
+		surface = g.createSurface();
+
+		// Create fake Frame object to warn user about the changes
+//		if (g.displayable()) {
+//			frame = new Frame() {
+//				@Override
+//				public void setResizable(boolean resizable) {
+//					deprecationWarning("setResizable");
+//					surface.setResizable(resizable);
+//				}
 //
-//	    sketch.showSurface();
-//	    sketch.startSurface();
+//				@Override
+//				public void setVisible(boolean visible) {
+//					deprecationWarning("setVisible");
+//					surface.setVisible(visible);
+//				}
+//
+//				@Override
+//				public void setTitle(String title) {
+//					deprecationWarning("setTitle");
+//					surface.setTitle(title);
+//				}
+//
+//				@Override
+//				public void setUndecorated(boolean ignored) {
+//					throw new RuntimeException("'frame' has been removed from Processing 3, " +
+//							"use fullScreen() to get an undecorated full screen frame");
+//				}
+//
+//				// Can't override this one because it's called by Window's constructor
+//				/*
+//				 * @Override
+//				 * public void setLocation(int x, int y) {
+//				 * deprecationWarning("setLocation");
+//				 * surface.setLocation(x, y);
+//				 * }
+//				 */
+//
+//				@Override
+//				public void setSize(int w, int h) {
+//					deprecationWarning("setSize");
+//					surface.setSize(w, h);
+//				}
+//
+//				private void deprecationWarning(String method) {
+//					PGraphics.showWarning("Use surface." + method + "() instead of " +
+//							"frame." + method + " in Processing 3");
+//					// new Exception(method).printStackTrace(System.out);
+//				}
+//			};
+//
+//			surface.initFrame(this); // , backgroundColor, displayNum, fullScreen, spanDisplays);
+//			surface.setTitle(getClass().getSimpleName());
+//
+//		} else {
+//			surface.initOffscreen(this); // for PDF/PSurfaceNone and friends
+//		}
+
+//		    init();
+		return surface;
 	}
 
 	void handleSettings() {
@@ -688,7 +769,81 @@ public class GameBase implements SGFX, Runnable,
 		return pixelDensity;
 	}
 
-	void privatePreSetup() {
+	public void setup() {}
+
+	void privateRefresh() {
+		frameCount = 0;
+		frameRate = 0;
+		tickCount = 0;
+		tickRate = 0;
+
+		multiplierMin = 0;
+		deltaMin = 0;
+
+		width = 0;
+		height = 0;
+
+		fps = 0;
+
+		screen.refresh();
+	}
+
+	public void refresh() {}
+
+	public final void start() {
+		if (isRunning) return;
+		isRunning = true;
+
+		thread = new Thread(this, "MainThread");
+//		thread.start();
+		thread.run();
+	}
+
+	public final void exit() { stop(); }
+
+	public final void stop() {
+		if (!isRunning) return;
+		isRunning = false;
+	}
+
+	public final void createCanvas(float width, float height) { createCanvas((int) width, (int) height, 1, 1); }
+
+	public final void createCanvas(float width, float height, float scale) { createCanvas((int) width, (int) height, scale, scale); }
+
+	public void createCanvas(float width, float height, float scaleW, float scaleH) { createCanvas((int) width, (int) height, scaleW, scaleH); }
+
+	public final void createCanvas(int width, int height) { createCanvas(width, height, 1, 1); }
+
+	public final void createCanvas(int width, int height, float scale) { createCanvas(width, height, scale, scale); }
+
+	public void createCanvas(int width, int height, float scaleW, float scaleH) {
+		this.width = width;
+		this.height = height;
+
+		screen.createCanvas(width, height, scaleW, scaleH);
+
+//		setParent(this);
+//		setPrimary(true);
+//		setSize(width(), height());
+//		graphics = checkImage();
+
+		defaultSettings();
+		screen.show();
+		screen.requestFocus();
+	}
+
+	public final void title(String title) { screen.setTitle(title); }
+
+	public final void undecorated(boolean undecorated) { screen.setUndecorated(undecorated); }
+
+	@Override
+	public void run() {
+		init();
+		loop();
+		destroy();
+	}
+
+	void init() {
 		final String className = this.getClass().getSimpleName();
 		final String cleanedClass = className.replaceAll("__[^_]+__\\$", "").replaceAll("\\$\\d+", "");
 
@@ -698,7 +853,6 @@ public class GameBase implements SGFX, Runnable,
 //		if (sketchArgs != null) args = concat(args, sketchArgs);
 
 		handleRunSketch(args, this);
-		handleSettings();
 
 //		game = this;
 		infos = getInfo();
@@ -727,91 +881,8 @@ public class GameBase implements SGFX, Runnable,
 
 		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(this, mouse);
 		else screen = new ScreenJava(this, mouse);
-	}
 
-	protected void preSetup() {}
-
-	protected void setup() {}
-
-	void privateRefresh() {
-		frameCount = 0;
-		frameRate = 0;
-		tickCount = 0;
-		tickRate = 0;
-
-		multiplierMin = 0;
-		deltaMin = 0;
-
-		width = 0;
-		height = 0;
-
-		fps = 0;
-
-		screen.refresh();
-	}
-
-	protected void refresh() {}
-
-	protected void start() {
-		if (isRunning) return;
-		isRunning = true;
-
-		thread = new Thread(this, "MainThread");
-//		thread.start();
-		thread.run();
-	}
-
-	public final void exit() { stop(); }
-
-	public final void stop() {
-		if (!isRunning) return;
-		isRunning = false;
-	}
-
-	public final void createCanvas(float width, float height) { createCanvas((int) width, (int) height, 1, 1); }
-
-	public final void createCanvas(float width, float height, float scale) { createCanvas((int) width, (int) height, scale, scale); }
-
-	public void createCanvas(float width, float height, float scaleW, float scaleH) { createCanvas((int) width, (int) height, scaleW, scaleH); }
-
-	public final void createCanvas(int width, int height) { createCanvas(width, height, 1, 1); }
-
-	public final void createCanvas(int width, int height, float scale) { createCanvas(width, height, scale, scale); }
-
-	public void createCanvas(int width, int height, float scaleW, float scaleH) {
-		screen.createCanvas(width, height, scaleW, scaleH);
-
-//		setParent(this);
-//		setPrimary(true);
-//		setSize(width(), height());
-//		graphics = checkImage();
-
-		g = createPrimaryGraphics();
-
-		defaultSettings();
-		screen.show();
-		screen.requestFocus();
-
-		this.width = width;
-		this.height = height;
-	}
-
-	public final void title(String title) { screen.setTitle(title); }
-
-	public final void undecorated(boolean undecorated) { screen.setUndecorated(undecorated); }
-
-	@Override
-	public void run() {
-		init();
-		loop();
-		destroy();
-	}
-
-	void init() {
-		privatePreSetup();
-		preSetup();
-
-		setup();
+//		setup();
 
 		thread.setName(screen.title + " MainThread");
 		screen.show();
@@ -837,38 +908,58 @@ public class GameBase implements SGFX, Runnable,
 
 	protected void update() {}
 
-//		if (!isRunning) return;
+	boolean insideDraw;
+
 	private void render() {
-		preDraw();
+		if (g == null) return;
+//		if(noLoop && !redraw) return;
 
-		push();
-		draw();
-		draw(((SGraphicsJava2D) g).graphics);
-		pop();
+		if (insideDraw) {
+			System.err.println("handleDraw() called before finishing");
+			System.exit(1);
+		}
+		insideDraw = true;
 
-		postDraw();
+		if (width != 0) g.beginDraw();
 
-		if (!screen.render()) return;
+		if (frameCount == 0) {
+//			Setup();
+			setup();
+		} else {
+			preDraw();
+
+			push();
+			draw();
+			draw(((SGraphicsJava2D) g).graphics);
+			pop();
+
+			postDraw();
+		}
+		g.endDraw();
+
+		insideDraw = false;
 
 		frames++;
 		frameCount++;
 	}
 
-	protected void preDraw() {
-		g.beginDraw();
+	void preDraw() {
 //		graphics = checkImage();
 //		handleSmooth();
 		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
 		screen.preDraw();
 	}
 
-	protected void postDraw() { g.endDraw(); screen.postDraw(); for (FrameLoopListener fll : frameLoopListeners) fll.postDraw(); }
+	void postDraw() {
+		screen.postDraw();
+		for (FrameLoopListener fll : frameLoopListeners) fll.postDraw();
+	}
 
-	protected void draw() {}
+	public void draw() {}
 
-	protected void draw(Graphics2D g) {}
+	public void draw(Graphics2D g) {}
 
-	protected void info() {
+	void info() {
 		tps = ticks;
 		ticks = 0;
 		fps = frames;
@@ -924,7 +1015,7 @@ public class GameBase implements SGFX, Runnable,
 				if (syncMode == ASYNC) render();
 				else {
 					if (!isPaused) tick();
-					if (screen.isCreated()) render(); // TODO: USE STH ELSE
+					render(); // TODO: USE STH ELSE
 				}
 			}
 
@@ -1032,6 +1123,8 @@ public class GameBase implements SGFX, Runnable,
 		g.width = width();
 		g.height = height();
 		g.format = RGB;
+
+		g.beginDraw();
 
 //		g.defaultSettings();
 
@@ -1465,7 +1558,7 @@ public class GameBase implements SGFX, Runnable,
 		System.exit(1);
 	}
 
-	protected SGraphics createPrimaryGraphics() { return makeGraphics(width(), height(), renderer, outputPath, true); }
+	protected SGraphics createPrimaryGraphics() { return makeGraphics(getWidth(), getHeight(), renderer, outputPath, true); }
 
 //	protected SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
 
@@ -3343,18 +3436,22 @@ public class GameBase implements SGFX, Runnable,
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-	/**
-	 * @nowebref
-	 */
+	/** smooth(1); */
 	@Override
-	public void smooth() {
-		smooth(1);
-	}
+	public void smooth() { smooth(1); }
 
 	/**
-	 * @webref environment
 	 * @param level
 	 *            either 2, 3, 4, or 8 depending on the renderer
+	 * 
+	 * @param quality
+	 *            0: all off
+	 *            1 : Antialising
+	 *            2 : + Text Antialising
+	 *            3 : + Interpolation Bicubic
+	 *            4 : ~ Interpolation Biliniear
+	 *            5 : + Fractionalmetrics
+	 *            6 : all default
 	 */
 	@Override
 	public void smooth(int level) { this.smooth = level; g.smooth(level); }

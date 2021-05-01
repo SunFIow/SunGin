@@ -64,8 +64,8 @@ public class ScreenOpenGL extends Screen {
 	float xfactor = 0, yfactor = 0;
 
 	@Override
-	public boolean render() {
-		if (!isCreated) return false;
+	synchronized protected void render() {
+		if (!isCreated) return;
 
 		BufferedImage image = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
@@ -92,8 +92,6 @@ public class ScreenOpenGL extends Screen {
 		GL46.glDrawPixels(getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, buffer);
 
 		window.render();
-
-		return true;
 	}
 
 	final public ByteBuffer loadPixels(BufferedImage image) {
@@ -157,6 +155,7 @@ public class ScreenOpenGL extends Screen {
 	public void postDraw() {
 		S_Shape.drawAll(game);
 		if (showOverlay) drawOverlay();
+		super.postDraw();
 	}
 
 	@Override

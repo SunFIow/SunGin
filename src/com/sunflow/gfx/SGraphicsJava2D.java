@@ -86,7 +86,7 @@ public class SGraphicsJava2D extends SGraphics {
 
 	@Override
 	public SSurface createSurface() {
-		return surface = new SScreenAWT(this);
+		return surface = new SSurfaceAWT(this);
 	}
 
 	// JAVA2D
@@ -868,7 +868,9 @@ public class SGraphicsJava2D extends SGraphics {
 		u2 *= img.pixelDensity;
 		v2 *= img.pixelDensity;
 
-		graphics.drawImage(((ImageCache) getCache(img)).image,
+		BufferedImage image = ((ImageCache) getCache(img)).image;
+
+		graphics.drawImage(image,
 				(int) x, (int) y, (int) w, (int) h,
 				u1, v1, u2, v2, null);
 	}
@@ -1867,6 +1869,7 @@ public class SGraphicsJava2D extends SGraphics {
 		if (pixels == null || (pixels.length != pixelWidth * pixelHeight)) {
 			pixels = new int[pixelWidth * pixelHeight];
 		}
+//		super.loadPixels();
 
 		WritableRaster raster = getRaster();
 		raster.getDataElements(0, 0, pixelWidth, pixelHeight, pixels);

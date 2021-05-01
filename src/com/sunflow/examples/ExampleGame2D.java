@@ -66,7 +66,7 @@ public class ExampleGame2D extends GameBase {
 	}
 
 	@Override
-	protected void draw() {
+	public void draw() {
 		background(25);
 		fill(255);
 		ellipse(ballX, ballY, ballR * 2, ballR * 2);

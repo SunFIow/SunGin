@@ -26,19 +26,19 @@ public abstract class S_Shape {
 
 	public static void addShape(SGFX screen) {
 		if (screen instanceof Game3D) Shape3D.addShape((Game3D) screen);
-		else if (screen instanceof GameBase) Shape2D.addShape(screen);
+		else if (screen instanceof GameBase) Shape2D.addShape((GameBase) screen);
 	}
 
 	public static void endShape(SGFX screen) {
 //		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.endShape((Game3D) screen);
-		else if (screen instanceof GameBase) Shape2D.endShape(screen);
+		else if (screen instanceof GameBase) Shape2D.endShape((GameBase) screen);
 	}
 
 	public static void beginShape(SGFX screen) {
 //		if (tempShape) return;
 		if (screen instanceof Game3D) Shape3D.beginShape((Game3D) screen);
-		else if (screen instanceof GameBase) Shape2D.beginShape(screen);
+		else if (screen instanceof GameBase) Shape2D.beginShape((GameBase) screen);
 	}
 
 	public static class Shape3D extends S_Shape {

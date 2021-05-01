@@ -8,10 +8,10 @@ public interface ColorUtils {
 	public static final ColorUtils instance = new ColorUtils() {};
 
 	default int colorShade(int rgb, float lum) {
-		float calcR = ColorUtils.instance.red(rgb);
-		float calcG = ColorUtils.instance.green(rgb);
-		float calcB = ColorUtils.instance.blue(rgb);
-		return ColorUtils.instance.color(calcR * lum, calcG * lum, calcB * lum);
+		float calcR = red(rgb);
+		float calcG = green(rgb);
+		float calcB = blue(rgb);
+		return color(calcR * lum, calcG * lum, calcB * lum);
 	}
 
 	default float alpha(int rgb) { return (rgb >> 24) & 0xff; }
@@ -25,10 +25,10 @@ public interface ColorUtils {
 	default SVector vColor(int rgb) { return new SVector(red(rgb), green(rgb), blue(rgb), alpha(rgb)); }
 
 	default int color(int rgb, SVector vLight, SVector vFog) {
-		SVector vColor = ColorUtils.instance.vColor(rgb);
+		SVector vColor = vColor(rgb);
 		SVector vShaded = vColor.mult(vLight);
 		vShaded.add(vFog);
-		return ColorUtils.instance.color(vShaded.x, vShaded.y, vShaded.z, vShaded.w);
+		return color(vShaded.x, vShaded.y, vShaded.z, vShaded.w);
 	}
 
 	default float hue(int rgb) {

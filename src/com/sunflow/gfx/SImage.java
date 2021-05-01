@@ -209,7 +209,6 @@ public class SImage implements Cloneable, SConstants {
 	 * Returns a native BufferedImage from this SImage.
 	 */
 	public Object getNative() { // ignore
-		System.out.println("simagegetnative");
 		loadPixels();
 		int type = (format == RGB) ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
 		BufferedImage image = new BufferedImage(pixelWidth, pixelHeight, type);
@@ -262,7 +261,7 @@ public class SImage implements Cloneable, SConstants {
 	}
 
 	public void updatePixels() {
-		updatePixels(0, 0, width, height);
+		updatePixels(0, 0, pixelWidth, pixelHeight);
 	}
 
 	public void updatePixels(int x, int y, int w, int h) { // ignore
@@ -700,6 +699,7 @@ public class SImage implements Cloneable, SConstants {
 		int targetOffset = targetY * pixelWidth + targetX;
 
 		for (int y = sourceY; y < sourceY + sourceHeight; y++) {
+//			Log.warn(sourceImage.pixels, sourceOffset, pixels, targetOffset, sourceWidth);
 			System.arraycopy(sourceImage.pixels, sourceOffset, pixels, targetOffset, sourceWidth);
 			sourceOffset += sourceImage.pixelWidth;
 			targetOffset += pixelWidth;

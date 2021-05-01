@@ -4,8 +4,8 @@ import java.awt.Point;
 
 import com.sunflow.game.GameBase;
 import com.sunflow.math3d.SMatrix;
-import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
+import com.sunflow.util.SConstants;
 
 public class SVector implements Cloneable {
 
@@ -289,15 +289,15 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
-	public SVector multipied(SVector v) { return clone().mult(v); }
+	public SVector multiplied(SVector v) { return clone().mult(v); }
 
-	public SVector multipied(float n) { return clone().mult(n, n, n, n); }
+	public SVector multiplied(float n) { return clone().mult(n, n, n, n); }
 
-	public SVector multipied(float x, float y) { return clone().mult(x, y); }
+	public SVector multiplied(float x, float y) { return clone().mult(x, y); }
 
-	public SVector multipied(float x, float y, float z) { return clone().mult(x, y, z); }
+	public SVector multiplied(float x, float y, float z) { return clone().mult(x, y, z); }
 
-	public SVector multipied(float x, float y, float z, float w) { return clone().mult(x, y, z, w); }
+	public SVector multiplied(float x, float y, float z, float w) { return clone().mult(x, y, z, w); }
 
 	public static SVector mult(SVector v, float n) { return v.clone().mult(n); }
 
@@ -328,13 +328,15 @@ public class SVector implements Cloneable {
 		return this;
 	}
 
-	public SVector divied(SVector v) { return clone().div(v); }
+	public SVector divided(float n) { return clone().div(n); }
 
-	public SVector divied(float x, float y) { return clone().div(x, y); }
+	public SVector divided(SVector v) { return clone().div(v); }
 
-	public SVector divied(float x, float y, float z) { return clone().div(x, y, z); }
+	public SVector divided(float x, float y) { return clone().div(x, y); }
 
-	public SVector divied(float x, float y, float z, float w) { return clone().div(x, y, z, w); }
+	public SVector divided(float x, float y, float z) { return clone().div(x, y, z); }
+
+	public SVector divided(float x, float y, float z, float w) { return clone().div(x, y, z, w); }
 
 	public static SVector div(SVector v, float n) { return v.clone().mult(1.0f / n); }
 

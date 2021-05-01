@@ -83,8 +83,7 @@ public class Game3D extends GameBase {
 	public ArrayList<SVector> vertices;
 
 	@Override
-	final void privatePreSetup() {
-
+	void init() {
 		Models = new ArrayList<>();
 		DModels = new ArrayList<>();
 
@@ -100,7 +99,7 @@ public class Game3D extends GameBase {
 		keys = new boolean[KEY_COUNT];
 		outlines = true;
 
-		movementSpeed = 0.2f;
+		movementSpeed = 10f;
 
 		vertLook = -0.9999999f;
 		horLook = HALF_PI + PI;
@@ -113,10 +112,10 @@ public class Game3D extends GameBase {
 
 		gMatrix = new GraphicsMatrix();
 
-		super.privatePreSetup();
-
 //		shapes = new ArrayList<>();
 		updateView();
+
+		super.init();
 	}
 
 	@Override
@@ -133,7 +132,7 @@ public class Game3D extends GameBase {
 	}
 
 	@Override
-	protected final void preDraw() {
+	void preDraw() {
 		super.preDraw();
 
 		cameraMovement();
@@ -240,6 +239,7 @@ public class Game3D extends GameBase {
 		endShape(CLOSE);
 	}
 
+	@Override
 	public final void vertex(float x, float y, float z) {
 		SVector applied = apply(x, y, z);
 		float[] pos2d = convert3Dto2D(applied);
@@ -430,12 +430,16 @@ public class Game3D extends GameBase {
 	@Override
 	public final void scale(float n) { scale(n, n, n); };
 
+	@Override
 	public final void scale(float x, float y, float z) { gMatrix.scale(x, y, z); };
 
+	@Override
 	public final void rotateX(float angle) { gMatrix.rotateX(angle); }
 
+	@Override
 	public final void rotateY(float angle) { gMatrix.rotateY(angle); }
 
+	@Override
 	public final void rotateZ(float angle) { gMatrix.rotateZ(angle); }
 
 	public final void rotateXTo(float angle) { gMatrix.rotateXTo(angle); }
