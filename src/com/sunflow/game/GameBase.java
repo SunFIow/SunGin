@@ -1120,8 +1120,8 @@ public class GameBase implements SGFX, Runnable,
 		showInfo(false);
 		isPaused = false;
 
-		g.width = width();
-		g.height = height();
+		g.pixelDensity = getPixelDensity();
+		g.setSize(width, height);
 		g.format = RGB;
 
 		g.beginDraw();
@@ -3444,13 +3444,13 @@ public class GameBase implements SGFX, Runnable,
 	 * @param level
 	 *            either 2, 3, 4, or 8 depending on the renderer
 	 * 
-	 * @param quality
-	 *            0: all off
-	 *            1 : Antialising
-	 *            2 : + Text Antialising
-	 *            3 : + Interpolation Bicubic
-	 *            4 : ~ Interpolation Biliniear
-	 *            5 : + Fractionalmetrics
+	 * @param level
+	 *            0: all off <br/>
+	 *            1 : Antialising <br/>
+	 *            2 : + Text Antialising <br/>
+	 *            3 : + Interpolation Bicubic <br/>
+	 *            4 : ~ Interpolation Biliniear <br/>
+	 *            5 : + Fractionalmetrics <br/>
 	 *            6 : all default
 	 */
 	@Override

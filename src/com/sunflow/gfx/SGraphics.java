@@ -4902,9 +4902,8 @@ public class SGraphics extends SImage implements SGFX {
 	static float[] lerpColorHSB2;
 
 	/**
-	 * @nowebref
-	 *           Interpolate between two colors. Like lerp(), but for the
-	 *           individual color components of a color supplied as an int value.
+	 * Interpolate between two colors. Like lerp(), but for the
+	 * individual color components of a color supplied as an int value.
 	 */
 	public static int lerpColor(int c1, int c2, float amt, int mode) {
 		if (amt < 0) amt = 0;
@@ -5063,34 +5062,22 @@ public class SGraphics extends SImage implements SGFX {
 	 * A better name? showFrame, displayable, isVisible, visible, shouldDisplay,
 	 * what to call this?
 	 */
-	public boolean displayable() { // ignore
-		return true;
-	}
+	public boolean displayable() { return true; }
 
 	/**
 	 * Return true if this renderer supports 2D drawing. Defaults to true.
 	 */
-	public boolean is2D() { // ignore
-		return true;
-	}
+	public boolean is2D() { return true; }
 
-	/**
-	 * Return true if this renderer supports 3D drawing. Defaults to false.
-	 */
-	public boolean is3D() { // ignore
-		return false;
-	}
+	/** Return true if this renderer supports 3D drawing. Defaults to false. */
+	public boolean is3D() { return false; }
 
 	/**
 	 * Return true if this renderer does rendering through OpenGL. Defaults to false.
 	 */
-	public boolean isGL() { // ignore
-		return false;
-	}
+	public boolean isGL() { return false; }
 
-	public boolean is2X() {
-		return pixelDensity == 2;
-	}
+	public boolean is2X() { return pixelDensity == 2; }
 
 	//////////////////////////////////////////////////////////////
 

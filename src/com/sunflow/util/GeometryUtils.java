@@ -14,11 +14,58 @@ import com.sunflow.math.SVector;
 public interface GeometryUtils {
 	public static final GeometryUtils instance = new GeometryUtils() {};
 
-	/***
-	 * Returns an Optional SVector containing the intersection point, provided there is one.
-	 */
+	default Optional<SVector> cast(SVector ray, SVector A, SVector B, SVector C) {
+		// Get the Plane-Repesentation of the Triangle ABC
+		SVector plane = SVector.normalBig(A, B, C);
+		plane.w = SVector.dot(plane, A);
 
+		// Get the Distance of the Plane to the Camera[0,0,0] relative to the ray
+		float t = plane.w / SVector.dot(plane, ray); // TODO Combine with Vector3.dot of "constructPlane"
+
+		// Test if the Plane is in front of the Camera
+		if (t <= 0) {
+			// It's not so there is no intersection
+			return Optional.empty();
+		}
+
+		// Get the Intersection-Point P of the Ray with the Plane of ABC
+		SVector P = new SVector(t * ray.x, t * ray.y, t * ray.z);
+
+		// Lastly check if the Intersection-Point P is inside the Triangle ABC
+		float w1 = (A.x * (C.y - A.y) + (P.y - A.y) * (C.x - A.x) - P.x * (C.y - A.y)) / ((B.y - A.y) * (C.x - A.x) - (B.x - A.x) * (C.y - A.y));
+		float w2 = (P.y - A.y - w1 * (B.y - A.y)) / (C.y - A.y);
+		boolean intersects = w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
+
+		if (intersects) return Optional.of(P);
+		return Optional.empty();
+	}
+
+	/**
+	 * Returns an Optional SVector containing the intersection point, provided there is one.
+	 * 
+	 * @param x1
+	 *            x-coordination from the first point of the line
+	 * @param y1
+	 *            y-coordination from the first point of the line
+	 * 
+	 * @param x2
+	 *            x-coordination from the second point of the line
+	 * @param y2
+	 *            y-coordination from the second point of the line
+	 * 
+	 * @param x3
+	 *            x-coordination from the position of the ray
+	 * @param y3
+	 *            y-coordination from the position of the ray
+	 * 
+	 * @param x4
+	 *            x-coordination from the direction of the ray
+	 * @param y4
+	 *            y-coordination from the direction of the ray
+	 */
 	default Optional<SVector> cast(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
+		x4 += x3;
+		y4 += y3;
 		float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 		if (den == 0) return Optional.empty();
 
@@ -31,7 +78,32 @@ public interface GeometryUtils {
 		return Optional.of(new SVector(x, y));
 	}
 
+	/**
+	 * Returns an Optional DVector containing the intersection point, provided there is one.
+	 * 
+	 * @param x1
+	 *            x-coordination from the first point of the line
+	 * @param y1
+	 *            y-coordination from the first point of the line
+	 * 
+	 * @param x2
+	 *            x-coordination from the second point of the line
+	 * @param y2
+	 *            y-coordination from the second point of the line
+	 * 
+	 * @param x3
+	 *            x-coordination from the position of the ray
+	 * @param y3
+	 *            y-coordination from the position of the ray
+	 * 
+	 * @param x4
+	 *            x-coordination from the direction of the ray
+	 * @param y4
+	 *            y-coordination from the direction of the ray
+	 */
 	default Optional<DVector> cast(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+		x4 += x3;
+		y4 += y3;
 		double den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 		if (den == 0) return Optional.empty();
 

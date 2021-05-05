@@ -1848,19 +1848,20 @@ public class SGraphicsJava2D extends SGraphics {
 //			} else {
 			raster = ((BufferedImage) image).getRaster();
 //			}
-		}
 
-		// On Raspberry Pi (and perhaps other platforms, the color buffer won't
-		// necessarily be the int array that we'd like. Need to convert it here.
-		// Not that this would probably mean getRaster() would need to work more
-		// like loadRaster/updateRaster because the pixels will need to be
-		// temporarily moved to (and later from) a buffer that's understood by
-		// the rest of the Processing source.
-		// https://github.com/processing/processing/issues/2010
-		if (raster.getTransferType() != DataBuffer.TYPE_INT) {
-			System.err.println("See https://github.com/processing/processing/issues/2010");
-			throw new RuntimeException("Pixel operations are not supported on this device.");
+			// On Raspberry Pi (and perhaps other platforms, the color buffer won't
+			// necessarily be the int array that we'd like. Need to convert it here.
+			// Not that this would probably mean getRaster() would need to work more
+			// like loadRaster/updateRaster because the pixels will need to be
+			// temporarily moved to (and later from) a buffer that's understood by
+			// the rest of the Processing source.
+			// https://github.com/processing/processing/issues/2010
+			if (raster.getTransferType() != DataBuffer.TYPE_INT) {
+				System.err.println("See https://github.com/processing/processing/issues/2010");
+				throw new RuntimeException("Pixel operations are not supported on this device.");
+			}
 		}
+		
 		return raster;
 	}
 
@@ -1883,6 +1884,49 @@ public class SGraphicsJava2D extends SGraphics {
 		// ((BufferedImage) image).getRGB(0, 0, width, height, pixels, 0, width);
 //	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
 //	    WritableRaster raster = image.getRaster();
+	}
+
+	@Override
+	public void resize(int w, int h) {
+		if (w <= 0 && h <= 0) {
+			throw new IllegalArgumentException("width or height must be > 0 for resize");
+		}
+
+		if (w == 0) { // Use height to determine relative size
+			float diff = (float) h / height;
+			w = (int) (width * diff);
+		} else if (h == 0) { // Use the width to determine relative size
+			float diff = (float) w / width;
+			h = (int) (height * diff);
+		}
+		BufferedImage img = shrinkImage((BufferedImage) getImage(), w * pixelDensity, h * pixelDensity);
+
+		SImage temp = new SImage(img);
+		this.pixelWidth = temp.width;
+		this.pixelHeight = temp.height;
+
+		// Get the resized pixel array
+		this.pixels = temp.pixels;
+
+		this.width = pixelWidth / pixelDensity;
+		this.height = pixelHeight / pixelDensity;
+
+		// Mark the pixels array as altered
+		checkImage();
+
+		updatePixels();
+
+//		BufferedImage oldImage = image.getSubimage(0, 0, this.width, this.height);
+//
+//		this.width = width;
+//		this.height = height;
+//		this.pixels = new int[width * height];
+//
+//		image = new BufferedImage(width, height, format);
+//		Graphics2D g = image.createGraphics();
+//		g.drawImage(oldImage, 0, 0, null);
+//		g.dispose();
+////		image = image.getSubimage(0, 0, width, height);
 	}
 
 	/**
@@ -1970,15 +2014,15 @@ public class SGraphicsJava2D extends SGraphics {
 		}
 	}
 
-	@Override
-	public void pixel(int x, int y, int argb) {
-		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
-//	    ((BufferedImage) image).setRGB(x, y, argb);
-		getset[0] = argb;
-//	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
-//	    WritableRaster raster = image.getRaster();
-		getRaster().setDataElements(x, y, getset);
-	}
+//	@Override
+//	public void pixel(int x, int y, int argb) {
+//		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) return;
+////	    ((BufferedImage) image).setRGB(x, y, argb);
+//		getset[0] = argb;
+////	    WritableRaster raster = ((BufferedImage) (useOffscreen && primarySurface ? offscreen : image)).getRaster();
+////	    WritableRaster raster = image.getRaster();
+//		getRaster().setDataElements(x, y, getset);
+//	}
 
 	@Override
 	public void set(int x, int y, int argb) {

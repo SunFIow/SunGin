@@ -293,7 +293,7 @@ public class SImage implements Cloneable, SConstants {
 		return get();
 	}
 
-//	final public int[] loadPixels2() {
+//	public int[] loadPixels2() {
 //		DataBuffer buffer = ((BufferedImage) getNative()).getRaster().getDataBuffer();
 //		if (buffer instanceof DataBufferInt) {
 //			pixels = ((DataBufferInt) buffer).getData();
@@ -307,7 +307,7 @@ public class SImage implements Cloneable, SConstants {
 //		return pixels;
 //	}
 //
-//	final public int[][] loadPixels2D() {
+//	public int[][] loadPixels2D() {
 //		pixels = ((DataBufferInt) ((BufferedImage) getNative()).getRaster().getDataBuffer()).getData();
 //
 //		final int width = image.getWidth();
@@ -350,11 +350,11 @@ public class SImage implements Cloneable, SConstants {
 //		return result;
 //	}
 //
-//	final public void updatePixels2() { image.getRaster().setDataElements(0, 0, image.getWidth(), image.getHeight(), pixels); }
+//	public void updatePixels2() { image.getRaster().setDataElements(0, 0, image.getWidth(), image.getHeight(), pixels); }
 //
-//	final public void updatePixels2(int[] data) { image.getRaster().setDataElements(0, 0, image.getWidth(), image.getHeight(), data); }
+//	public void updatePixels2(int[] data) { image.getRaster().setDataElements(0, 0, image.getWidth(), image.getHeight(), data); }
 //
-//	final public void updatePixels2(int x, int y, int w, int h, int[] pixels) {
+//	public void updatePixels2(int x, int y, int w, int h, int[] pixels) {
 //		if (pixels == null || w == 0 || h == 0) return;
 //		else if (pixels.length < w * h) throw new IllegalArgumentException("pixels array must have a length" + " >= w*h");
 //
@@ -366,7 +366,7 @@ public class SImage implements Cloneable, SConstants {
 //		}
 //	}
 
-	final public void resize(int w, int h) {
+	public void resize(int w, int h) {
 		if (w <= 0 && h <= 0) {
 			throw new IllegalArgumentException("width or height must be > 0 for resize");
 		}
@@ -378,7 +378,7 @@ public class SImage implements Cloneable, SConstants {
 			float diff = (float) w / width;
 			h = (int) (height * diff);
 		}
-		BufferedImage img = shrinkImage((BufferedImage) getImage(), w * pixelDensity, h * pixelDensity);
+		BufferedImage img = shrinkImage((BufferedImage) getNative(), w * pixelDensity, h * pixelDensity);
 
 		SImage temp = new SImage(img);
 		this.pixelWidth = temp.width;
@@ -411,7 +411,7 @@ public class SImage implements Cloneable, SConstants {
 	// Additional modifications and simplifications have been added,
 	// plus a fix to deal with an infinite loop if images are expanded.
 	// http://code.google.com/p/processing/issues/detail?id=1463
-	private static BufferedImage shrinkImage(BufferedImage img,
+	protected static BufferedImage shrinkImage(BufferedImage img,
 			int targetWidth, int targetHeight) {
 		int type = (img.getTransparency() == Transparency.OPAQUE) ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
 		BufferedImage outgoing = img;
@@ -644,7 +644,7 @@ public class SImage implements Cloneable, SConstants {
 		updatePixels(x, y, 1, 1); // slow...
 	}
 
-//	public final void setRGB(float x, float y, int color) {
+//	public void setRGB(float x, float y, int color) {
 ////		img.setRGB(Math.round(x), Math.round(y), color);
 ////		image.setRGB((int) x, (int) y, color);
 //	}
@@ -2262,9 +2262,9 @@ public class SImage implements Cloneable, SConstants {
 
 	//////////////////////////////////////////////////////////////
 
-	public final int index(float x, float y) { return index((int) x, (int) y); }
+	public int index(float x, float y) { return index((int) x, (int) y); }
 
-	public final int index(int x, int y) { return x + y * pixelWidth; }
+	public int index(int x, int y) { return x + y * pixelWidth; }
 
 	//////////////////////////////////////////////////////////////
 

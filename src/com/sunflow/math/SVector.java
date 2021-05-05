@@ -559,6 +559,10 @@ public class SVector implements Cloneable {
 		return result;
 	}
 
+	public static SVector normalBig(SVector a, SVector b, SVector c) {
+		return SVector.cross(SVector.sub(b, a), SVector.sub(c, a));
+	}
+
 	public static SVector normal(SVector a, SVector b, SVector c) {
 		return SVector.cross(SVector.sub(b, a), SVector.sub(c, a)).normalize();
 	}
