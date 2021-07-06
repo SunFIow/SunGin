@@ -150,10 +150,6 @@ public class SVector implements Cloneable {
 		return target;
 	}
 
-	public static SVector fromAngle(double angle) { return fromAngle((float) angle, null); }
-
-	public static SVector fromAngle(double angle, SVector target) { return fromAngle((float) angle, target); }
-
 	public static SVector fromAngle(float angle) { return fromAngle(angle, null); }
 
 	public static SVector fromAngle(float angle, SVector target) {
@@ -163,6 +159,68 @@ public class SVector implements Cloneable {
 			target.set(MathUtils.instance.cos(angle), MathUtils.instance.sin(angle));
 		}
 		return target;
+	}
+
+	public static SVector fromAngle(float alpha, float beta) { return fromAngle(alpha, beta, null); }
+
+	public static SVector fromAngle(float alpha, float beta, SVector target) {
+		if (target == null) {
+			target = new SVector(
+//					MathUtils.instance.cos(beta),
+//					MathUtils.instance.sin(beta),
+//					alpha);
+
+					MathUtils.instance.cos(alpha),
+					MathUtils.instance.sin(alpha),
+					beta);
+
+//					MathUtils.instance.cos(alpha) * MathUtils.instance.cos(beta),
+//					MathUtils.instance.sin(alpha) * MathUtils.instance.cos(beta),
+//					MathUtils.instance.sin(beta));
+		} else {
+			target.set(
+					MathUtils.instance.cos(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(beta));
+		}
+		return target;
+	}
+
+	public static SVector fromAngle2(float alpha, float beta, SVector target) {
+		if (target == null) {
+			target = new SVector(
+					MathUtils.instance.cos(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(beta));
+//			target = new SVector(
+//					MathUtils.instance.cos(alpha) * MathUtils.instance.cos(beta),
+//					MathUtils.instance.sin(beta),
+//					MathUtils.instance.sin(alpha) * MathUtils.instance.cos(beta));
+		} else {
+			target.set(
+					MathUtils.instance.cos(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(alpha) * MathUtils.instance.cos(beta),
+					MathUtils.instance.sin(beta));
+		}
+		return target;
+	}
+
+	public SVector rotateX(float angle) {
+		y = y * MathUtils.instance.cos(angle) - z * MathUtils.instance.sin(angle);
+		z = y * MathUtils.instance.sin(angle) + z * MathUtils.instance.cos(angle);
+		return this;
+	}
+
+	public SVector rotateY(float angle) {
+		x = x * MathUtils.instance.cos(angle) + z * MathUtils.instance.sin(angle);
+		z = -x * MathUtils.instance.sin(angle) + z * MathUtils.instance.cos(angle);
+		return this;
+	}
+
+	public SVector rotateZ(float angle) {
+		x = x * MathUtils.instance.cos(angle) - y * MathUtils.instance.sin(angle);
+		y = x * MathUtils.instance.sin(angle) + y * MathUtils.instance.cos(angle);
+		return this;
 	}
 
 	public SVector copy() { return clone(); }
@@ -219,7 +277,7 @@ public class SVector implements Cloneable {
 
 	public float length() { return mag(); }
 
-	public float mag() { return MathUtils.instance.sqrt(dot(this, this)); }
+	public float mag() { return MathUtils.instance.sqrt(magSq()); }
 
 	public float magSq() { return dot(this, this); }
 
@@ -338,9 +396,9 @@ public class SVector implements Cloneable {
 
 	public SVector divided(float x, float y, float z, float w) { return clone().div(x, y, z, w); }
 
-	public static SVector div(SVector v, float n) { return v.clone().mult(1.0f / n); }
+	public static SVector div(SVector v, float n) { return v.clone().div(n, n, n, n); }
 
-	public SVector div(float n) { return mult(1.0f / n); }
+	public SVector div(float n) { return div(n, n, n, n); }
 
 	public static SVector div(SVector a, SVector b) { return a.clone().div(b); }
 
@@ -418,9 +476,47 @@ public class SVector implements Cloneable {
 		return a.x * b.y - a.y * b.x;
 	}
 
+	public static SVector proj(SVector a, SVector b) {
+		float scalar = dot(a, b) / dot(b, b); // TODO We dont need '/ dot(a, a)' if the a is of length 1
+		SVector result = new SVector(
+				b.x * scalar,
+				b.y * scalar,
+				b.z * scalar);
+		return result;
+	}
+
+	public static SVector reflect(SVector v, SVector normal) {
+		float scalar = 2 * dot(v, normal) / dot(normal, normal); // TODO We dont need '/ dot(normal, normal)' if the normal is of length 1
+		SVector result = new SVector(
+				v.x - normal.x * scalar,
+				v.y - normal.y * scalar,
+				v.z - normal.z * scalar);
+		return result;
+	}
+
+	public static SVector proj_unsafe(SVector a, SVector b) {
+		float scalar = dot(a, b);
+		SVector result = new SVector(
+				b.x * scalar,
+				b.y * scalar,
+				b.z * scalar);
+		return result;
+	}
+
+	public static SVector reflect_unsafe(SVector v, SVector normal) {
+		float scalar = 2 * dot(v, normal);
+		SVector result = new SVector(
+				v.x - normal.x * scalar,
+				v.y - normal.y * scalar,
+				v.z - normal.z * scalar);
+		return result;
+	}
+
 	public SVector normalize() {
-		float m = mag();
-		if (m != 0.0f && m != 1.0f) div(m);
+		float m_sq = magSq();
+		if (m_sq != 0.0f && m_sq != 1.0f) {
+			div(MathUtils.instance.sqrt(m_sq));
+		}
 		return this;
 	}
 
@@ -567,7 +663,7 @@ public class SVector implements Cloneable {
 		return SVector.cross(SVector.sub(b, a), SVector.sub(c, a)).normalize();
 	}
 
-	public SVector neg() { return mult(-1); }
+	public SVector neg() { return set(-x, -y, -z, -w); }
 
 	public SVector negated() { return clone().neg(); }
 
@@ -616,9 +712,9 @@ public class SVector implements Cloneable {
 
 	public SVector min(float bx, float by) { x = MathUtils.instance.min(x, bx); y = MathUtils.instance.min(y, by); return this; }
 
-	public SVector mined(SVector b) { return clone().min(b); }
+	public SVector minimized(SVector b) { return clone().min(b); }
 
-	public SVector mined(float bx, float by) { return clone().min(bx, by); }
+	public SVector minimized(float bx, float by) { return clone().min(bx, by); }
 
 	public static SVector max(SVector a, SVector b) { return max(a.x, a.y, b.x, b.y); }
 
@@ -634,8 +730,19 @@ public class SVector implements Cloneable {
 
 	public SVector max(float bx, float by) { x = MathUtils.instance.max(x, bx); y = MathUtils.instance.max(y, by); return this; }
 
-	public SVector maxed(SVector b) { return clone().max(b); }
+	public SVector maximized(SVector b) { return clone().max(b); }
 
-	public SVector maxed(float bx, float by) { return clone().max(bx, by); }
+	public SVector maximized(float bx, float by) { return clone().max(bx, by); }
+
+	public SVector abs() {
+		x = MathUtils.instance.abs(x);
+		y = MathUtils.instance.abs(y);
+		z = MathUtils.instance.abs(z);
+		return this;
+	}
+
+	public float max() {
+		return MathUtils.instance.max(MathUtils.instance.max(x, y), z);
+	}
 
 }

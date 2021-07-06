@@ -1812,10 +1812,10 @@ public class SGraphics extends SImage implements SGFX {
 	}
 
 	@Override
-	public final void ellipse(float x, float y, float r) { ellipse(x, y, r, r); }
+	public final void ellipse(float x, float y, float r) { ellipse(x, y, r * 2, r * 2); }
 
 	@Override
-	public final void circle(float x, float y, float r) { ellipse(x, y, r, r); }
+	public final void circle(float x, float y, float r) { ellipse(x, y, r * 2, r * 2); }
 
 	/**
 	 * @param a
@@ -3711,7 +3711,8 @@ public class SGraphics extends SImage implements SGFX {
 	public void text(int num, float x, float y) { text(String.valueOf(num), x, y); }
 
 	@Override
-	public void text(float num, float x, float y) { text(GameBase.nfs(num, 0, 3), x, y); }
+//	public void text(float num, float x, float y) { text(GameBase.nfs(num, 0, 3), x, y); }
+	public void text(float num, float x, float y) { text(GameBase.nf(num, 0, 3), x, y); }
 
 	//////////////////////////////////////////////////////////////
 

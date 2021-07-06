@@ -207,8 +207,8 @@ public class Game3DOLC extends GameBase {
 	private final void cameraMovement() {
 		if (!isCameraActivated) return;
 		float fSpeedM = 1.0f;
-		if (keyIsDown(SHIFT)) fSpeedM *= 2;
-		if (keyIsDown(ALT)) fSpeedM /= 4;
+		if (isKeyDown(SHIFT)) fSpeedM *= 2;
+		if (isKeyDown(ALT)) fSpeedM /= 4;
 
 		SVector vForward = new SVector(vCameraDir);
 		vForward.y = 0;

@@ -12,6 +12,7 @@ public class KeyInputEvent extends Event {
 		this.keycode = key;
 		this.scancode = scancode;
 		this.action = action;
+		this.mods = mods;
 	}
 
 	public char getKeyChar() { return (char) keycode; }
@@ -42,6 +43,11 @@ public class KeyInputEvent extends Event {
 
 		@Override
 		public String getName() { return "Key Pressed"; }
+
+		@Override
+		public String toString() {
+			return String.format("Event[type=%s, window=%s, code=%s, char=%s, action=%s, mods=%s]", getType(), getWindow(), getKeyCode(), getKeyChar(), getScanCode(), getAction(), getMods());
+		}
 	}
 
 	static public class KeyReleasedEvent extends KeyInputEvent {

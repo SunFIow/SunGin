@@ -96,8 +96,8 @@ public interface SConstants {
 	static final byte L180 = 2;
 	static final byte L270 = 1;
 
-	static final int NANOSECOND = 1000000000;
-	static final int MILLISECOND = 1000;
+	static final int NANOSECOND = 1_000_000_000;
+	static final int MILLISECOND = 1_000;
 
 	static final int X = 0;
 	static final int Y = 1;
@@ -381,18 +381,44 @@ public interface SConstants {
 	// i.e. if ((key == CODED) && (keyCode == UP))
 	static final int CODED = 0xffff;
 
-	// key will be CODED and keyCode will be this value
+	// key values for Direction
 	static final int UP = KeyEvent.VK_UP;
 	static final int DOWN = KeyEvent.VK_DOWN;
 	static final int LEFT = KeyEvent.VK_LEFT;
 	static final int RIGHT = KeyEvent.VK_RIGHT;
 
-	// key will be CODED and keyCode will be this value
+	// key values for controls
 	static final int ALT = KeyEvent.VK_ALT;
 	static final int CONTROL = KeyEvent.VK_CONTROL;
 	static final int SHIFT = KeyEvent.VK_SHIFT;
 	static final int SPACE = KeyEvent.VK_SPACE;
 	static final int ESCAPE = KeyEvent.VK_ESCAPE;
+
+	// key values for f-keys
+	static final int F1 = KeyEvent.VK_F1;
+	static final int F2 = KeyEvent.VK_F2;
+	static final int F3 = KeyEvent.VK_F3;
+	static final int F4 = KeyEvent.VK_F4;
+	static final int F5 = KeyEvent.VK_F5;
+	static final int F6 = KeyEvent.VK_F6;
+	static final int F7 = KeyEvent.VK_F7;
+	static final int F8 = KeyEvent.VK_F8;
+	static final int F9 = KeyEvent.VK_F9;
+	static final int F10 = KeyEvent.VK_F10;
+	static final int F11 = KeyEvent.VK_F11;
+	static final int F12 = KeyEvent.VK_F12;
+	static final int F13 = KeyEvent.VK_F13;
+	static final int F14 = KeyEvent.VK_F14;
+	static final int F15 = KeyEvent.VK_F15;
+	static final int F16 = KeyEvent.VK_F16;
+	static final int F17 = KeyEvent.VK_F17;
+	static final int F18 = KeyEvent.VK_F18;
+	static final int F19 = KeyEvent.VK_F19;
+	static final int F20 = KeyEvent.VK_F20;
+	static final int F21 = KeyEvent.VK_F21;
+	static final int F22 = KeyEvent.VK_F22;
+	static final int F23 = KeyEvent.VK_F23;
+	static final int F24 = KeyEvent.VK_F24;
 
 	// orientations (only used on Android, ignored on desktop)
 

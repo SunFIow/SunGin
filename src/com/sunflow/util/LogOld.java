@@ -72,9 +72,7 @@ public class LogOld {
 	}
 
 	private static String getMsg(Object msg) {
-		if (msg == null) {
-			return "null";
-		}
+		if (msg == null) return "null";
 		return msg.toString();
 	}
 

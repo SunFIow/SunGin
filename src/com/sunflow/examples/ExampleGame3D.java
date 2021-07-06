@@ -99,13 +99,13 @@ public class ExampleGame3D extends Game3D {
 	}
 
 	@Override
-	protected void update() {
+	public void update() {
 		// rotate and update shape examples
 		if (!auto) return;
-		Models.get(0).rotateX(2f * delta);
-		Models.get(1).rotateX(0.5f * delta);
-		Models.get(1).rotateY(0.2f * delta);
-		Models.get(1).rotateZ(0.1f * delta);
+		Models.get(0).rotateX(2f * tElapsedTime);
+		Models.get(1).rotateX(0.5f * tElapsedTime);
+		Models.get(1).rotateY(0.2f * tElapsedTime);
+		Models.get(1).rotateZ(0.1f * tElapsedTime);
 	}
 
 	float sx = 0;
@@ -116,8 +116,8 @@ public class ExampleGame3D extends Game3D {
 		sx += 0.1;
 
 		if (frameCount % frameRate == 0) {
-			showElapsedTime = delta;
-			showMult = multiplier;
+			showElapsedTime = tElapsedTime;
+			showMult = tMultiplier;
 		}
 
 		background(168, 211, 255);
@@ -134,20 +134,20 @@ public class ExampleGame3D extends Game3D {
 		stroke(255, 0, 0);
 		strokeWeight(10);
 		point(0, 0, 0);
-		line(1, 2, 2, 2, 1, 2);
+//		line(1, 2, 2, 2, 1, 2);
 //		rotateZTo(frameCount / 100f);
 
-		beginShape();
-		vertex(0, 0, 0);
-		vertex(50, 50);
-		vertex(70, 30);
-		vertex(80, 60);
-		vertex(100, 120);
-		vertex(60, 110);
-		vertex(70, 220);
-		vertex(200, 150);
-		vertex(100, 100);
-		endShape(CLOSE);
+//		beginShape();
+//		vertex(0, 0, 0);
+//		vertex(50, 50);
+//		vertex(70, 30);
+//		vertex(80, 60);
+//		vertex(100, 120);
+//		vertex(60, 110);
+//		vertex(70, 220);
+//		vertex(200, 150);
+//		vertex(100, 100);
+//		endShape(CLOSE);
 	}
 
 	@Override

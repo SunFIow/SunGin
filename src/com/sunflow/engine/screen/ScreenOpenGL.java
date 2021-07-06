@@ -3,7 +3,6 @@ package com.sunflow.engine.screen;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.util.EventListener;
@@ -25,9 +24,15 @@ import com.sunflow.engine.eventsystem.events.MouseInputEvent.MousePressedEvent;
 import com.sunflow.engine.eventsystem.events.MouseInputEvent.MouseReleasedEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent;
 import com.sunflow.engine.eventsystem.events.MouseMotionEvent.MouseMovedEvent;
+import com.sunflow.engine.eventsystem.events.ScrollEvent;
 import com.sunflow.engine.eventsystem.events.WindowResizeEvent;
+import com.sunflow.engine.eventsystem.listeners.KeyInputListener;
+import com.sunflow.engine.eventsystem.listeners.MouseInputListener;
+import com.sunflow.engine.eventsystem.listeners.MouseMotionListener;
 import com.sunflow.engine.eventsystem.listeners.SEventListener;
+import com.sunflow.engine.eventsystem.listeners.ScrollListener;
 import com.sunflow.engine.eventsystem.listeners.WindowResizeListener;
+import com.sunflow.engine.input.InputConstants;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.S_Shape;
@@ -35,17 +40,13 @@ import com.sunflow.util.SConstants;
 
 public class ScreenOpenGL extends Screen {
 
-//	protected JFrame frame;
-//	protected Canvas canvas;
-//	protected BufferStrategy bs;
-
 	protected WindowLWJGL window;
 
 	protected SGraphics overlay;
 
 	private int textureID;
 
-	ByteBuffer buffer;
+	private ByteBuffer buffer;
 
 	public ScreenOpenGL(GameBase game, Mouse mouse) { super(game, mouse); }
 
@@ -53,12 +54,10 @@ public class ScreenOpenGL extends Screen {
 	public void refresh() {
 		super.refresh();
 
-//		frame.dispose();
-//		frame = null;
-//		canvas = null;
-
 		window.destroy();
 		window = null;
+
+		destroyListeners();
 	}
 
 	float xfactor = 0, yfactor = 0;
@@ -147,9 +146,14 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	public void preDraw() {
-		window.prepare();
+	public void preUpdate() {
+		if (window.isCloseRequested()) game.isRunning = false;
+
+		super.preUpdate();
 	}
+
+	@Override
+	public void preDraw() { window.prepare(); }
 
 	@Override
 	public void postDraw() {
@@ -166,21 +170,34 @@ public class ScreenOpenGL extends Screen {
 		window = new WindowLWJGL();
 		window.createWindow(scaledWidth, scaledHeight, title);
 
-		EventManager.addKeyInputListener(new KeyInputAdapter() {
+		buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * 4);
+	}
+
+	private KeyInputListener keyInput;
+	private MouseInputListener mouseInput;
+	private MouseMotionListener mouseMotion;
+	private ScrollListener mouseScroll;
+	private WindowResizeListener windowResize;
+
+	@Override
+	protected void createListeners() {
+		EventManager.setupRawCallbacks(window.getID());
+
+		EventManager.addKeyInputListener(keyInput = new KeyInputAdapter() {
 			@Override
 			public void onKeyPressed(KeyPressedEvent e) {
 				key = e.getKeyChar();
 				keyCode = e.getKeyCode();
-				keys[keyCode] = true;
+				keysNew[keyCode] = true;
 				if (game.keyPressed()) return;
 				switch (e.getKeyCode()) {
-					case KeyEvent.VK_F5:
+					case InputConstants.KEY_F5:
 						game.reset();
 						break;
-					case KeyEvent.VK_F9:
+					case InputConstants.KEY_F9:
 						game.isPaused = !game.isPaused;
 						break;
-					case KeyEvent.VK_F11:
+					case InputConstants.KEY_F11:
 						toggleFullscreen();
 						break;
 				}
@@ -190,12 +207,12 @@ public class ScreenOpenGL extends Screen {
 			public void onKeyReleased(KeyReleasedEvent e) {
 				key = e.getKeyChar();
 				keyCode = e.getKeyCode();
-				keys[keyCode] = false;
+				keysNew[keyCode] = false;
 				if (game.keyReleased()) return;
 			}
 		});
 
-		EventManager.addMouseInputListener(new MouseInputAdapter() {
+		EventManager.addMouseInputListener(mouseInput = new MouseInputAdapter() {
 			@Override
 			public void onMousePressed(MousePressedEvent e) {
 				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = true;
@@ -209,7 +226,7 @@ public class ScreenOpenGL extends Screen {
 			}
 		});
 
-		EventManager.addMouseMotionListener(new MouseMotionAdapter() {
+		EventManager.addMouseMotionListener(mouseMotion = new MouseMotionAdapter() {
 			@Override
 			public void onMouseMotion(MouseMotionEvent e) {
 				mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY());
@@ -221,7 +238,12 @@ public class ScreenOpenGL extends Screen {
 			}
 		});
 
-		EventManager.addWindowResizeListener(new WindowResizeListener() {
+		EventManager.addScrollListener(mouseScroll = new ScrollListener() {
+			@Override
+			public void onScrolled(ScrollEvent e) { mouseWheel = e.getAmountX(); }
+		});
+
+		EventManager.addWindowResizeListener(windowResize = new WindowResizeListener() {
 			@Override
 			public void onResized(WindowResizeEvent e) {
 				int w = e.getWidth();
@@ -245,21 +267,19 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	final public void createCanvas(int width, int height, float scaleW, float scaleH) {
-		if (!isCreated) {
-			isCreated = true;
-			this.width = width;
-			this.height = height;
-			this.scaleWidth = scaleW;
-			this.scaleHeight = scaleH;
+	protected void destroyListeners() {
+		EventManager.removeKeyInputListener(keyInput);
+		EventManager.removeMouseInputListener(mouseInput);
+		EventManager.removeMouseMotionListener(mouseMotion);
+		EventManager.removeScrollListener(mouseScroll);
+		EventManager.removeWindowResizeListener(windowResize);
 
-			this.scaledWidth = (int) (width * scaleWidth);
-			this.scaledHeight = (int) (height * scaleHeight);
-
-			createScreen();
-
-			buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * 4);
-		}
+		EventManager.removeKeyInputListener(game);
+		EventManager.removeMouseInputListener(game);
+		EventManager.removeMouseMotionListener(game);
+		EventManager.removeScrollListener(game);
+		EventManager.removeWindowResizeListener(game);
+		EventManager.removeWindowMoveListener(game);
 	}
 
 	@Override
@@ -269,7 +289,6 @@ public class ScreenOpenGL extends Screen {
 //		overlay.init();
 		overlay.smooth();
 
-		System.out.println(isCreated);
 		textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 	}
@@ -299,15 +318,6 @@ public class ScreenOpenGL extends Screen {
 	@Override
 	public void toggleFullscreen() {
 		window.toggleFullscreen();
-	}
-
-	@Override
-	public void privateUpdate() {
-		EventManager.pollEvents();
-
-		if (window.isCloseRequested()) game.isRunning = false;
-
-		super.privateUpdate();
 	}
 
 	static float aimSize = 3;

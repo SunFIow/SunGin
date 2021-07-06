@@ -149,6 +149,7 @@ public class SMatrix implements Cloneable, Serializable
 			Log.error("MatrixF#dot: cols and rows didnt match");
 			Log.error("MatrixF#dot this:\n" + this);
 			Log.error("matrixF#dot b:\n" + b);
+//			new Throwable().printStackTrace();
 		}
 		SMatrix result = new SMatrix(this.rows, b.cols);
 		result.map((x, i, j) -> {
@@ -334,8 +335,8 @@ public class SMatrix implements Cloneable, Serializable
 		return matrix;
 	}
 
-	static public SMatrix Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar) {
-		float fFovRad = 1.0f / MathUtils.instance.tan(MathUtils.instance.radians(fFovDegrees * 0.5f));
+	static public SMatrix Matrix_MakeProjection(float fFov, float fAspectRatio, float fNear, float fFar) {
+		float fFovRad = 1.0f / MathUtils.instance.tan(fFov * 0.5f);
 //		float fFovRad = 1.0f / MathUtils.instance.tan(MathUtils.instance.degrees(fFovDegrees * 0.5f));
 		SMatrix matrix = new SMatrix(4, 4);
 
@@ -405,4 +406,121 @@ public class SMatrix implements Cloneable, Serializable
 		return matrix;
 	}
 
+	static public SMatrix mat4(SVector translation, SVector scale, SVector rotation) {
+		final float c3 = MathUtils.instance.cos(rotation.z);
+		final float s3 = MathUtils.instance.sin(rotation.z);
+		final float c2 = MathUtils.instance.cos(rotation.x);
+		final float s2 = MathUtils.instance.sin(rotation.x);
+		final float c1 = MathUtils.instance.cos(rotation.y);
+		final float s1 = MathUtils.instance.sin(rotation.y);
+		return new SMatrix(new float[][] {
+				{
+						scale.x * (c1 * c3 + s1 * s2 * s3),
+						scale.x * (c2 * s3),
+						scale.x * (c1 * s2 * s3 - c3 * s1),
+						0.0f,
+				},
+				{
+						scale.y * (c3 * s1 * s2 - c1 * s3),
+						scale.y * (c2 * c3),
+						scale.y * (c1 * c3 * s2 + s1 * s3),
+						0.0f,
+				},
+				{
+						scale.z * (c2 * s1),
+						scale.z * (-s2),
+						scale.z * (c1 * c2),
+						0.0f,
+				},
+				{ translation.x, translation.y, translation.z, 1.0f }
+		});
+	}
+
+	static public SMatrix mat4(float rz, float rx, float ry) {
+		final float c3 = MathUtils.instance.cos(rz);
+		final float s3 = MathUtils.instance.sin(rz);
+		final float c2 = MathUtils.instance.cos(rx);
+		final float s2 = MathUtils.instance.sin(rx);
+		final float c1 = MathUtils.instance.cos(ry);
+		final float s1 = MathUtils.instance.sin(ry);
+		return new SMatrix(new float[][] {
+				{
+						c1 * c3 + s1 * s2 * s3,
+						c2 * s3,
+						c1 * s2 * s3 - c3 * s1,
+						0.0f,
+				},
+				{
+						c3 * s1 * s2 - c1 * s3,
+						c2 * c3,
+						c1 * c3 * s2 + s1 * s3,
+						0.0f,
+				},
+				{
+						c2 * s1,
+						-s2,
+						c1 * c2,
+						0.0f,
+				},
+				{ 0.0f, 0.0f, 0.0f, 1.0f }
+		});
+	}
+
+	public static SMatrix initRotation(SVector forward, SVector up) {
+		SVector f = forward.normalized();
+		SVector r = up.normalized();
+		r = r.cross(f);
+
+		SVector u = f.cross(r);
+
+		return initRotation(f, u, r);
+	}
+
+//	public static SMatrix initRotation(SVector forward, SVector up) {
+//		SMatrix result = new SMatrix(4, 4);
+//		
+//		forward = forward.normalized();
+//		up = up.normalized();
+//		SVector right = up.cross(forward);
+//
+//		result.data[0][0] = right.x;
+//		result.data[0][1] = right.y;
+//		result.data[0][2] = right.z;
+//
+//		result.data[1][0] = up.x;
+//		result.data[1][1] = up.y;
+//		result.data[1][2] = up.z;
+//
+//		result.data[2][0] = forward.x;
+//		result.data[2][1] = forward.y;
+//		result.data[2][2] = forward.z;
+//
+//		result.data[3][3] = 1;
+//
+//		return result;
+//	}
+
+	public static SMatrix initRotation(SVector forward, SVector up, SVector right) {
+		SMatrix result = new SMatrix(4, 4);
+
+		forward = forward.normalized();
+		up = up.normalized();
+		right = right.normalized();
+
+		result.data[0][0] = right.x;
+		result.data[0][1] = right.y;
+		result.data[0][2] = right.z;
+
+		result.data[1][0] = up.x;
+		result.data[1][1] = up.y;
+		result.data[1][2] = up.z;
+
+		result.data[2][0] = forward.x;
+		result.data[2][1] = forward.y;
+		result.data[2][2] = forward.z;
+
+		result.data[3][3] = 1;
+
+		return result;
+	}
 }

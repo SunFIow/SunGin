@@ -45,9 +45,9 @@ public abstract class Screen {
 	protected char key;
 	protected int keyCode;
 
-	protected boolean[] keys = new boolean[65536];
-	protected boolean[] keysNew = new boolean[keys.length];
-	protected boolean[] keysOld = new boolean[keys.length];
+	protected boolean[] keysNew = new boolean[65536];
+	protected boolean[] keys = new boolean[keysNew.length];
+	protected boolean[] keysOld = new boolean[keysNew.length];
 
 	protected boolean[] mouseButtons = new boolean[MouseInfo.getNumberOfButtons()];
 	protected boolean[] mouseButtonsNew = new boolean[mouseButtons.length];
@@ -85,25 +85,27 @@ public abstract class Screen {
 		this.showInfo = true;
 	}
 
-	public void privateUpdate() {
-		for (int i = 0; i < keys.length; i++) keysOld[i] = keysNew[i];
-		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsOld[i] = mouseButtonsNew[i];
+	public void preUpdate() {}
 
-		for (int i = 0; i < keys.length; i++) keysNew[i] = keys[i];
+	public void postUpdate() {}
+
+	protected abstract void render();
+
+	public void preDraw() {
+		for (int i = 0; i < keysNew.length; i++) keysOld[i] = keys[i];
+		for (int i = 0; i < keysNew.length; i++) keys[i] = keysNew[i];
+
+		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsOld[i] = mouseButtonsNew[i];
 		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsNew[i] = mouseButtons[i];
+
 		mouseWheelOld = mouseWheelNew;
 		mouseWheelNew = mouseWheel;
-		mouseWheel = 0;
 
 //		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
 //		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
 		Point mSP = MouseInfo.getPointerInfo().getLocation();
 		mouse.updateScreenPosition(mSP.x, mSP.y);
 	}
-
-	protected abstract void render();
-
-	public void preDraw() {}
 
 	public void postDraw() { render(); }
 
@@ -117,7 +119,25 @@ public abstract class Screen {
 
 	public abstract void createScreen();
 
-	public abstract void createCanvas(int width, int height, float scaleW, float scaleH);
+	protected abstract void createListeners();
+
+	protected abstract void destroyListeners();
+
+	public void createCanvas(int width, int height, float scaleW, float scaleH) {
+		if (!isCreated) {
+			isCreated = true;
+			this.width = width;
+			this.height = height;
+			this.scaleWidth = scaleW;
+			this.scaleHeight = scaleH;
+
+			this.scaledWidth = (int) (width * scaleWidth);
+			this.scaledHeight = (int) (height * scaleHeight);
+
+			createScreen();
+			createListeners();
+		}
+	}
 
 	public abstract void show();
 
@@ -137,7 +157,7 @@ public abstract class Screen {
 
 	public int keyCode() { return keyCode; }
 
-	public boolean[] keys() { return keys; }
+	public boolean[] keys() { return keysNew; }
 
 	public boolean keyIsDown(char key) { return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
@@ -147,13 +167,13 @@ public abstract class Screen {
 
 	public boolean keyIsReleased(char key) { return keyIsReleased(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
-	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keysNew[key]; }
+	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keys[key]; }
 
-	public boolean keyIsPressed(int key) { if (key < 0 || key > keys.length) return false; return !keysOld[key] && keysNew[key]; }
+	public boolean keyIsPressed(int key) { if (key < 0 || key > keys.length) return false; return !keysOld[key] && keys[key]; }
 
-	public boolean keyIsHeld(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && keysNew[key]; }
+	public boolean keyIsHeld(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && keys[key]; }
 
-	public boolean keyIsReleased(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && !keysNew[key]; }
+	public boolean keyIsReleased(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && !keys[key]; }
 
 	public boolean mouseIsDown(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsNew[button]; }
 

@@ -2,12 +2,14 @@ package com.sunflow.engine;
 
 import java.awt.Cursor;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
 
+import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.input.Input;
 
 public class WindowLWJGL {
@@ -29,7 +31,12 @@ public class WindowLWJGL {
 		this.height = height;
 		this.title = title;
 
-		if (!GLFW.glfwInit()) throw new IllegalStateException("Unable to initialize GLFW");
+		if (!GLFW.glfwInit()) {
+			PointerBuffer description = PointerBuffer.allocateDirect(1);
+			int error = GLFW.glfwGetError(description);
+			System.out.println("Error[" + error + "]: " + description.getStringUTF8());
+			throw new IllegalStateException("Unable to initialize GLFW");
+		}
 
 		// Setup an error callback. It will print the error message in System.err.
 		GLFW.glfwSetErrorCallback(errorCallback = GLFWErrorCallback.createPrint(System.err));
@@ -74,6 +81,8 @@ public class WindowLWJGL {
 	public void destroy() {
 		// Free the window callbacks and destroy the window
 //		Callbacks.glfwFreeCallbacks(windowID);
+		EventManager.destroyRawCallbacks(windowID);
+
 		GLFW.glfwDestroyWindow(windowID);
 		// Terminate GLFW and free the error callback
 		GLFW.glfwTerminate();

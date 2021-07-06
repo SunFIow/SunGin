@@ -235,21 +235,33 @@ public final class SMatrix3D implements SMatrix_D /* , SConstants */ {
 	public void rotateX(float angle) {
 		float c = cos(angle);
 		float s = sin(angle);
-		apply(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1);
+		apply(
+				1, 0, 0, 0,
+				0, c, -s, 0,
+				0, s, c, 0,
+				0, 0, 0, 1);
 	}
 
 	@Override
 	public void rotateY(float angle) {
 		float c = cos(angle);
 		float s = sin(angle);
-		apply(c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1);
+		apply(
+				c, 0, s, 0,
+				0, 1, 0, 0,
+				-s, 0, c, 0,
+				0, 0, 0, 1);
 	}
 
 	@Override
 	public void rotateZ(float angle) {
 		float c = cos(angle);
 		float s = sin(angle);
-		apply(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+		apply(
+				c, -s, 0, 0,
+				s, c, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1);
 	}
 
 	@Override

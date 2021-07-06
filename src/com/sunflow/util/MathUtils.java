@@ -1,5 +1,7 @@
 package com.sunflow.util;
 
+import java.util.ArrayList;
+
 public interface MathUtils {
 	public static final MathUtils instance = new MathUtils() {};
 
@@ -169,6 +171,10 @@ public interface MathUtils {
 		} while (value == high);
 		return value;
 	}
+
+	default <D> D random(D[] arr) { return arr[random(arr.length)]; }
+
+	default <D> D random(ArrayList<D> arr) { return arr.get(random(arr.size())); }
 
 	/**
 	 * Simple utility function which clamps the given value to be strictly

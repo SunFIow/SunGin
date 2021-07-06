@@ -69,7 +69,7 @@ public class RawCallbacks implements EventConstants {
 			if (action == PRESS) event = new KeyPressedEvent(window, key, scancode, mods);
 			else if (action == RELEASE) event = new KeyReleasedEvent(window, key, scancode, mods);
 			else if (action == REPEAT) event = new KeyRepeatedEvent(window, key, scancode, mods);
-			else event = new KeyInputEvent(EventType.KEY_INPUT, window, key, scancode, action, mods);
+			else event = new KeyInputEvent(EventType.KEY_INPUT, window, key, scancode, action, mods); // we should never get here in theory
 			EventManager.addEvent(event);
 		}
 	}

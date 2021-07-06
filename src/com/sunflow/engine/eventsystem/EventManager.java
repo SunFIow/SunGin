@@ -57,11 +57,6 @@ public class EventManager {
 		if (rawCallbacks != null) rawCallbacks.destroy();
 	}
 
-	static public void pollEvents() {
-		events.clear();
-		GLFW.glfwPollEvents();
-	}
-
 	static public void addEvent(Event event) { if (event != null) events.add(event); }
 
 	static public List<Event> getAllEvents() { return events; }
@@ -114,53 +109,35 @@ public class EventManager {
 	static public void addWindowMoveListener(WindowMoveListener listener) { windowMoveListeners.add(listener); }
 
 	static public boolean removeEventListener(SEventListener listener) {
-		boolean removed = false;
-		if (listener instanceof KeyInputListener) {
-			keyInputListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof MouseInputListener) {
-			mouseInputListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof MouseMotionListener) {
-			mouseMotionListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof MouseOnScreenListener) {
-			mouseOnScreenListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof ScrollListener) {
-			scrollListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof WindowResizeListener) {
-			windowResizeListeners.remove(listener);
-			removed = true;
-		}
-		if (listener instanceof WindowMoveListener) {
-			windowMoveListeners.remove(listener);
-			removed = true;
-		}
-		return removed;
+		return ((listener instanceof KeyInputListener && removeKeyInputListener((KeyInputListener) listener)) |
+				(listener instanceof MouseInputListener && removeMouseInputListener((MouseInputListener) listener)) |
+				(listener instanceof MouseMotionListener && removeMouseMotionListener((MouseMotionListener) listener)) |
+				(listener instanceof MouseOnScreenListener && removeMouseOnScreenListener((MouseOnScreenListener) listener)) |
+				(listener instanceof ScrollListener && removeScrollListener((ScrollListener) listener)) |
+				(listener instanceof WindowResizeListener && removeWindowResizeListener((WindowResizeListener) listener)) |
+				(listener instanceof WindowMoveListener && removeWindowMoveListener((WindowMoveListener) listener)));
 	}
 
-	static public void removeKeyInputListener(KeyInputListener listener) { keyInputListeners.remove(listener); }
+	static public boolean removeKeyInputListener(KeyInputListener listener) { return keyInputListeners.remove(listener); }
 
-	static public void removeMouseInputListener(MouseInputListener listener) { mouseInputListeners.remove(listener); }
+	static public boolean removeMouseInputListener(MouseInputListener listener) { return mouseInputListeners.remove(listener); }
 
-	static public void removeMouseMotionListener(MouseMotionListener listener) { mouseMotionListeners.remove(listener); }
+	static public boolean removeMouseMotionListener(MouseMotionListener listener) { return mouseMotionListeners.remove(listener); }
 
-	static public void removeMouseOnScreenListener(MouseOnScreenListener listener) { mouseOnScreenListeners.remove(listener); }
+	static public boolean removeMouseOnScreenListener(MouseOnScreenListener listener) { return mouseOnScreenListeners.remove(listener); }
 
-	static public void removeScrollListener(ScrollListener listener) { scrollListeners.remove(listener); }
+	static public boolean removeScrollListener(ScrollListener listener) { return scrollListeners.remove(listener); }
 
-	static public void removeWindowResizeListener(WindowResizeListener listener) { windowResizeListeners.remove(listener); }
+	static public boolean removeWindowResizeListener(WindowResizeListener listener) { return windowResizeListeners.remove(listener); }
 
-	static public void removeWindowMoveListener(WindowMoveListener listener) { windowMoveListeners.remove(listener); }
+	static public boolean removeWindowMoveListener(WindowMoveListener listener) { return windowMoveListeners.remove(listener); }
 
-	static public void processMessages(double delta) {
+	static public void pollEvents() {
+		events.clear();
+		GLFW.glfwPollEvents();
+	}
+
+	static public void processEvents(double delta) {
 		List<Event> events = EventManager.getAllEvents();
 
 		for (Event event : events) switch (event.getType()) {

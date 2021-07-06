@@ -109,7 +109,7 @@ public class SGraphicsJava2D extends SGraphics {
 	// JAVA2D
 
 	public Graphics2D checkImage() {
-//		System.out.println(image);
+		// System.out.println(image);
 		int wide = width * pixelDensity;
 		int high = height * pixelDensity;
 		if (image == null ||
@@ -1861,7 +1861,7 @@ public class SGraphicsJava2D extends SGraphics {
 				throw new RuntimeException("Pixel operations are not supported on this device.");
 			}
 		}
-		
+
 		return raster;
 	}
 

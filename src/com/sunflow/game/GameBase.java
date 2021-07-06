@@ -84,6 +84,7 @@ import javax.swing.UIManager;
 
 import com.sunflow.Settings;
 import com.sunflow.engine.Mouse;
+import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyPressedEvent;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent.KeyReleasedEvent;
@@ -127,7 +128,7 @@ import com.sunflow.util.MathUtils;
 import com.sunflow.util.SConstants;
 import com.sunflow.util.SStyle;
 
-public class GameBase implements SGFX, Runnable,
+public class GameBase implements SGFX,
 		SConstants, MathUtils, GameUtils, GeometryUtils, LogUtils,
 		MouseListener,
 		MouseWheelListener, MouseMotionListener, KeyListener, ComponentListener,
@@ -293,10 +294,11 @@ public class GameBase implements SGFX, Runnable,
 	private float timePerTickNano, timePerTickMilli;
 	private float timePerFrameNano, timePerFrameMilli;
 
-	protected float delta, deltaMin;
-	protected float multiplier, multiplierMin;
+	protected float tMultiplier, tMultiplierMax;
+	protected float tElapsedTime, tElapsedTimeMax;
 
-	protected float fElapsedTime, fElapsedTimeMin;
+	protected float fMultiplier, fMultiplierMax;
+	protected float fElapsedTime, fElapsedTimeMax;
 
 //	protected float aimSize;
 //	protected Color aimColor;
@@ -322,11 +324,25 @@ public class GameBase implements SGFX, Runnable,
 	}
 
 	final public void reset() {
+//		if (insideDraw) {
+//			new Thread(() -> {
+//				while (insideDraw);
+//				System.out.println("hurra");
+//				reset();
+//			}).start();
+//			return;
+//		}
+		if (insideDraw) {
+			reset = true;
+			return;
+		}
 		stop();
-		privateRefresh();
+		_refresh();
 		refresh();
-		init();
+		start();
 	}
+
+	boolean reset;
 
 	/**
 	 * @param method
@@ -771,14 +787,14 @@ public class GameBase implements SGFX, Runnable,
 
 	public void setup() {}
 
-	void privateRefresh() {
+	void _refresh() {
 		frameCount = 0;
 		frameRate = 0;
 		tickCount = 0;
 		tickRate = 0;
 
-		multiplierMin = 0;
-		deltaMin = 0;
+		tMultiplierMax = 0;
+		tElapsedTimeMax = 0;
 
 		width = 0;
 		height = 0;
@@ -794,12 +810,17 @@ public class GameBase implements SGFX, Runnable,
 		if (isRunning) return;
 		isRunning = true;
 
-		thread = new Thread(this, "MainThread");
+		thread = new Thread(() -> {
+			init();
+			loop();
+//			destroy();
+		}, "MainThread");
+
 //		thread.start();
 		thread.run();
 	}
 
-	public final void exit() { stop(); }
+	public final void exit() { destroy(); }
 
 	public final void stop() {
 		if (!isRunning) return;
@@ -836,13 +857,6 @@ public class GameBase implements SGFX, Runnable,
 
 	public final void undecorated(boolean undecorated) { screen.setUndecorated(undecorated); }
 
-	@Override
-	public void run() {
-		init();
-		loop();
-		destroy();
-	}
-
 	void init() {
 		final String className = this.getClass().getSimpleName();
 		final String cleanedClass = className.replaceAll("__[^_]+__\\$", "").replaceAll("\\$\\d+", "");
@@ -855,7 +869,6 @@ public class GameBase implements SGFX, Runnable,
 		handleRunSketch(args, this);
 
 //		game = this;
-		infos = getInfo();
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
 		mouse = new Mouse();
@@ -871,9 +884,10 @@ public class GameBase implements SGFX, Runnable,
 		frameRate(60);
 		syncMode(SYNC);
 
-		multiplierMin = 5;
-		deltaMin = timePerTickNano / NANOSECOND * multiplierMin;
-		fElapsedTimeMin = timePerFrameNano / NANOSECOND * multiplierMin;
+		tMultiplierMax = 5;
+		tElapsedTimeMax = timePerTickNano / NANOSECOND * tMultiplierMax;
+		fMultiplierMax = 5;
+		fElapsedTimeMax = timePerFrameNano / NANOSECOND * tMultiplierMax;
 
 		gameLoopListeners = new ArrayList<>();
 		frameLoopListeners = new ArrayList<>();
@@ -888,25 +902,20 @@ public class GameBase implements SGFX, Runnable,
 		screen.show();
 	}
 
-	void tick() {
-		screen.privateUpdate();
-
-		width = screen.width;
-		height = screen.height;
-		pmouseX = mouseX;
-		pmouseY = mouseY;
-		mouseX = mouse.x;
-		mouseY = mouse.y;
-
+	private void tick() {
+		screen.preUpdate();
 		for (GameLoopListener gll : gameLoopListeners) gll.preUpdate();
+
 		update();
+
+		screen.postUpdate();
 		for (GameLoopListener gll : gameLoopListeners) gll.postUpdate();
 
 		ticks++;
 		tickCount++;
 	}
 
-	protected void update() {}
+	public void update() {}
 
 	boolean insideDraw;
 
@@ -915,7 +924,7 @@ public class GameBase implements SGFX, Runnable,
 //		if(noLoop && !redraw) return;
 
 		if (insideDraw) {
-			System.err.println("handleDraw() called before finishing");
+			new IllegalStateException("render() called before finishing").printStackTrace();
 			System.exit(1);
 		}
 		insideDraw = true;
@@ -923,7 +932,6 @@ public class GameBase implements SGFX, Runnable,
 		if (width != 0) g.beginDraw();
 
 		if (frameCount == 0) {
-//			Setup();
 			setup();
 		} else {
 			preDraw();
@@ -937,6 +945,9 @@ public class GameBase implements SGFX, Runnable,
 		}
 		g.endDraw();
 
+		EventManager.pollEvents();
+		EventManager.processEvents(fElapsedTime);
+
 		insideDraw = false;
 
 		frames++;
@@ -944,10 +955,18 @@ public class GameBase implements SGFX, Runnable,
 	}
 
 	void preDraw() {
+		width = screen.width;
+		height = screen.height;
+		pmouseX = mouseX;
+		pmouseY = mouseY;
+		mouseX = mouse.x;
+		mouseY = mouse.y;
+
 //		graphics = checkImage();
 //		handleSmooth();
-		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
+
 		screen.preDraw();
+		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
 	}
 
 	void postDraw() {
@@ -997,31 +1016,35 @@ public class GameBase implements SGFX, Runnable,
 
 			if (timeSinceLastTick >= timePerTickNano) {
 				timeSinceLastTick -= timePerTickNano;
-				delta = (currentTime - lastTick) / (float) NANOSECOND;
-				delta = Math.min(delta, deltaMin);
-				multiplier = (currentTime - lastTick) / timePerTickNano;
-				multiplier = Math.min(multiplier, multiplierMin);
+				tElapsedTime = (currentTime - lastTick) / (float) NANOSECOND;
+				tElapsedTime = Math.min(tElapsedTime, tElapsedTimeMax);
+				tMultiplier = (currentTime - lastTick) / timePerTickNano;
+				tMultiplier = Math.min(tMultiplier, tMultiplierMax);
 				lastTick = currentTime;
 
-				if (!isPaused) if (syncMode == ASYNC) tick();
+				if (!isPaused && syncMode == ASYNC) tick();
 			}
 
 			if (timeSinceLastFrame >= timePerFrameNano) {
 				timeSinceLastFrame -= timePerFrameNano;
 				fElapsedTime = (currentTime - lastFrame) / (float) NANOSECOND;
-				fElapsedTime = Math.min(fElapsedTime, fElapsedTimeMin);
+				fElapsedTime = Math.min(fElapsedTime, fElapsedTimeMax);
+				fMultiplier = (currentTime - lastFrame) / timePerFrameNano;
+				fMultiplier = Math.min(fMultiplier, fMultiplierMax);
 				lastFrame = currentTime;
 
-				if (syncMode == ASYNC) render();
-				else {
-					if (!isPaused) tick();
-					render(); // TODO: USE STH ELSE
-				}
+				if (!isPaused && syncMode == SYNC && frameCount > 0) tick();
+				render();// TODO: USE STH ELSE
 			}
 
 			if (timeSinceLastInfoUpdate >= NANOSECOND) {
 				info();
 				timeSinceLastInfoUpdate -= NANOSECOND;
+			}
+
+			if (reset) {
+				reset = false;
+				reset();
 			}
 		}
 
@@ -1034,7 +1057,7 @@ public class GameBase implements SGFX, Runnable,
 		}
 	}
 
-	boolean exitCalled;
+	private boolean exitCalled;
 
 	void destroy() {
 		if (isStopped()) {
@@ -1066,6 +1089,7 @@ public class GameBase implements SGFX, Runnable,
 			System.exit(0);
 		} catch (SecurityException e) {
 			// don't care about applet security exceptions
+			e.printStackTrace();
 		}
 	}
 
@@ -1084,15 +1108,21 @@ public class GameBase implements SGFX, Runnable,
 			if (g != null) g.dispose();
 		}
 
-		if (platform == MACOSX) {
-			try {
-				final String td = "processing.core.ThinkDifferent";
-				final Class<?> thinkDifferent = getClass().getClassLoader().loadClass(td);
-				thinkDifferent.getMethod("cleanup").invoke(null);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+//		if (platform == MACOSX) {
+////			com.sun.glass.ui.Application application = null;
+////			if (application == null) {
+////				application = com.sun.glass.ui.Application.getApplication();
+////			}
+////			application.setQuitHandler(null);
+//
+//			try {
+//				final String td = "processing.core.ThinkDifferent";
+//				final Class<?> thinkDifferent = getClass().getClassLoader().loadClass(td);
+//				thinkDifferent.getMethod("cleanup").invoke(null);
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
 
 	}
 
@@ -1342,7 +1372,7 @@ public class GameBase implements SGFX, Runnable,
 		try {
 //			saveImage(image, savePath("screen-" + nf(frameCount, 4) + ".tif"));
 //			graphics.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
-			return save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
+			return g.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
 		} catch (SecurityException se) {
 			System.err.println("Can't use saveFrame() when running in a browser, " +
 					"unless using a signed applet.");
@@ -1354,7 +1384,7 @@ public class GameBase implements SGFX, Runnable,
 		try {
 //			saveImage(image, filename.replace(s, f));
 //			graphics.save(savePath(insertFrame(filename)));
-			return save(savePath(insertFrame(filename)));
+			return g.save(savePath(insertFrame(filename)));
 		} catch (SecurityException se) {
 			System.err.println("Can't use saveFrame() when running in a browser, " +
 					"unless using a signed applet.");
@@ -1384,7 +1414,7 @@ public class GameBase implements SGFX, Runnable,
 
 	public final float elapsedTime() { return delta(); }
 
-	public final float delta() { return delta; }
+	public final float delta() { return tElapsedTime; }
 
 	public final int x() { return screen.getX(); }
 
@@ -1406,29 +1436,29 @@ public class GameBase implements SGFX, Runnable,
 
 	public final int lastMouseY() { return (int) mouse.lastY; }
 
-	public final boolean keyIsDown(int key) { return screen.keyIsDown(key); }
+	public final boolean isKeyDown(int key) { return screen.keyIsDown(key); }
 
-	public final boolean keyIsPressed(int key) { return screen.keyIsPressed(key); }
+	public final boolean isKeyPressed(int key) { return screen.keyIsPressed(key); }
 
-	public final boolean keyIsHeld(int key) { return screen.keyIsHeld(key); }
+	public final boolean isKeyHeld(int key) { return screen.keyIsHeld(key); }
 
-	public final boolean keyIsReleased(int key) { return screen.keyIsReleased(key); }
+	public final boolean isKeyReleased(int key) { return screen.keyIsReleased(key); }
 
-	public final boolean keyIsDown(char key) { return screen.keyIsDown(key); }
+	public final boolean isKeyDown(char key) { return screen.keyIsDown(key); }
 
-	public final boolean keyIsPressed(char key) { return screen.keyIsPressed(key); }
+	public final boolean isKeyPressed(char key) { return screen.keyIsPressed(key); }
 
-	public final boolean keyIsHeld(char key) { return screen.keyIsHeld(key); }
+	public final boolean isKeyHeld(char key) { return screen.keyIsHeld(key); }
 
-	public final boolean keyIsReleased(char key) { return screen.keyIsReleased(key); }
+	public final boolean isKeyReleased(char key) { return screen.keyIsReleased(key); }
 
-	public final boolean mouseIsDown(int button) { return screen.mouseIsDown(button); }
+	public final boolean isMouseDown(int button) { return screen.mouseIsDown(button); }
 
-	public final boolean mouseIsPressed(int button) { return screen.mouseIsPressed(button); }
+	public final boolean isMousePressed(int button) { return screen.mouseIsPressed(button); }
 
-	public final boolean mouseIsHeld(int button) { return screen.mouseIsHeld(button); }
+	public final boolean isMouseHeld(int button) { return screen.mouseIsHeld(button); }
 
-	public final boolean mouseIsReleased(int button) { return screen.mouseIsReleased(button); }
+	public final boolean isMouserReleased(int button) { return screen.mouseIsReleased(button); }
 
 	public final double mouseWheel() { return screen.mouseWheel(); }
 
@@ -6239,5 +6269,327 @@ public class GameBase implements SGFX, Runnable,
 			lookAndFeelCheck = true;
 		}
 	}
+
+	//////////////////////////////////////////////////////////////
+
+	/**
+	 * ( begin auto-generated from print.xml )
+	 *
+	 * Writes to the console area of the Processing environment. This is often
+	 * helpful for looking at the data a program is producing. The companion
+	 * function <b>println()</b> works like <b>print()</b>, but creates a new
+	 * line of text for each call to the function. Individual elements can be
+	 * separated with quotes ("") and joined with the addition operator (+).<br />
+	 * <br />
+	 * Beginning with release 0125, to print the contents of an array, use
+	 * println(). There's no sensible way to do a <b>print()</b> of an array,
+	 * because there are too many possibilities for how to separate the data
+	 * (spaces, commas, etc). If you want to print an array as a single line,
+	 * use <b>join()</b>. With <b>join()</b>, you can choose any delimiter you
+	 * like and <b>print()</b> the result.<br />
+	 * <br />
+	 * Using <b>print()</b> on an object will output <b>null</b>, a memory
+	 * location that may look like "@10be08," or the result of the
+	 * <b>toString()</b> method from the object that's being printed. Advanced
+	 * users who want more useful output when calling <b>print()</b> on their
+	 * own classes can add a <b>toString()</b> method to the class that returns
+	 * a String.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref output:text_area
+	 * @usage IDE
+	 * @param what
+	 *            data to print to console
+	 * @see PApplet#println()
+	 * @see PApplet#printArray(Object)
+	 * @see PApplet#join(String[], char)
+	 */
+	static public void print(byte what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(boolean what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(char what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(int what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(long what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(float what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(double what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	static public void print(String what) {
+		System.out.print(what);
+		System.out.flush();
+	}
+
+	/**
+	 * @param variables
+	 *            list of data, separated by commas
+	 */
+	static public void print(Object... variables) {
+		StringBuilder sb = new StringBuilder();
+		for (Object o : variables) {
+			if (sb.length() != 0) {
+				sb.append(" ");
+			}
+			if (o == null) {
+				sb.append("null");
+			} else {
+				sb.append(o.toString());
+			}
+		}
+		System.out.print(sb.toString());
+	}
+
+	/*
+	 * static public void print(Object what) {
+	 * if (what == null) {
+	 * // special case since this does fuggly things on > 1.1
+	 * System.out.print("null");
+	 * } else {
+	 * System.out.println(what.toString());
+	 * }
+	 * }
+	 */
+
+	/**
+	 * ( begin auto-generated from println.xml )
+	 *
+	 * Writes to the text area of the Processing environment's console. This is
+	 * often helpful for looking at the data a program is producing. Each call
+	 * to this function creates a new line of output. Individual elements can
+	 * be separated with quotes ("") and joined with the string concatenation
+	 * operator (+). See <b>print()</b> for more about what to expect in the output.
+	 * <br/>
+	 * <br/>
+	 * <b>println()</b> on an array (by itself) will write the
+	 * contents of the array to the console. This is often helpful for looking
+	 * at the data a program is producing. A new line is put between each
+	 * element of the array. This function can only print one dimensional
+	 * arrays. For arrays with higher dimensions, the result will be closer to
+	 * that of <b>print()</b>.
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref output:text_area
+	 * @usage IDE
+	 * @see PApplet#print(byte)
+	 * @see PApplet#printArray(Object)
+	 */
+	static public void println() {
+		System.out.println();
+	}
+
+	/**
+	 * @param what
+	 *            data to print to console
+	 */
+	static public void println(byte what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(boolean what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(char what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(int what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(long what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(float what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(double what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	static public void println(String what) {
+		System.out.println(what);
+		System.out.flush();
+	}
+
+	/**
+	 * @param variables
+	 *            list of data, separated by commas
+	 */
+	static public void println(Object... variables) {
+//	    System.out.println("got " + variables.length + " variables");
+		print(variables);
+		println();
+	}
+
+	/*
+	 * // Breaking this out since the compiler doesn't know the difference between
+	 * // Object... and just Object (with an array passed in). This should take care
+	 * // of the confusion for at least the most common case (a String array).
+	 * // On second thought, we're going the printArray() route, since the other
+	 * // object types are also used frequently.
+	 * static public void println(String[] array) {
+	 * for (int i = 0; i < array.length; i++) {
+	 * System.out.println("[" + i + "] \"" + array[i] + "\"");
+	 * }
+	 * System.out.flush();
+	 * }
+	 */
+
+	/**
+	 * For arrays, use printArray() instead. This function causes a warning
+	 * because the new print(Object...) and println(Object...) functions can't
+	 * be reliably bound by the compiler.
+	 */
+	static public void println(Object what) {
+		if (what == null) {
+			System.out.println("null");
+		} else if (what.getClass().isArray()) {
+			printArray(what);
+		} else {
+			System.out.println(what.toString());
+			System.out.flush();
+		}
+	}
+
+	/**
+	 * ( begin auto-generated from printArray.xml )
+	 *
+	 * To come...
+	 *
+	 * ( end auto-generated )
+	 * 
+	 * @webref output:text_area
+	 * @param what
+	 *            one-dimensional array
+	 * @usage IDE
+	 * @see PApplet#print(byte)
+	 * @see PApplet#println()
+	 */
+	static public void printArray(Object what) {
+		if (what == null) {
+			// special case since this does fuggly things on > 1.1
+			System.out.println("null");
+
+		} else {
+			String name = what.getClass().getName();
+			if (name.charAt(0) == '[') {
+				switch (name.charAt(1)) {
+					case '[':
+						// don't even mess with multi-dimensional arrays (case '[')
+						// or anything else that's not int, float, boolean, char
+						System.out.println(what);
+						break;
+
+					case 'L':
+						// print a 1D array of objects as individual elements
+						Object poo[] = (Object[]) what;
+						for (int i = 0; i < poo.length; i++) {
+							if (poo[i] instanceof String) {
+								System.out.println("[" + i + "] \"" + poo[i] + "\"");
+							} else {
+								System.out.println("[" + i + "] " + poo[i]);
+							}
+						}
+						break;
+
+					case 'Z': // boolean
+						boolean zz[] = (boolean[]) what;
+						for (int i = 0; i < zz.length; i++) {
+							System.out.println("[" + i + "] " + zz[i]);
+						}
+						break;
+
+					case 'B': // byte
+						byte bb[] = (byte[]) what;
+						for (int i = 0; i < bb.length; i++) {
+							System.out.println("[" + i + "] " + bb[i]);
+						}
+						break;
+
+					case 'C': // char
+						char cc[] = (char[]) what;
+						for (int i = 0; i < cc.length; i++) {
+							System.out.println("[" + i + "] '" + cc[i] + "'");
+						}
+						break;
+
+					case 'I': // int
+						int ii[] = (int[]) what;
+						for (int i = 0; i < ii.length; i++) {
+							System.out.println("[" + i + "] " + ii[i]);
+						}
+						break;
+
+					case 'J': // int
+						long jj[] = (long[]) what;
+						for (int i = 0; i < jj.length; i++) {
+							System.out.println("[" + i + "] " + jj[i]);
+						}
+						break;
+
+					case 'F': // float
+						float ff[] = (float[]) what;
+						for (int i = 0; i < ff.length; i++) {
+							System.out.println("[" + i + "] " + ff[i]);
+						}
+						break;
+
+					case 'D': // double
+						double dd[] = (double[]) what;
+						for (int i = 0; i < dd.length; i++) {
+							System.out.println("[" + i + "] " + dd[i]);
+						}
+						break;
+
+					default:
+						System.out.println(what);
+				}
+			} else { // not an array
+				System.out.println(what);
+			}
+		}
+		System.out.flush();
+	}
+
+//	static public void debug(String msg) {
+//		if (DEBUG) println(msg);
+//	}
+
 //	public GraphicsConfiguration getGC() { return screen.getGC(); }
 }

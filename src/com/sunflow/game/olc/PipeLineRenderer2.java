@@ -9,8 +9,8 @@ import com.sunflow.game.GameBase;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
-import com.sunflow.util.SConstants;
 import com.sunflow.util.MathUtils;
+import com.sunflow.util.SConstants;
 
 public class PipeLineRenderer2 implements MathUtils, SConstants {
 
@@ -67,7 +67,7 @@ public class PipeLineRenderer2 implements MathUtils, SConstants {
 			float fNear, float fFar,
 			float fLeft, float fTop,
 			float fWidth, float fHeight) {
-		matProj = SMatrix.Matrix_MakeProjection(fFovDegrees, fAspectRatio, fNear, fFar);
+		matProj = SMatrix.Matrix_MakeProjection(radians(fFovDegrees), fAspectRatio, fNear, fFar);
 		fViewX = fLeft;
 		fViewY = fTop;
 		fViewW = fWidth;

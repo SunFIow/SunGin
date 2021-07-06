@@ -89,6 +89,7 @@ public class Game3D extends GameBase {
 
 //		vCameraPos = new SVector(197, 198, -980f);
 		vCameraPos = new SVector(197, 198, 980f);
+//		vCameraPos = new SVector(200, 200, 600);
 		vCameraDir = new SVector(0, 0, 0);
 		vLightDir = new SVector(1, 1, 1);
 
@@ -156,7 +157,7 @@ public class Game3D extends GameBase {
 //		drawCrosshair();
 	}
 
-	protected final void render() {
+	protected final void renderModels() {
 		// Draw Models in the Order that is set by the 'setOrder' function
 		for (int i = 0; i < drawOrder.length; i++) {
 			BaseModel current = DModels.get(drawOrder[i]);
@@ -309,6 +310,8 @@ public class Game3D extends GameBase {
 		updateView();
 	}
 
+	private static final float cPI = PI * 0.9999f;
+
 	private final void mouseMovement(float NewMouseX, float NewMouseY) {
 		mouseDifX = (NewMouseX - width / 2f);
 //		mouseDifY = (NewMouseY - height / 2f) * (6 - Math.abs(vertLook / PI) * 5);
@@ -325,8 +328,6 @@ public class Game3D extends GameBase {
 
 		updateView();
 	}
-
-	private static final float cPI = PI * 0.9999f;
 
 	public final void updateView() {
 		float vertLook = this.vertLook / PI;

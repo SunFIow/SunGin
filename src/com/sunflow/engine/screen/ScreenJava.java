@@ -14,6 +14,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -143,6 +144,8 @@ public class ScreenJava extends Screen {
 	@Override
 	public void refresh() {
 		super.refresh();
+
+		destroyListeners();
 
 		frame.dispose();
 		frame = null;
@@ -277,13 +280,23 @@ public class ScreenJava extends Screen {
 
 		frame.pack();
 		frame.setLocationRelativeTo(null);
+	}
 
-		canvas.addKeyListener(new KeyAdapter() {
+	private KeyListener keyInput;
+	private MouseListener mouseInput;
+	private MouseMotionListener mouseMotion;
+	private MouseWheelListener mouseScroll;
+	private ComponentListener windowResize;
+	private ComponentListener frameResize;
+
+	@Override
+	protected void createListeners() {
+		canvas.addKeyListener(keyInput = new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				key = e.getKeyChar();
 				keyCode = e.getKeyCode();
-				keys[keyCode] = true;
+				keysNew[keyCode] = true;
 				if (game.keyPressed()) return;
 				switch (e.getKeyCode()) {
 					case KeyEvent.VK_F5:
@@ -302,7 +315,7 @@ public class ScreenJava extends Screen {
 			public void keyReleased(KeyEvent e) {
 				key = e.getKeyChar();
 				keyCode = e.getKeyCode();
-				keys[keyCode] = false;
+				keysNew[keyCode] = false;
 				if (game.keyReleased()) return;
 			}
 
@@ -314,7 +327,7 @@ public class ScreenJava extends Screen {
 			}
 		});
 
-		canvas.addMouseListener(new MouseListener() {
+		canvas.addMouseListener(mouseInput = new MouseListener() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 //				System.err.println("mouspressed");
@@ -344,7 +357,7 @@ public class ScreenJava extends Screen {
 			public void mouseClicked(MouseEvent e) {}
 		});
 
-		canvas.addMouseMotionListener(new MouseMotionListener() {
+		canvas.addMouseMotionListener(mouseMotion = new MouseMotionListener() {
 			@Override
 			public void mouseMoved(MouseEvent e) { mouse.updatePosition(e.getX(), e.getY()); }
 
@@ -352,12 +365,12 @@ public class ScreenJava extends Screen {
 			public void mouseDragged(MouseEvent e) { mouse.updatePosition(e.getX(), e.getY()); }
 		});
 
-		canvas.addMouseWheelListener(new MouseWheelListener() {
+		canvas.addMouseWheelListener(mouseScroll = new MouseWheelListener() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) { mouseWheel = e.getPreciseWheelRotation(); }
 		});
 
-		canvas.addComponentListener(new ComponentAdapter() {
+		canvas.addComponentListener(windowResize = new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 //				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
@@ -371,7 +384,7 @@ public class ScreenJava extends Screen {
 			}
 		});
 
-		frame.addComponentListener(new ComponentAdapter() {
+		frame.addComponentListener(frameResize = new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				frameWidth = e.getComponent().getWidth();
@@ -387,19 +400,20 @@ public class ScreenJava extends Screen {
 	}
 
 	@Override
-	final public void createCanvas(int width, int height, float scaleW, float scaleH) {
-		if (!isCreated) {
-			this.width = width;
-			this.height = height;
-			this.scaleWidth = scaleW;
-			this.scaleHeight = scaleH;
+	protected void destroyListeners() {
+		canvas.removeKeyListener(keyInput);
+		canvas.removeMouseListener(mouseInput);
+		canvas.removeMouseMotionListener(mouseMotion);
+		canvas.removeMouseWheelListener(mouseScroll);
+		canvas.removeComponentListener(windowResize);
 
-			this.scaledWidth = (int) (width * scaleWidth);
-			this.scaledHeight = (int) (height * scaleHeight);
+		frame.removeComponentListener(frameResize);
 
-			createScreen();
-			isCreated = true;
-		}
+		canvas.removeKeyListener(game);
+		canvas.removeMouseListener(game);
+		canvas.removeMouseMotionListener(game);
+		canvas.removeMouseWheelListener(game);
+		canvas.removeComponentListener(game);
 	}
 
 	@Override

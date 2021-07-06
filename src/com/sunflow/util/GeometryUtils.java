@@ -37,6 +37,7 @@ public interface GeometryUtils {
 		boolean intersects = w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
 
 		if (intersects) return Optional.of(P);
+
 		return Optional.empty();
 	}
 
@@ -204,4 +205,7 @@ public interface GeometryUtils {
 		return Line2D.Double.ptLineDist(x1, y1, x2, y2, px, py);
 	}
 
+//	default double distRectanglePoint(double x1, double y1, double x2, double y2, double px, double py) {
+//	
+//	}
 }
