@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sunflow.logging.Log;
+import com.sunflow.logging.LogManager;
 import com.sunflow.math.SVector;
 import com.sunflow.util.GameUtils;
 
@@ -90,7 +90,7 @@ public class Mesh {
 					}
 				}
 			} catch (Exception e) {
-				Log.debug(li, e);
+				LogManager.debug(li, e);
 			}
 		}
 		return obj;

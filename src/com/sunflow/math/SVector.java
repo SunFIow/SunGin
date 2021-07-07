@@ -236,6 +236,14 @@ public class SVector implements Cloneable {
 
 	public int w() { return (int) w; }
 
+	public int getX() { return x(); }
+
+	public int getY() { return y(); }
+
+	public int getZ() { return z(); }
+
+	public int getW() { return w(); }
+
 	public float[] array() { return get((float[]) null); };
 
 	public float[] get(float[] target) {

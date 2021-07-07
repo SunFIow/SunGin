@@ -115,7 +115,7 @@ import com.sunflow.gfx.SImage;
 import com.sunflow.gfx.SSurface;
 import com.sunflow.interfaces.FrameLoopListener;
 import com.sunflow.interfaces.GameLoopListener;
-import com.sunflow.logging.Log;
+import com.sunflow.logging.LogManager;
 import com.sunflow.math.OpenSimplexNoise;
 import com.sunflow.math.SMatrix2D;
 import com.sunflow.math.SMatrix_D;
@@ -1584,7 +1584,7 @@ public class GameBase implements SGFX,
 	public void printStackTrace(Throwable e) { e.printStackTrace(); }
 
 	public static void UncaughtException(Throwable e) {
-		Log.log(Log.FATAL, "Uncaught Exception", e);
+		LogManager.log(LogManager.FATAL, "Uncaught Exception", e);
 		System.exit(1);
 	}
 
@@ -2169,7 +2169,7 @@ public class GameBase implements SGFX,
 			if (Files.notExists(dir.getParent())) try {
 				Files.createDirectory(dir.getParent());
 			} catch (IOException e) {
-				Log.error("File Directory could't be created", e);
+				LogManager.error("File Directory could't be created", e);
 			}
 			File outputfile = dir.toFile();
 			ImageIO.write(image, "png", outputfile);

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import com.sunflow.game.GameBase;
-import com.sunflow.logging.Log;
+import com.sunflow.logging.LogManager;
 import com.sunflow.math.SVector;
 import com.sunflow.math3d.SMatrix;
 import com.sunflow.util.ColorUtils;
@@ -909,7 +909,7 @@ public class PipeLineRenderer implements MathUtils, SConstants {
 //			int color = sprTexture.SampleColor(tex_u / tex_w, tex_v / tex_w);
 			int color = colorFun.apply(u / w, v / w);
 			game.pixel(x, y, color);
-			Log.debug(x, y, color);
+			LogManager.debug(x, y, color);
 		}
 	}
 }

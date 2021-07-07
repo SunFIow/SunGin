@@ -8,13 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SunLogger {
-	public static final Level ALL = Level.ALL;
-	public static final Level DEBUG = SunLevel.DEBUG;
-	public static final Level INFO = SunLevel.INFO;
-	public static final Level WARN = SunLevel.WARN;
-	public static final Level ERROR = SunLevel.ERROR;
-	public static final Level FATAL = SunLevel.FATAL;
-	public static final Level OFF = Level.OFF;
 
 	private final Logger logger;
 
@@ -34,38 +27,79 @@ public class SunLogger {
 
 	public void log(Level level, Throwable throwable, Supplier<String> msgSupplier) { logger.log(level, throwable, msgSupplier); }
 
-	public void debug(String logMessage) { log(DEBUG, logMessage); }
+	public void debug(String logMessage) { log(SunLevel.DEBUG, logMessage); }
 
-	public void info(String logMessage) { log(INFO, logMessage); }
+	public void info(String logMessage) { log(SunLevel.INFO, logMessage); }
 
-	public void warn(String logMessage) { log(WARN, logMessage); }
+	public void warn(String logMessage) { log(SunLevel.WARNING, logMessage); }
 
-	public void error(String logMessage) { log(ERROR, logMessage); }
+	public void error(String logMessage) { log(SunLevel.ERROR, logMessage); }
 
-	public void fatal(String logMessage) { log(FATAL, logMessage); }
+	public void fatal(String logMessage) { log(SunLevel.FATAL, logMessage); }
 
-	public void debug(String logMessage, Object... params) { log(DEBUG, logMessage, params); }
+	public void debug(String logMessage, Object... params) { log(SunLevel.DEBUG, logMessage, params); }
 
-	public void info(String logMessage, Object... params) { log(INFO, logMessage, params); }
+	public void info(String logMessage, Object... params) { log(SunLevel.INFO, logMessage, params); }
 
-	public void warn(String logMessage, Object... params) { log(WARN, logMessage, params); }
+	public void warn(String logMessage, Object... params) { log(SunLevel.WARNING, logMessage, params); }
 
-	public void error(String logMessage, Object... params) { log(ERROR, logMessage, params); }
+	public void error(String logMessage, Object... params) { log(SunLevel.ERROR, logMessage, params); }
 
-	public void fatal(String logMessage, Object... params) { log(FATAL, logMessage, params); }
+	public void fatal(String logMessage, Object... params) { log(SunLevel.FATAL, logMessage, params); }
 
 	public void log(Level level, Object logMessage) { logger.log(level, logMessage.toString()); }
 
 	public void log(Level level, Object logMessage, Throwable throwable) { logger.log(level, logMessage.toString(), throwable); }
 
-	public void debug(Object logMessage) { log(DEBUG, "{0}", logMessage); }
+	public void debug(Object logMessage) { log(SunLevel.DEBUG, "{0}", logMessage); }
 
-	public void info(Object logMessage) { log(INFO, "{0}", logMessage); }
+	public void info(Object logMessage) { log(SunLevel.INFO, "{0}", logMessage); }
 
-	public void warn(Object logMessage) { log(WARN, "{0}", logMessage); }
+	public void warn(Object logMessage) { log(SunLevel.WARNING, "{0}", logMessage); }
 
-	public void error(Object logMessage) { log(ERROR, "{0}", logMessage); }
+	public void error(Object logMessage) { log(SunLevel.ERROR, "{0}", logMessage); }
 
-	public void fatal(Object logMessage) { log(FATAL, "{0}", logMessage); }
+	public void fatal(Object logMessage) { log(SunLevel.FATAL, "{0}", logMessage); }
 
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#DEBUG DEBUG} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isDebugEnabled() { return logger.isLoggable(SunLevel.DEBUG); }
+
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#INFO INFO} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isInfoEnabled() { return logger.isLoggable(SunLevel.INFO); }
+
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#WARNING WARNING} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isWarningEnabled() { return logger.isLoggable(SunLevel.WARNING); }
+
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#ERROR ERROR} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isErrorEnabled() { return logger.isLoggable(SunLevel.ERROR); }
+
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#FATAL FATAL} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isFatalEnabled() { return logger.isLoggable(SunLevel.FATAL); }
+
+	/**
+	 * Checks whether sunLogger is enabled for the {@link SunLevel#ALL ALL} Level.
+	 *
+	 * @return boolean - {@code true} if this Logger is enabled for level DEBUG, {@code false} otherwise.
+	 */
+	public boolean isEnabled() { return logger.isLoggable(SunLevel.ALL); }
 }

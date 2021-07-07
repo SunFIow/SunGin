@@ -27,7 +27,7 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 
 import com.sunflow.game.GameBase;
-import com.sunflow.logging.Log;
+import com.sunflow.logging.LogManager;
 import com.sunflow.util.MathUtils;
 import com.sunflow.util.SConstants;
 
@@ -629,7 +629,7 @@ public class SImage implements Cloneable, SConstants {
 
 	public void pixel(int x, int y, int color) {
 		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) {
-			Log.warn("Tried to set a pixel out of bounds.");
+			LogManager.warn("Tried to set a pixel out of bounds.");
 			return;
 		}
 		pixels[index(x, y)] = color;
@@ -637,7 +637,7 @@ public class SImage implements Cloneable, SConstants {
 
 	public void set(int x, int y, int c) {
 		if ((x < 0) || (y < 0) || (x >= pixelWidth) || (y >= pixelHeight)) {
-			Log.warn("Tried to set a pixel out of bounds.");
+			LogManager.warn("Tried to set a pixel out of bounds.");
 			return;
 		}
 		pixels[index(x, y)] = c;

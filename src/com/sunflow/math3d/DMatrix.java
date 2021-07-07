@@ -3,7 +3,7 @@ package com.sunflow.math3d;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
-import com.sunflow.logging.Log;
+import com.sunflow.logging.LogManager;
 import com.sunflow.math.DVector;
 import com.sunflow.util.Mapper;
 import com.sunflow.util.MathUtils;
@@ -34,9 +34,9 @@ public class DMatrix implements Cloneable, Serializable
 
 	public DMatrix(double[][] data) {
 		if (this.rows != data.length || this.cols != data[0].length) {
-			Log.error("MatrixF#add: rows and cols didnt match");
-			Log.error("MatrixF#add this: \n" + this);
-			Log.error("matrixF#add data: \n" + data);
+			LogManager.error("MatrixF#add: rows and cols didnt match");
+			LogManager.error("MatrixF#add this: \n" + this);
+			LogManager.error("matrixF#add data: \n" + data);
 		}
 		this.data = data;
 	}
@@ -56,9 +56,9 @@ public class DMatrix implements Cloneable, Serializable
 
 	public DMatrix set(double[][] data) {
 		if (this.rows != data.length || this.cols != data[0].length) {
-			Log.error("MatrixF#add: rows and cols didnt match");
-			Log.error("MatrixF#add this: \n" + this);
-			Log.error("matrixF#add data: \n" + data);
+			LogManager.error("MatrixF#add: rows and cols didnt match");
+			LogManager.error("MatrixF#add this: \n" + this);
+			LogManager.error("matrixF#add data: \n" + data);
 		}
 
 		this.data = data;
@@ -81,9 +81,9 @@ public class DMatrix implements Cloneable, Serializable
 
 	public DMatrix add(DMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.error("MatrixF#add: rows and cols didnt match");
-			Log.error("MatrixF#add this: \n" + this);
-			Log.error("matrixF#add b: \n" + b);
+			LogManager.error("MatrixF#add: rows and cols didnt match");
+			LogManager.error("MatrixF#add this: \n" + this);
+			LogManager.error("matrixF#add b: \n" + b);
 		}
 		map((x, i, j) -> x + b.data[i][j]);
 		return this;
@@ -100,9 +100,9 @@ public class DMatrix implements Cloneable, Serializable
 
 	public DMatrix substract(DMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.error("MatrixF#substract: rows and cols didnt match");
-			Log.error("MatrixF#substract this: \n" + this);
-			Log.error("matrixF#substract b: \n" + b);
+			LogManager.error("MatrixF#substract: rows and cols didnt match");
+			LogManager.error("MatrixF#substract this: \n" + this);
+			LogManager.error("matrixF#substract b: \n" + b);
 		}
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
@@ -130,9 +130,9 @@ public class DMatrix implements Cloneable, Serializable
 	// Hadamar product
 	public DMatrix multiply(DMatrix b) {
 		if (this.rows != b.rows || this.cols != b.cols) {
-			Log.error("MatrixF#multiply: rows and cols didnt match");
-			Log.error("MatrixF#multiply this: \n" + this);
-			Log.error("matrixF#multiply b: \n" + b);
+			LogManager.error("MatrixF#multiply: rows and cols didnt match");
+			LogManager.error("MatrixF#multiply this: \n" + this);
+			LogManager.error("matrixF#multiply b: \n" + b);
 		}
 		map((x, i, j) -> x * b.data[i][j]);
 		return this;
@@ -146,9 +146,9 @@ public class DMatrix implements Cloneable, Serializable
 	// Matrix dot product
 	public DMatrix dot(DMatrix b) {
 		if (this.cols != b.rows) {
-			Log.error("MatrixF#dot: cols and rows didnt match");
-			Log.error("MatrixF#dot this:\n" + this);
-			Log.error("matrixF#dot b:\n" + b);
+			LogManager.error("MatrixF#dot: cols and rows didnt match");
+			LogManager.error("MatrixF#dot this:\n" + this);
+			LogManager.error("matrixF#dot b:\n" + b);
 		}
 		DMatrix result = new DMatrix(this.rows, b.cols);
 		result.map((x, i, j) -> {
