@@ -13,6 +13,13 @@ import java.util.logging.Logger;
 import com.sunflow.game.GameBase;
 
 public class LogManager {
+	public static final Level OFF = SunLevel.OFF;
+	public static final Level DEBUG = SunLevel.DEBUG;
+	public static final Level INFO = SunLevel.INFO;
+	public static final Level WARNING = SunLevel.WARNING;
+	public static final Level ERROR = SunLevel.ERROR;
+	public static final Level FATAL = SunLevel.FATAL;
+	public static final Level ALL = SunLevel.ALL;
 
 	private static SunLogger sunLogger = createSunLogger();
 

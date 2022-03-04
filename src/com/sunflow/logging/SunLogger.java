@@ -8,6 +8,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SunLogger {
+	public static final Level OFF = SunLevel.OFF;
+	public static final Level DEBUG = SunLevel.DEBUG;
+	public static final Level INFO = SunLevel.INFO;
+	public static final Level WARNING = SunLevel.WARNING;
+	public static final Level ERROR = SunLevel.ERROR;
+	public static final Level FATAL = SunLevel.FATAL;
+	public static final Level ALL = SunLevel.ALL;
 
 	private final Logger logger;
 
