@@ -1,0 +1,14 @@
+{
+	"java.project.sourcePaths": ["src"],
+	"java.project.outputPath": "bin",
+	"java.project.referencedLibraries": [
+		"lib/**/*.jar",
+		"G:\\Programming\\Libaries\\lwjgl-stable-2020-04-15-custom\\lwjgl.jar",
+		"G:\\Programming\\Libaries\\lwjgl-stable-2020-04-15-custom\\lwjgl-natives-windows.jar",
+		"G:\\Programming\\Libaries\\lwjgl-stable-2020-04-15-custom\\lwjgl-glfw.jar",
+		"G:\\Programming\\Libaries\\lwjgl-stable-2020-04-15-custom\\lwjgl-glfw-natives-windows.jar"
+		// "G:\\Programming\\Libaries\\lwjgl-stable-2020-04-15-custom\\*.jar"
+	],
+	"java.autobuild.enabled": true,
+	"java.configuration.updateBuildConfiguration": "interactive"
+}
