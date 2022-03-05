@@ -7,11 +7,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.util.EventListener;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL46;
-
+import com.sunflow.engine.Keyboard;
 import com.sunflow.engine.Mouse;
 import com.sunflow.engine.WindowLWJGL;
 import com.sunflow.engine.eventsystem.EventManager;
@@ -38,6 +34,11 @@ import com.sunflow.gfx.SGraphics;
 import com.sunflow.gfx.S_Shape;
 import com.sunflow.util.SConstants;
 
+import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL46;
+
 public class ScreenOpenGL extends Screen {
 
 	protected WindowLWJGL window;
@@ -48,7 +49,7 @@ public class ScreenOpenGL extends Screen {
 
 	private ByteBuffer buffer;
 
-	public ScreenOpenGL(GameBase game, Mouse mouse) { super(game, mouse); }
+	public ScreenOpenGL(GameBase game, Mouse mouse, Keyboard keyboard) { super(game, mouse, keyboard); }
 
 	@Override
 	public void refresh() {
@@ -72,31 +73,31 @@ public class ScreenOpenGL extends Screen {
 		if (showOverlay) g.drawImage(overlay.image, 0, scaledHeight, scaledWidth, -scaledHeight, null);
 		g.dispose();
 
-//		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
-//		genTexture(image);
+		//		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+		//		genTexture(image);
 
-//		xfactor += 0.1;
-//		GL46.glPixelZoom(xfactor, yfactor);
-//		int[] pixels = loadPixels(image);
-//		int[] pixels = new int[getWidth() * getHeight()];
-//		IntBuffer pixels = BufferUtils.createIntBuffer(getWidth() * getHeight());
-//		pixels.put(loadPixels(image));
-//		game.loadPixels();
-//		pixels.put(game.pixels);
-//		pixels.flip();
-//		GL46.glReadPixels(0, 0, getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, pixels);
-//		GL46.glDrawPixels(getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, loadPixels(image));
+		//		xfactor += 0.1;
+		//		GL46.glPixelZoom(xfactor, yfactor);
+		//		int[] pixels = loadPixels(image);
+		//		int[] pixels = new int[getWidth() * getHeight()];
+		//		IntBuffer pixels = BufferUtils.createIntBuffer(getWidth() * getHeight());
+		//		pixels.put(loadPixels(image));
+		//		game.loadPixels();
+		//		pixels.put(game.pixels);
+		//		pixels.flip();
+		//		GL46.glReadPixels(0, 0, getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, pixels);
+		//		GL46.glDrawPixels(getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, loadPixels(image));
 
 		genTexture(image);
-		GL46.glDrawPixels(getWidth(), getHeight(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, buffer);
+		GL46.glDrawPixels(width(), height(), GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, buffer);
 
 		window.render();
 	}
 
 	final public ByteBuffer loadPixels(BufferedImage image) {
 		int BYTES_PER_PIXEL = 4; // 4 for RGBA, 3 for RGB
-		if (buffer == null) buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * BYTES_PER_PIXEL);
-//		ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * BYTES_PER_PIXEL);
+		if (buffer == null) buffer = BufferUtils.createByteBuffer(width() * height() * BYTES_PER_PIXEL);
+		//		ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * BYTES_PER_PIXEL);
 
 		int[] pixels = new int[image.getWidth() * image.getHeight()];
 		image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
@@ -117,8 +118,8 @@ public class ScreenOpenGL extends Screen {
 
 	private void genTexture(BufferedImage image) {
 		int BYTES_PER_PIXEL = 4; // 4 for RGBA, 3 for RGB
-		if (buffer == null) buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * BYTES_PER_PIXEL);
-//		ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * BYTES_PER_PIXEL);
+		if (buffer == null) buffer = BufferUtils.createByteBuffer(width() * height() * BYTES_PER_PIXEL);
+		//		ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * BYTES_PER_PIXEL);
 
 		int[] pixels = new int[image.getWidth() * image.getHeight()];
 		image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
@@ -139,10 +140,10 @@ public class ScreenOpenGL extends Screen {
 		// Now just create a texture ID and bind it. Then you can load it using
 		// whatever OpenGL method you want, for example:
 
-//		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL46.GL_RGB8, image.getWidth(), image.getHeight(), 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+		//		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL46.GL_RGB8, image.getWidth(), image.getHeight(), 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
 
-//		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-//		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+		//		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+		//		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
 	}
 
 	@Override
@@ -164,13 +165,13 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public void createScreen() {
-//		if (frame != null) frame.dispose();
+		//		if (frame != null) frame.dispose();
 		if (window != null) window.destroy();
 
 		window = new WindowLWJGL();
 		window.createWindow(scaledWidth, scaledHeight, title);
 
-		buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * 4);
+		buffer = BufferUtils.createByteBuffer(width() * height() * 4);
 	}
 
 	private KeyInputListener keyInput;
@@ -186,9 +187,7 @@ public class ScreenOpenGL extends Screen {
 		EventManager.addKeyInputListener(keyInput = new KeyInputAdapter() {
 			@Override
 			public void onKeyPressed(KeyPressedEvent e) {
-				key = e.getKeyChar();
-				keyCode = e.getKeyCode();
-				keysNew[keyCode] = true;
+				keyboard.updateKey(e.getKeyChar(), e.getKeyCode(), true);
 				if (game.keyPressed()) return;
 				switch (e.getKeyCode()) {
 					case InputConstants.KEY_F5:
@@ -205,9 +204,7 @@ public class ScreenOpenGL extends Screen {
 
 			@Override
 			public void onKeyReleased(KeyReleasedEvent e) {
-				key = e.getKeyChar();
-				keyCode = e.getKeyCode();
-				keysNew[keyCode] = false;
+				keyboard.updateKey(e.getKeyChar(), e.getKeyCode(), false);
 				if (game.keyReleased()) return;
 			}
 		});
@@ -215,32 +212,28 @@ public class ScreenOpenGL extends Screen {
 		EventManager.addMouseInputListener(mouseInput = new MouseInputAdapter() {
 			@Override
 			public void onMousePressed(MousePressedEvent e) {
-				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = true;
-				mouseButtonsOld[e.getButton()] = true;
+				mouse.updateButton(e.getButton(), true, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				if (game.mouseOnPressed()) return;
 			}
 
 			@Override
 			public void onMouseReleased(MouseReleasedEvent e) {
-				if (e.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) mousePressed = false;
-				mouseButtonsOld[e.getButton()] = false;
+				mouse.updateButton(e.getButton(), false, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				if (game.mouseOnReleased()) return;
 			}
 		});
 
 		EventManager.addMouseMotionListener(mouseMotion = new MouseMotionAdapter() {
 			@Override
-			public void onMouseMotion(MouseMotionEvent e) {
-				mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY());
-			}
+			public void onMouseMotion(MouseMotionEvent e) { mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY()); }
 
 			@Override
-			public void onMouseMoved(MouseMovedEvent e) {
-				mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY());
-			}
+			public void onMouseMoved(MouseMovedEvent e) { mouse.updatePosition((float) e.getMouseX(), (float) e.getMouseY()); }
 		});
 
 		EventManager.addScrollListener(mouseScroll = new ScrollListener() {
 			@Override
-			public void onScrolled(ScrollEvent e) { mouseWheel = e.getAmountX(); }
+			public void onScrolled(ScrollEvent e) { mouse.updateWheel((float) e.getAmountX(), (float) e.getAmountY()); }
 		});
 
 		EventManager.addWindowResizeListener(windowResize = new WindowResizeListener() {
@@ -284,9 +277,9 @@ public class ScreenOpenGL extends Screen {
 
 	@Override
 	public void defaultSettings() {
-//		overlay = new SGraphics(scaledWidth, scaledHeight);
+		//		overlay = new SGraphics(scaledWidth, scaledHeight);
 		overlay = game.createGraphics(scaledWidth, scaledHeight);
-//		overlay.init();
+		//		overlay.init();
 		overlay.smooth();
 
 		textureID = GL11.glGenTextures();
@@ -294,14 +287,10 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	public void show() {
-		if (isCreated) window.setVisible(true);
-	}
+	public void show() { if (isCreated) window.setVisible(true); }
 
 	@Override
-	public void requestFocus() {
-		if (isCreated) window.requestFocus();
-	}
+	public void requestFocus() { if (isCreated) window.requestFocus(); }
 
 	@Override
 	public void setTitle(String title) {
@@ -316,9 +305,7 @@ public class ScreenOpenGL extends Screen {
 	}
 
 	@Override
-	public void toggleFullscreen() {
-		window.toggleFullscreen();
-	}
+	public void toggleFullscreen() { window.toggleFullscreen(); }
 
 	static float aimSize = 3;
 	static Color aimColor = Color.black;
@@ -339,12 +326,12 @@ public class ScreenOpenGL extends Screen {
 	public final void drawInfo() {
 		if (game.infos == null || game.infos.isEmpty()) return;
 
-//		overlay.colorMode(RGB);
-//		overlay.smooth();
+		//		overlay.colorMode(RGB);
+		//		overlay.smooth();
 		overlay.fill(255, 255, 0);
 		overlay.stroke(0, 100);
 		overlay.strokeWeight(5);
-//		overlay.textSize(13);
+		//		overlay.textSize(13);
 		overlay.textAlign(SConstants.LEFT, SConstants.TOP);
 
 		float xoff = 5, yoff = 5;
@@ -361,8 +348,8 @@ public class ScreenOpenGL extends Screen {
 		int aimStroke = aimStrokeWidth * 2;
 		overlay.noStroke();
 		overlay.fill(aimColor.getRGB());
-		overlay.rect((int) (mouse.x - aimSize), mouse.y - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		overlay.rect(mouse.x - aimStrokeWidth, (int) (mouse.y - aimSize), aimStroke, (int) (aimSize * 2));
+		overlay.rect((int) (mouse.x() - aimSize), mouse.y() - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouse.x() - aimStrokeWidth, (int) (mouse.y() - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
 	@Override
@@ -395,6 +382,6 @@ public class ScreenOpenGL extends Screen {
 	@Override
 	public int getScreenY() { return getY(); }
 
-//	@Override
-//	public GraphicsConfiguration getGC() { return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration(); }
+	//	@Override
+	//	public GraphicsConfiguration getGC() { return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration(); }
 }

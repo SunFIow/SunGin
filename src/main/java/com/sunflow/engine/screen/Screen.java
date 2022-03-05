@@ -4,9 +4,9 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.event.KeyEvent;
 import java.util.EventListener;
 
+import com.sunflow.engine.Keyboard;
 import com.sunflow.engine.Mouse;
 import com.sunflow.game.GameBase;
 import com.sunflow.gfx.SGraphics;
@@ -33,25 +33,8 @@ public abstract class Screen {
 	protected SVector savedSize;
 	protected SVector savedPos;
 
-//	public float mouseX, mouseY;
-//	public float lastMouseX, lastMouseY;
-//	public float mouseScreenX, mouseScreenY;
-
-	protected boolean mousePressed;
-	protected int button;
-	protected double mouseWheel;
-	protected double mouseWheelOld;
-	protected double mouseWheelNew;
-	protected char key;
-	protected int keyCode;
-
-	protected boolean[] keysNew = new boolean[65536];
-	protected boolean[] keys = new boolean[keysNew.length];
-	protected boolean[] keysOld = new boolean[keysNew.length];
-
-	protected boolean[] mouseButtons = new boolean[MouseInfo.getNumberOfButtons()];
-	protected boolean[] mouseButtonsNew = new boolean[mouseButtons.length];
-	protected boolean[] mouseButtonsOld = new boolean[mouseButtons.length];
+	protected Keyboard keyboard;
+	protected Mouse mouse;
 
 	// Overlay
 	protected boolean showOverlay;
@@ -61,12 +44,11 @@ public abstract class Screen {
 	protected GameBase game;
 	protected SGraphics graphics;
 
-	protected Mouse mouse;
-
-	public Screen(GameBase game, Mouse mouse) {
+	public Screen(GameBase game, Mouse mouse, Keyboard keyboard) {
 		this.game = game;
 		this.graphics = game.getGraphics();
 		this.mouse = mouse;
+		this.keyboard = keyboard;
 		this.title = "";
 		this.savedSize = new SVector();
 		this.savedPos = new SVector();
@@ -75,12 +57,6 @@ public abstract class Screen {
 	public void refresh() {
 		this.frameWidth = 0;
 		this.frameHeight = 0;
-
-//		this.mouseX = 0;
-//		this.mouseY = 0;
-//		this.mouseScreenX = 0;
-//		this.mouseScreenY = 0;
-
 		this.fullscreen = false;
 		this.showInfo = true;
 	}
@@ -92,19 +68,11 @@ public abstract class Screen {
 	protected abstract void render();
 
 	public void preDraw() {
-		for (int i = 0; i < keysNew.length; i++) keysOld[i] = keys[i];
-		for (int i = 0; i < keysNew.length; i++) keys[i] = keysNew[i];
+		keyboard.update();
 
-		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsOld[i] = mouseButtonsNew[i];
-		for (int i = 0; i < mouseButtons.length; i++) mouseButtonsNew[i] = mouseButtons[i];
-
-		mouseWheelOld = mouseWheelNew;
-		mouseWheelNew = mouseWheel;
-
-//		mouseScreenX = MouseInfo.getPointerInfo().getLocation().x;
-//		mouseScreenY = MouseInfo.getPointerInfo().getLocation().y;
 		Point mSP = MouseInfo.getPointerInfo().getLocation();
 		mouse.updateScreenPosition(mSP.x, mSP.y);
+		mouse.update();
 	}
 
 	public void postDraw() { render(); }
@@ -153,51 +121,9 @@ public abstract class Screen {
 
 	public abstract int getScreenY();
 
-	public char key() { return key; }
+	public int width() { return width; }
 
-	public int keyCode() { return keyCode; }
-
-	public boolean[] keys() { return keysNew; }
-
-	public boolean keyIsDown(char key) { return keyIsDown(KeyEvent.getExtendedKeyCodeForChar(key)); }
-
-	public boolean keyIsPressed(char key) { return keyIsPressed(KeyEvent.getExtendedKeyCodeForChar(key)); }
-
-	public boolean keyIsHeld(char key) { return keyIsHeld(KeyEvent.getExtendedKeyCodeForChar(key)); }
-
-	public boolean keyIsReleased(char key) { return keyIsReleased(KeyEvent.getExtendedKeyCodeForChar(key)); }
-
-	public boolean keyIsDown(int key) { if (key < 0 || key > keys.length) return false; return keys[key]; }
-
-	public boolean keyIsPressed(int key) { if (key < 0 || key > keys.length) return false; return !keysOld[key] && keys[key]; }
-
-	public boolean keyIsHeld(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && keys[key]; }
-
-	public boolean keyIsReleased(int key) { if (key < 0 || key > keys.length) return false; return keysOld[key] && !keys[key]; }
-
-	public boolean mouseIsDown(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsNew[button]; }
-
-	public boolean mouseIsPressed(int button) { if (button < 0 || button > mouseButtons.length) return false; return !mouseButtonsOld[button] && mouseButtonsNew[button]; }
-
-	public boolean mouseIsHeld(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsOld[button] && mouseButtonsNew[button]; }
-
-	public boolean mouseIsReleased(int button) { if (button < 0 || button > mouseButtons.length) return false; return mouseButtonsOld[button] && !mouseButtonsNew[button]; }
-
-	public double mouseWheel() { return mouseWheelNew; }
-
-	public boolean mousePressed() { return mousePressed; }
-
-//	public int getMouseX() { return (int) mouseX; }
-//
-//	public int getMouseY() { return (int) mouseY; }
-//
-//	public int getLastMouseX() { return (int) lastMouseX; }
-//
-//	public int getLastMouseY() { return (int) lastMouseY; }
-
-	public int getWidth() { return width; }
-
-	public int getHeight() { return height; }
+	public int height() { return height; }
 
 	public boolean isCreated() { return isCreated; }
 
@@ -206,8 +132,6 @@ public abstract class Screen {
 	public abstract void drawOverlay();
 
 	public abstract void drawInfo();
-
-//	public abstract void updateMousePosition(float x, float y);
 
 	public abstract boolean addListener(EventListener listener);
 
@@ -240,6 +164,6 @@ public abstract class Screen {
 
 	public abstract void infoSize(float size);
 
-//	public abstract GraphicsConfiguration getGC();
+	//	public abstract GraphicsConfiguration getGC();
 
 }

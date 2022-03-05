@@ -31,6 +31,7 @@ import java.util.EventListener;
 
 import javax.swing.JFrame;
 
+import com.sunflow.engine.Keyboard;
 import com.sunflow.engine.Mouse;
 import com.sunflow.engine.eventsystem.listeners.SEventListener;
 import com.sunflow.game.GameBase;
@@ -44,7 +45,7 @@ public class ScreenJava extends Screen {
 	// Note that x and y may not be zero, depending on the display configuration
 	Rectangle screenRect;
 
-//	Insets currentInsets = new Insets(0, 0, 0, 0);
+	//	Insets currentInsets = new Insets(0, 0, 0, 0);
 
 	int gameWidth;
 	int gameHeight;
@@ -53,12 +54,12 @@ public class ScreenJava extends Screen {
 
 	protected Frame frame;
 	protected Canvas canvas;
-//	protected BufferStrategy bs;
+	//	protected BufferStrategy bs;
 
 	// Overlay
 	protected SGraphics overlay;
 
-	public ScreenJava(GameBase game, Mouse mouse) { super(game, mouse); }
+	public ScreenJava(GameBase game, Mouse mouse, Keyboard keyboard) { super(game, mouse, keyboard); }
 
 	public class SmoothCanvas extends Canvas {
 		private static final long serialVersionUID = -3098873451251328369L;
@@ -67,19 +68,13 @@ public class ScreenJava extends Screen {
 		private Dimension newSize = new Dimension(0, 0);
 
 		// Turns out getParent() returns a JPanel on a JFrame. Yech.
-		public Frame getFrame() {
-			return frame;
-		}
+		public Frame getFrame() { return frame; }
 
 		@Override
-		public Dimension getPreferredSize() {
-			return new Dimension(gameWidth, gameHeight);
-		}
+		public Dimension getPreferredSize() { return new Dimension(gameWidth, gameHeight); }
 
 		@Override
-		public Dimension getMinimumSize() {
-			return getPreferredSize();
-		}
+		public Dimension getMinimumSize() { return getPreferredSize(); }
 
 		@Override
 		public Dimension getMaximumSize() {
@@ -92,32 +87,32 @@ public class ScreenJava extends Screen {
 			super.validate();
 			newSize.width = getWidth();
 			newSize.height = getHeight();
-//	      if (oldSize.equals(newSize)) {
-////	        System.out.println("validate() return " + oldSize);
-//	        return;
-//	      } else {
+			//	      if (oldSize.equals(newSize)) {
+			////	        System.out.println("validate() return " + oldSize);
+			//	        return;
+			//	      } else {
 			if (!oldSize.equals(newSize)) {
-//	        System.out.println("validate() render old=" + oldSize + " -> new=" + newSize);
+				//	        System.out.println("validate() render old=" + oldSize + " -> new=" + newSize);
 				oldSize = newSize;
 				game.setSize(newSize.width / windowScaleFactor, newSize.height / windowScaleFactor);
-//	        try {
+				//	        try {
 				render();
-//	        } catch (IllegalStateException ise) {
-//	          System.out.println(ise.getMessage());
-//	        }
+				//	        } catch (IllegalStateException ise) {
+				//	          System.out.println(ise.getMessage());
+				//	        }
 			}
 		}
 
 		@Override
 		public void update(Graphics g) {
-//	      System.out.println("updating");
+			//	      System.out.println("updating");
 			paint(g);
 		}
 
 		@Override
 		public void paint(Graphics screen) {
-//	      System.out.println("painting");
-//	      if (useStrategy) {
+			//	      System.out.println("painting");
+			//	      if (useStrategy) {
 			render();
 			/*
 			 * if (graphics != null) {
@@ -126,18 +121,18 @@ public class ScreenJava extends Screen {
 			 * }
 			 */
 
-//	      } else {
-////	        new Exception("painting").printStackTrace(System.out);
-////	        if (graphics.image != null) { // && !sketch.insideDraw) {
-//	        if (onscreen != null) {
-////	          synchronized (graphics.image) {
-//	          // Needs the width/height to be set so that retina images are properly scaled down
-////	          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
-//	          synchronized (offscreenLock) {
-//	            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
-//	          }
-//	        }
-//	      }
+			//	      } else {
+			////	        new Exception("painting").printStackTrace(System.out);
+			////	        if (graphics.image != null) { // && !sketch.insideDraw) {
+			//	        if (onscreen != null) {
+			////	          synchronized (graphics.image) {
+			//	          // Needs the width/height to be set so that retina images are properly scaled down
+			////	          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+			//	          synchronized (offscreenLock) {
+			//	            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
+			//	          }
+			//	        }
+			//	      }
 		}
 	}
 
@@ -165,12 +160,12 @@ public class ScreenJava extends Screen {
 			strategy = canvas.getBufferStrategy();
 		}
 		// if (strategy != null) {
-//		Drawing the image
+		//		Drawing the image
 		do {
 			// The following loop ensures that the contents of the drawing buffer
 			// are consistent in case the underlying surface was recreated
 			do {
-//				Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
+				//				Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
 				Graphics draw = strategy.getDrawGraphics();
 				// draw to width/height, since this may be a 2x image
 				draw.drawImage(game.getGraphics().image, 0, 0, scaledWidth, scaledHeight, null);
@@ -186,8 +181,8 @@ public class ScreenJava extends Screen {
 		// }
 	}
 
-//	@Override
-//	public void preDraw() {}
+	//	@Override
+	//	public void preDraw() {}
 
 	@Override
 	public void postDraw() {
@@ -203,7 +198,7 @@ public class ScreenJava extends Screen {
 		GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
 		int displayNum = game.getDisplay();
-//			    System.out.println("display from sketch is " + displayNum);
+		//			    System.out.println("display from sketch is " + displayNum);
 		if (displayNum > 0) { // if -1, use the default device
 			GraphicsDevice[] devices = environment.getScreenDevices();
 			if (displayNum <= devices.length) {
@@ -242,11 +237,11 @@ public class ScreenJava extends Screen {
 
 		canvas = new Canvas();
 		canvas.setFocusable(true);
-//		canvas.setPreferredSize(new Dimension(width(), height()));
+		//		canvas.setPreferredSize(new Dimension(width(), height()));
 		canvas.setPreferredSize(new Dimension(scaledWidth, scaledHeight));
-//		screen = new Screen(this);
-//		screen.setFocusable(true);
-//		screen.setPreferredSize(new Dimension(width(), height()));
+		//		screen = new Screen(this);
+		//		screen.setFocusable(true);
+		//		screen.setPreferredSize(new Dimension(width(), height()));
 
 		canvas.setIgnoreRepaint(true);
 
@@ -259,7 +254,7 @@ public class ScreenJava extends Screen {
 			frame.setBackground(windowColor);
 		}
 
-//		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //TODO
+		//		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //TODO
 
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
@@ -273,10 +268,10 @@ public class ScreenJava extends Screen {
 		frame.add(canvas);
 		frame.setVisible(true);
 		frame.setVisible(false);
-//		screen.addToFrame(frame);
+		//		screen.addToFrame(frame);
 
-//		canvas.createBufferStrategy(3);
-//		bs = canvas.getBufferStrategy();
+		//		canvas.createBufferStrategy(3);
+		//		bs = canvas.getBufferStrategy();
 
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -294,9 +289,7 @@ public class ScreenJava extends Screen {
 		canvas.addKeyListener(keyInput = new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				key = e.getKeyChar();
-				keyCode = e.getKeyCode();
-				keysNew[keyCode] = true;
+				keyboard.updateKey(e.getKeyChar(), e.getKeyCode(), true);
 				if (game.keyPressed()) return;
 				switch (e.getKeyCode()) {
 					case KeyEvent.VK_F5:
@@ -313,16 +306,13 @@ public class ScreenJava extends Screen {
 
 			@Override
 			public void keyReleased(KeyEvent e) {
-				key = e.getKeyChar();
-				keyCode = e.getKeyCode();
-				keysNew[keyCode] = false;
+				keyboard.updateKey(e.getKeyChar(), e.getKeyCode(), false);
 				if (game.keyReleased()) return;
 			}
 
 			@Override
 			public void keyTyped(KeyEvent e) {
-				key = e.getKeyChar();
-				keyCode = e.getKeyCode();
+				keyboard.updateKey(e.getKeyChar(), e.getKeyCode(), false);
 				if (game.keyTyped()) return;
 			}
 		});
@@ -330,20 +320,13 @@ public class ScreenJava extends Screen {
 		canvas.addMouseListener(mouseInput = new MouseListener() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-//				System.err.println("mouspressed");
-				button = e.getButton();
-				mouseButtons[e.getButton()] = true;
-				if (e.getButton() == MouseEvent.BUTTON1)
-					mousePressed = true;
+				mouse.updateButton(e.getButton(), true, SConstants.MOUSE_LEFT);
 				if (game.mouseOnPressed()) return;
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				button = e.getButton();
-				mouseButtons[e.getButton()] = false;
-				if (e.getButton() == MouseEvent.BUTTON1)
-					mousePressed = false;
+				mouse.updateButton(e.getButton(), false, SConstants.MOUSE_LEFT);
 				if (game.mouseOnReleased()) return;
 			}
 
@@ -367,13 +350,13 @@ public class ScreenJava extends Screen {
 
 		canvas.addMouseWheelListener(mouseScroll = new MouseWheelListener() {
 			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) { mouseWheel = e.getPreciseWheelRotation(); }
+			public void mouseWheelMoved(MouseWheelEvent e) { mouse.updateWheel((float) e.getPreciseWheelRotation(), 0); }
 		});
 
 		canvas.addComponentListener(windowResize = new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-//				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
+				//				cResized(e.getComponent().getWidth(), e.getComponent().getHeight());
 				int w = e.getComponent().getWidth();
 				int h = e.getComponent().getHeight();
 				scaledWidth = w;
@@ -418,9 +401,9 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public void defaultSettings() {
-//		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
+		//		overlay = new SGraphics(scaledWidth, scaledHeight, SGraphics.ARGB);
 		overlay = game.createGraphics(scaledWidth, scaledHeight);
-//		overlay.init(); //TODO
+		//		overlay.init(); //TODO
 		overlay.smooth();
 	}
 
@@ -428,9 +411,7 @@ public class ScreenJava extends Screen {
 	public void show() { if (isCreated) frame.setVisible(true); }
 
 	@Override
-	public void requestFocus() {
-		canvas.requestFocus();
-	}
+	public void requestFocus() { canvas.requestFocus(); }
 
 	@Override
 	public void setTitle(String title) {
@@ -446,7 +427,7 @@ public class ScreenJava extends Screen {
 
 	@Override
 	public void toggleFullscreen() {
-//		synchronized (bs) {
+		//		synchronized (bs) {
 		int w, h;
 		if (fullscreen) {
 			w = savedSize.x();
@@ -465,7 +446,7 @@ public class ScreenJava extends Screen {
 		if (frame instanceof JFrame) ((JFrame) frame).getContentPane().setPreferredSize(new Dimension(w, h));
 		frame.pack();
 		frame.setVisible(true);
-//		}
+		//		}
 	}
 
 	@Override
@@ -486,12 +467,12 @@ public class ScreenJava extends Screen {
 	public final void drawInfo() {
 		if (game.infos == null || game.infos.isEmpty()) return;
 
-//		overlay.colorMode(RGB);
-//		overlay.smooth();
+		//		overlay.colorMode(RGB);
+		//		overlay.smooth();
 		overlay.fill(255, 255, 0);
 		overlay.stroke(0, 100);
 		overlay.strokeWeight(5);
-//		overlay.textSize(13);
+		//		overlay.textSize(13);
 		overlay.textAlign(SConstants.LEFT, SConstants.TOP);
 
 		float xoff = 5, yoff = 5;
@@ -508,8 +489,8 @@ public class ScreenJava extends Screen {
 		int aimStroke = aimStrokeWidth * 2;
 		overlay.noStroke();
 		overlay.fill(aimColor.getRGB());
-		overlay.rect((int) (mouse.x - aimSize), mouse.y - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
-		overlay.rect(mouse.x - aimStrokeWidth, (int) (mouse.y - aimSize), aimStroke, (int) (aimSize * 2));
+		overlay.rect((int) (mouse.x() - aimSize), mouse.y() - aimStrokeWidth, (int) (aimSize * 2), aimStroke);
+		overlay.rect(mouse.x() - aimStrokeWidth, (int) (mouse.y() - aimSize), aimStroke, (int) (aimSize * 2));
 	}
 
 	@Override
@@ -592,8 +573,8 @@ public class ScreenJava extends Screen {
 		return bounds;
 	}
 
-//	@Override
-//	public GraphicsConfiguration getGC() { return displayDevice.getDefaultConfiguration(); }
-//	public GraphicsConfiguration getGC() { return canvas.getGraphicsConfiguration(); }
+	//	@Override
+	//	public GraphicsConfiguration getGC() { return displayDevice.getDefaultConfiguration(); }
+	//	public GraphicsConfiguration getGC() { return canvas.getGraphicsConfiguration(); }
 
 }

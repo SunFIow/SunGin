@@ -21,7 +21,7 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 
 	public PeasyCam(Game3D game) {
 		this.game = game;
-//		game.addListener(this);
+		//		game.addListener(this);
 		game.addListener((SEventListener) this);
 		game.addListener((EventListener) this);
 	}
@@ -31,34 +31,30 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 		flipedY = !flipedY;
 	}
 
-	public void flipX() {
-		flipedY = !flipedY;
-	}
+	public void flipX() { flipedY = !flipedY; }
 
-	public void flipY() {
-		flipedY = !flipedY;
-	}
+	public void flipY() { flipedY = !flipedY; }
 
 	@Override
 	public void preDraw() {
 		game.rotateXTo(xr);
 		game.rotateYTo(yr);
 		game.rotateZTo(zr);
-//		game.vCameraPos.set(game.mouseX(), game.mouseY(), 650);
-//		game.hor
+		//		game.vCameraPos.set(game.mouseX(), game.mouseY(), 650);
+		//		game.hor
 		game.updateView();
-//		zr += 0.01f;
+		//		zr += 0.01f;
 	}
 
-//	@Override
-//	public void postDraw() {}
+	//	@Override
+	//	public void postDraw() {}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-//	public void onMouseDragged(MouseDraggedEvent event) {
+		//	public void onMouseDragged(MouseDraggedEvent event) {
 		float change = 0.006f;
-		float mxc = (game.mouseX() - game.lastMouseX()) * (flipedX ? -change : change);
-		float myc = (game.mouseY() - game.lastMouseY()) * (flipedY ? -change : change);
+		float mxc = (game.mouseX() - game.mouseLastX()) * (flipedX ? -change : change);
+		float myc = (game.mouseY() - game.mouseLastY()) * (flipedY ? -change : change);
 		float xc = 0, yc = 0, zc = 0;
 
 		// x - axis
@@ -68,38 +64,38 @@ public class PeasyCam implements FrameLoopListener, MathUtils, SConstants, Mouse
 		yc += mxc;
 
 		// z - axis
-//		zc += myc;
+		//		zc += myc;
 
 		xr += xc;
 		yr += yc;
 		zr += zc;
 	}
 
-//	@Override
-//	public void mouseDragged(MouseEvent e) {
-//		float change = 0.003f;
-//		float mxc = (game.mouseX() - game.lastMouseX()) * (flipedX ? -change : change);
-//		float myc = (game.mouseY() - game.lastMouseY()) * (flipedY ? -change : change);
-//		float xc = 0, yc = 0, zc = 0;
-//
-//		// x - axis
-//		xc -= myc * cos(yr);
-//		xc -= myc * cos(zr);
-//		xc -= mxc * sin(zr);
-//
-//		// y - axis
-//		yc += mxc * cos(xr);
-//		yc += mxc * cos(zr);
-//		yc += myc * sin(zr);
-//
-//		// z - axis
-//		zc -= mxc * sin(xr);
-//		zc -= myc * sin(yr);
-//
-//		xr += xc;
-//		yr += yc;
-//		zr += zc;
-//	}
+	//	@Override
+	//	public void mouseDragged(MouseEvent e) {
+	//		float change = 0.003f;
+	//		float mxc = (game.mouseX() - game.lastMouseX()) * (flipedX ? -change : change);
+	//		float myc = (game.mouseY() - game.lastMouseY()) * (flipedY ? -change : change);
+	//		float xc = 0, yc = 0, zc = 0;
+	//
+	//		// x - axis
+	//		xc -= myc * cos(yr);
+	//		xc -= myc * cos(zr);
+	//		xc -= mxc * sin(zr);
+	//
+	//		// y - axis
+	//		yc += mxc * cos(xr);
+	//		yc += mxc * cos(zr);
+	//		yc += myc * sin(zr);
+	//
+	//		// z - axis
+	//		zc -= mxc * sin(xr);
+	//		zc -= myc * sin(yr);
+	//
+	//		xr += xc;
+	//		yr += yc;
+	//		zr += zc;
+	//	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {}

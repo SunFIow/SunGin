@@ -83,6 +83,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import com.sunflow.Settings;
+import com.sunflow.engine.Keyboard;
 import com.sunflow.engine.Mouse;
 import com.sunflow.engine.eventsystem.EventManager;
 import com.sunflow.engine.eventsystem.events.KeyInputEvent;
@@ -223,7 +224,7 @@ public class GameBase implements SGFX,
 		}
 	}
 
-//	protected GameBase game;
+	//	protected GameBase game;
 
 	protected SSurface surface;
 
@@ -239,7 +240,7 @@ public class GameBase implements SGFX,
 	boolean insideSettings;
 
 	String renderer = JAVA2D;
-//  int quality = 2;
+	//  int quality = 2;
 	int smooth = 1; // default smoothing (whatever that means for the renderer)
 
 	boolean fullScreen;
@@ -260,7 +261,7 @@ public class GameBase implements SGFX,
 	// https://github.com/processing/processing/issues/2297
 	int windowColor = 0xffDDDDDD;
 
-//	protected PScreen screen;
+	//	protected PScreen screen;
 
 	protected Screen screen;
 
@@ -272,8 +273,15 @@ public class GameBase implements SGFX,
 	public int pixelHeight;
 
 	protected Mouse mouse;
+	protected int button;
+	protected boolean mousePressed;
 	protected float mouseX, mouseY;
 	protected float pmouseX, pmouseY;
+	protected float mouseWheel, mouseWheelX, mouseWheelY;
+
+	protected Keyboard keyboard;
+	protected int key;
+	protected int keyCode;
 
 	protected boolean noLoop;
 	public boolean isRunning;
@@ -300,13 +308,13 @@ public class GameBase implements SGFX,
 	protected float fMultiplier, fMultiplierMax;
 	protected float fElapsedTime, fElapsedTimeMax;
 
-//	protected float aimSize;
-//	protected Color aimColor;
+	//	protected float aimSize;
+	//	protected Color aimColor;
 
 	protected ArrayList<GameLoopListener> gameLoopListeners;
 	protected ArrayList<FrameLoopListener> frameLoopListeners;
 
-//	private ImprovedNoise perlinnoise;
+	//	private ImprovedNoise perlinnoise;
 	protected OpenSimplexNoise noise;
 
 	protected Random random;
@@ -324,14 +332,14 @@ public class GameBase implements SGFX,
 	}
 
 	final public void reset() {
-//		if (insideDraw) {
-//			new Thread(() -> {
-//				while (insideDraw);
-//				System.out.println("hurra");
-//				reset();
-//			}).start();
-//			return;
-//		}
+		//		if (insideDraw) {
+		//			new Thread(() -> {
+		//				while (insideDraw);
+		//				System.out.println("hurra");
+		//				reset();
+		//			}).start();
+		//			return;
+		//		}
 		if (insideDraw) {
 			reset = true;
 			return;
@@ -356,7 +364,7 @@ public class GameBase implements SGFX,
 
 		final String url = "https://processing.org/reference/" + method + "_.html";
 		if (!external) { // post a warning for users of Eclipse and other IDEs
-//			String argList = new StringList(args).join(", ");
+			//			String argList = new StringList(args).join(", ");
 			String argList = join(", ", args);
 			System.err.println("When not using the PDE, " + method + "() can only be used inside settings().");
 			System.err.println("Remove the " + method + "() method from setup(), and add the following:");
@@ -409,9 +417,9 @@ public class GameBase implements SGFX,
 		boolean hideStop = false;
 
 		int displayNum = -1; // use default
-//	    boolean fullScreen = false;
+		//	    boolean fullScreen = false;
 		boolean present = false;
-//	    boolean spanDisplays = false;
+		//	    boolean spanDisplays = false;
 		int density = -1;
 
 		String param = null, value = null;
@@ -472,8 +480,8 @@ public class GameBase implements SGFX,
 				if (args[argIndex].equals(ARGS_PRESENT)) {
 					present = true;
 
-//	        } else if (args[argIndex].equals(ARGS_SPAN_DISPLAYS)) {
-//	          spanDisplays = true;
+					//	        } else if (args[argIndex].equals(ARGS_SPAN_DISPLAYS)) {
+					//	          spanDisplays = true;
 
 				} else if (args[argIndex].equals(ARGS_HIDE_STOP)) {
 					hideStop = true;
@@ -530,9 +538,9 @@ public class GameBase implements SGFX,
 		// used inside settings(). Sets a terrible precedent, but the alternative
 		// of not being able to size a sketch to an image is driving people loopy.
 		// A handful of things that need to be set before init/start.
-//		    if (folder == null) {
-//		      folder = calcSketchPath();
-//		    }
+		//		    if (folder == null) {
+		//		      folder = calcSketchPath();
+		//		    }
 		sketch.sketchPath = folder;
 
 		sketch.handleSettings();
@@ -559,7 +567,7 @@ public class GameBase implements SGFX,
 		if (sketch.external) {
 			surface.setupExternalMessages();
 		}
-//
+		//
 		sketch.showSurface();
 		sketch.startSurface();
 	}
@@ -567,13 +575,13 @@ public class GameBase implements SGFX,
 	/** Danger: available for advanced subclassing, but here be dragons. */
 	protected void showSurface() {
 		if (getGraphics().displayable()) {
-//			surface.setVisible(true);
+			//			surface.setVisible(true);
 		}
 	}
 
 	/** See warning in showSurface() */
 	protected void startSurface() {
-//		surface.startThread();
+		//		surface.startThread();
 	}
 
 	protected SSurface initSurface() {
@@ -581,62 +589,62 @@ public class GameBase implements SGFX,
 		surface = g.createSurface();
 
 		// Create fake Frame object to warn user about the changes
-//		if (g.displayable()) {
-//			frame = new Frame() {
-//				@Override
-//				public void setResizable(boolean resizable) {
-//					deprecationWarning("setResizable");
-//					surface.setResizable(resizable);
-//				}
-//
-//				@Override
-//				public void setVisible(boolean visible) {
-//					deprecationWarning("setVisible");
-//					surface.setVisible(visible);
-//				}
-//
-//				@Override
-//				public void setTitle(String title) {
-//					deprecationWarning("setTitle");
-//					surface.setTitle(title);
-//				}
-//
-//				@Override
-//				public void setUndecorated(boolean ignored) {
-//					throw new RuntimeException("'frame' has been removed from Processing 3, " +
-//							"use fullScreen() to get an undecorated full screen frame");
-//				}
-//
-//				// Can't override this one because it's called by Window's constructor
-//				/*
-//				 * @Override
-//				 * public void setLocation(int x, int y) {
-//				 * deprecationWarning("setLocation");
-//				 * surface.setLocation(x, y);
-//				 * }
-//				 */
-//
-//				@Override
-//				public void setSize(int w, int h) {
-//					deprecationWarning("setSize");
-//					surface.setSize(w, h);
-//				}
-//
-//				private void deprecationWarning(String method) {
-//					PGraphics.showWarning("Use surface." + method + "() instead of " +
-//							"frame." + method + " in Processing 3");
-//					// new Exception(method).printStackTrace(System.out);
-//				}
-//			};
-//
-//			surface.initFrame(this); // , backgroundColor, displayNum, fullScreen, spanDisplays);
-//			surface.setTitle(getClass().getSimpleName());
-//
-//		} else {
-//			surface.initOffscreen(this); // for PDF/PSurfaceNone and friends
-//		}
+		//		if (g.displayable()) {
+		//			frame = new Frame() {
+		//				@Override
+		//				public void setResizable(boolean resizable) {
+		//					deprecationWarning("setResizable");
+		//					surface.setResizable(resizable);
+		//				}
+		//
+		//				@Override
+		//				public void setVisible(boolean visible) {
+		//					deprecationWarning("setVisible");
+		//					surface.setVisible(visible);
+		//				}
+		//
+		//				@Override
+		//				public void setTitle(String title) {
+		//					deprecationWarning("setTitle");
+		//					surface.setTitle(title);
+		//				}
+		//
+		//				@Override
+		//				public void setUndecorated(boolean ignored) {
+		//					throw new RuntimeException("'frame' has been removed from Processing 3, " +
+		//							"use fullScreen() to get an undecorated full screen frame");
+		//				}
+		//
+		//				// Can't override this one because it's called by Window's constructor
+		//				/*
+		//				 * @Override
+		//				 * public void setLocation(int x, int y) {
+		//				 * deprecationWarning("setLocation");
+		//				 * surface.setLocation(x, y);
+		//				 * }
+		//				 */
+		//
+		//				@Override
+		//				public void setSize(int w, int h) {
+		//					deprecationWarning("setSize");
+		//					surface.setSize(w, h);
+		//				}
+		//
+		//				private void deprecationWarning(String method) {
+		//					PGraphics.showWarning("Use surface." + method + "() instead of " +
+		//							"frame." + method + " in Processing 3");
+		//					// new Exception(method).printStackTrace(System.out);
+		//				}
+		//			};
+		//
+		//			surface.initFrame(this); // , backgroundColor, displayNum, fullScreen, spanDisplays);
+		//			surface.setTitle(getClass().getSimpleName());
+		//
+		//		} else {
+		//			surface.initOffscreen(this); // for PDF/PSurfaceNone and friends
+		//		}
 
-//		    init();
+		//		    init();
 		return surface;
 	}
 
@@ -718,17 +726,11 @@ public class GameBase implements SGFX,
 		// size(DEFAULT_WIDTH, DEFAULT_HEIGHT, JAVA2D);
 	}
 
-	final public int getWidth() {
-		return width;
-	}
+	final public int getWidth() { return width; }
 
-	final public int getHeight() {
-		return height;
-	}
+	final public int getHeight() { return height; }
 
-	final public String getRenderer() {
-		return renderer;
-	}
+	final public String getRenderer() { return renderer; }
 
 	/*
 	 * Named quality instead of smooth to avoid people trying to set (or get)
@@ -739,15 +741,13 @@ public class GameBase implements SGFX,
 	 * true/false for whether fill was enabled, getFillColor() would return the
 	 * color itself. Or at least that's what I can recall at the moment. [fry]
 	 */
-//	public int sketchQuality() {
-//		// return 2;
-//		return quality;
-//	}
+	//	public int sketchQuality() {
+	//		// return 2;
+	//		return quality;
+	//	}
 
 	// smoothing 1 is default.. 0 is none.. 2,4,8 depend on renderer
-	final public int getSmooth() {
-		return smooth;
-	}
+	final public int getSmooth() { return smooth; }
 
 	final public boolean getFullScreen() {
 		// return false;
@@ -758,14 +758,12 @@ public class GameBase implements SGFX,
 	// // full screen who will be looking for it. On the other hand, screenX/Y/Z
 	// // makes things confusing, and if 'displayIndex' exists...
 	// public boolean sketchSpanDisplays() {
-//	    //return false;
-//	    return spanDisplays;
+	//	    //return false;
+	//	    return spanDisplays;
 	// }
 
 	// Numbered from 1, SPAN (0) means all displays, -1 means the default display
-	final public int getDisplay() {
-		return display;
-	}
+	final public int getDisplay() { return display; }
 
 	final public String getOutputPath() {
 		// return null;
@@ -777,13 +775,9 @@ public class GameBase implements SGFX,
 		return outputStream;
 	}
 
-	final public int getWindowColor() {
-		return windowColor;
-	}
+	final public int getWindowColor() { return windowColor; }
 
-	final public int getPixelDensity() {
-		return pixelDensity;
-	}
+	final public int getPixelDensity() { return pixelDensity; }
 
 	public void setup() {}
 
@@ -813,10 +807,10 @@ public class GameBase implements SGFX,
 		thread = new Thread(() -> {
 			init();
 			loop();
-//			destroy();
+			//			destroy();
 		}, "MainThread");
 
-//		thread.start();
+		//		thread.start();
 		thread.run();
 	}
 
@@ -843,10 +837,10 @@ public class GameBase implements SGFX,
 
 		screen.createCanvas(width, height, scaleW, scaleH);
 
-//		setParent(this);
-//		setPrimary(true);
-//		setSize(width(), height());
-//		graphics = checkImage();
+		//		setParent(this);
+		//		setPrimary(true);
+		//		setSize(width(), height());
+		//		graphics = checkImage();
 
 		defaultSettings();
 		screen.show();
@@ -863,23 +857,24 @@ public class GameBase implements SGFX,
 
 		String[] args = new String[] { cleanedClass };
 
-//		final String[] sketchArgs = null;
-//		if (sketchArgs != null) args = concat(args, sketchArgs);
+		//		final String[] sketchArgs = null;
+		//		if (sketchArgs != null) args = concat(args, sketchArgs);
 
 		handleRunSketch(args, this);
 
-//		game = this;
+		//	game = this;
 		random = new Random();
 		noise = new OpenSimplexNoise(random.nextLong());
 		mouse = new Mouse();
+		keyboard = new Keyboard();
 
 		try {
 			robot = new Robot();
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
-//		aimSize = 8;
-//		aimColor = Color.black;
+		//		aimSize = 8;
+		//		aimColor = Color.black;
 
 		frameRate(60);
 		syncMode(SYNC);
@@ -893,10 +888,10 @@ public class GameBase implements SGFX,
 		frameLoopListeners = new ArrayList<>();
 		startTime = System.currentTimeMillis();
 
-		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(this, mouse);
-		else screen = new ScreenJava(this, mouse);
+		if (settings.screentype == Settings.ScreenType.OPENGL) screen = new ScreenOpenGL(this, mouse, keyboard);
+		else screen = new ScreenJava(this, mouse, keyboard);
 
-//		setup();
+		//	setup();
 
 		thread.setName(screen.title + " MainThread");
 		screen.show();
@@ -921,7 +916,7 @@ public class GameBase implements SGFX,
 
 	private void render() {
 		if (g == null) return;
-//		if(noLoop && !redraw) return;
+		//		if(noLoop && !redraw) return;
 
 		if (insideDraw) {
 			new IllegalStateException("render() called before finishing").printStackTrace();
@@ -955,17 +950,27 @@ public class GameBase implements SGFX,
 	}
 
 	void preDraw() {
-		width = screen.width;
-		height = screen.height;
-		pmouseX = mouseX;
-		pmouseY = mouseY;
-		mouseX = mouse.x;
-		mouseY = mouse.y;
-
-//		graphics = checkImage();
-//		handleSmooth();
-
 		screen.preDraw();
+
+		width = screen.width();
+		height = screen.height();
+
+		key = keyboard.key();
+		keyCode = keyboard.keyCode();
+
+		button = mouse.button();
+		mousePressed = mouse.pressed();
+		mouseX = mouse.x();
+		mouseY = mouse.y();
+		pmouseX = mouse.lastX();
+		pmouseY = mouse.lastY();
+		mouseWheel = mouse.mouseWheel();
+		mouseWheelX = mouse.mouseWheelX();
+		mouseWheelY = mouse.mouseWheelY();
+
+		//	graphics = checkImage();
+		//	handleSmooth();
+
 		for (FrameLoopListener fll : frameLoopListeners) fll.preDraw();
 	}
 
@@ -984,7 +989,7 @@ public class GameBase implements SGFX,
 		fps = frames;
 		frames = 0;
 		infos = getInfo();
-//		frame.setTitle(title + " - FPS : " + fps);
+		//		frame.setTitle(title + " - FPS : " + fps);
 		screen.setTitleInfo(" - FPS : " + fps);
 	}
 
@@ -1080,9 +1085,7 @@ public class GameBase implements SGFX,
 		}
 	}
 
-	public boolean isStopped() {
-		return thread == null || !thread.isAlive();
-	}
+	public boolean isStopped() { return thread == null || !thread.isAlive(); }
 
 	void exitActual() {
 		try {
@@ -1108,21 +1111,21 @@ public class GameBase implements SGFX,
 			if (g != null) g.dispose();
 		}
 
-//		if (platform == MACOSX) {
-////			com.sun.glass.ui.Application application = null;
-////			if (application == null) {
-////				application = com.sun.glass.ui.Application.getApplication();
-////			}
-////			application.setQuitHandler(null);
-//
-//			try {
-//				final String td = "processing.core.ThinkDifferent";
-//				final Class<?> thinkDifferent = getClass().getClassLoader().loadClass(td);
-//				thinkDifferent.getMethod("cleanup").invoke(null);
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
+		//		if (platform == MACOSX) {
+		////			com.sun.glass.ui.Application application = null;
+		////			if (application == null) {
+		////				application = com.sun.glass.ui.Application.getApplication();
+		////			}
+		////			application.setQuitHandler(null);
+		//
+		//			try {
+		//				final String td = "processing.core.ThinkDifferent";
+		//				final Class<?> thinkDifferent = getClass().getClassLoader().loadClass(td);
+		//				thinkDifferent.getMethod("cleanup").invoke(null);
+		//			} catch (Exception e) {
+		//				e.printStackTrace();
+		//			}
+		//		}
 
 	}
 
@@ -1133,9 +1136,9 @@ public class GameBase implements SGFX,
 		return info;
 	}
 
-//	void updateMousePosition(float x, float y) {
-//		screen.updateMousePosition(x,y);
-//	}
+	//	void updateMousePosition(float x, float y) {
+	//		screen.updateMousePosition(x,y);
+	//	}
 
 	public final void noLoop() {
 		noLoop = true;
@@ -1156,9 +1159,9 @@ public class GameBase implements SGFX,
 
 		g.beginDraw();
 
-//		g.defaultSettings();
+		//		g.defaultSettings();
 
-//		noSmooth();
+		//		noSmooth();
 		smooth();
 	}
 
@@ -1239,23 +1242,21 @@ public class GameBase implements SGFX,
 	 * adds "rec/" to the filename
 	 * if it contains no "/".
 	 */
-	public final static void serialize(String filename, Serializable obj) {
-		serialize(getFile(filename), obj);
-	}
+	public final static void serialize(String filename, Serializable obj) { serialize(getFile(filename), obj); }
 
 	/**
 	 * Simple utility function to
 	 * save an Serializable obj to a file
 	 */
 	public final static void serialize(File file, Serializable obj) {
-//		if (file.isAbsolute()) {
-//			// make sure that the intermediate folders have been created
-//			PApplet.createPath(file);
-//		} else {
-//			String msg = "SImage.save() requires an absolute path. " +
-//					"Use createImage(), or pass savePath() to save().";
-//			PGraphics.showException(msg);
-//		}
+		//		if (file.isAbsolute()) {
+		//			// make sure that the intermediate folders have been created
+		//			PApplet.createPath(file);
+		//		} else {
+		//			String msg = "SImage.save() requires an absolute path. " +
+		//					"Use createImage(), or pass savePath() to save().";
+		//			PGraphics.showException(msg);
+		//		}
 		try {
 			OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
 			ObjectOutputStream oos = new ObjectOutputStream(os);
@@ -1274,9 +1275,7 @@ public class GameBase implements SGFX,
 	 * adds "rec/" to the filename
 	 * if it contains no "/".
 	 */
-	public final static Serializable deserialize(String filename) {
-		return deserialize(getFile(filename));
-	}
+	public final static Serializable deserialize(String filename) { return deserialize(getFile(filename)); }
 
 	/**
 	 * Simple utility function to
@@ -1333,45 +1332,29 @@ public class GameBase implements SGFX,
 		return new File(name);
 	}
 
-	public final void moveMouse(SVector v) {
-		moveMouse(v.x(), v.y());
-	}
+	public final void moveMouse(SVector v) { moveMouse(v.x(), v.y()); }
 
-	public final void moveMouse(float x, float y) {
-		moveMouseTo(mouse.x + x, mouse.y + y);
-	}
+	public final void moveMouse(float x, float y) { moveMouseTo(mouse.x() + x, mouse.y() + y); }
 
-	public final void moveMouseTo(SVector v) {
-		moveMouseTo(v.x, v.y);
-	}
+	public final void moveMouseTo(SVector v) { moveMouseTo(v.x, v.y); }
 
-	public final void moveMouseTo(float x, float y) {
-		robot.mouseMove((int) (x() + x), (int) (y() + y));
-	}
+	public final void moveMouseTo(float x, float y) { robot.mouseMove((int) (x() + x), (int) (y() + y)); }
 
-	public final void moveMouseOnScreen(SVector v) {
-		moveMouseOnScreen(v.x, v.y);
-	}
+	public final void moveMouseOnScreen(SVector v) { moveMouseOnScreen(v.x, v.y); }
 
-	public final void moveMouseOnScreen(float x, float y) {
-		moveMouseOnScreenTo(mouse.screenX + x, mouse.screenY + y);
-	}
+	public final void moveMouseOnScreen(float x, float y) { moveMouseOnScreenTo(mouse.screenX() + x, mouse.screenY() + y); }
 
-	public final void moveMouseOnScreenTo(SVector v) {
-		moveMouseOnScreenTo(v.x, v.y);
-	}
+	public final void moveMouseOnScreenTo(SVector v) { moveMouseOnScreenTo(v.x, v.y); }
 
-	public final void moveMouseOnScreenTo(float x, float y) {
-		robot.mouseMove((int) x, (int) y);
-	}
+	public final void moveMouseOnScreenTo(float x, float y) { robot.mouseMove((int) x, (int) y); }
 
 	@Override
 	public final boolean save(String filename) { return saveFrame(filename); }
 
 	public boolean saveFrame() {
 		try {
-//			saveImage(image, savePath("screen-" + nf(frameCount, 4) + ".tif"));
-//			graphics.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
+			//			saveImage(image, savePath("screen-" + nf(frameCount, 4) + ".tif"));
+			//			graphics.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
 			return g.save(savePath("screen-" + nf(frameCount, 4) + ".tif"));
 		} catch (SecurityException se) {
 			System.err.println("Can't use saveFrame() when running in a browser, " +
@@ -1382,8 +1365,8 @@ public class GameBase implements SGFX,
 
 	public boolean saveFrame(String filename) {
 		try {
-//			saveImage(image, filename.replace(s, f));
-//			graphics.save(savePath(insertFrame(filename)));
+			//			saveImage(image, filename.replace(s, f));
+			//			graphics.save(savePath(insertFrame(filename)));
 			return g.save(savePath(insertFrame(filename)));
 		} catch (SecurityException se) {
 			System.err.println("Can't use saveFrame() when running in a browser, " +
@@ -1424,74 +1407,99 @@ public class GameBase implements SGFX,
 
 	public final int frameY() { return screen.getScreenY(); }
 
-	public final int width() { return screen.getWidth(); }
+	public final int width() { return screen.width(); }
 
-	public final int height() { return screen.getHeight(); }
+	public final int height() { return screen.height(); }
 
-	public final int mouseX() { return (int) mouse.x; }
+	public final char key() { return keyboard.key(); }
 
-	public final int mouseY() { return (int) mouse.y; }
+	public final int keyCode() { return keyboard.keyCode(); }
 
-	public final int lastMouseX() { return (int) mouse.lastX; }
+	// public final boolean[] keys() { return keyboard.keys(); }
 
-	public final int lastMouseY() { return (int) mouse.lastY; }
+	public boolean isKeyDown(char key) { return isKeyDown(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
-	public final boolean isKeyDown(int key) { return screen.keyIsDown(key); }
+	public boolean isKeyPressed(char key) { return isKeyPressed(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
-	public final boolean isKeyPressed(int key) { return screen.keyIsPressed(key); }
+	public boolean isKeyHeld(char key) { return isKeyHeld(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
-	public final boolean isKeyHeld(int key) { return screen.keyIsHeld(key); }
+	public boolean isKeyReleased(char key) { return isKeyReleased(KeyEvent.getExtendedKeyCodeForChar(key)); }
 
-	public final boolean isKeyReleased(int key) { return screen.keyIsReleased(key); }
+	public final boolean isKeyDown(int key) { return keyboard.isKeyDown(key); }
 
-	public final boolean isKeyDown(char key) { return screen.keyIsDown(key); }
+	public final boolean isKeyPressed(int key) { return keyboard.isKeyPressed(key); }
 
-	public final boolean isKeyPressed(char key) { return screen.keyIsPressed(key); }
+	public final boolean isKeyHeld(int key) { return keyboard.isKeyHeld(key); }
 
-	public final boolean isKeyHeld(char key) { return screen.keyIsHeld(key); }
+	public final boolean isKeyReleased(int key) { return keyboard.isKeyReleased(key); }
 
-	public final boolean isKeyReleased(char key) { return screen.keyIsReleased(key); }
+	public final float mouseX() { return mouse.x(); }
 
-	public final boolean isMouseDown(int button) { return screen.mouseIsDown(button); }
+	public final float mouseY() { return mouse.y(); }
 
-	public final boolean isMousePressed(int button) { return screen.mouseIsPressed(button); }
+	public final float mouseLastX() { return mouse.lastX(); }
 
-	public final boolean isMouseHeld(int button) { return screen.mouseIsHeld(button); }
+	public final float mouseLastY() { return mouse.lastY(); }
 
-	public final boolean isMouserReleased(int button) { return screen.mouseIsReleased(button); }
+	public final int button() { return mouse.button(); }
 
-	public final double mouseWheel() { return screen.mouseWheel(); }
+	public final boolean mousePressed() { return mouse.pressed(); }
 
-	public final boolean mousePressed() { return screen.mousePressed(); }
+	// public int buttons() { return mouse.buttons(); }
 
-	public final char key() { return screen.key(); }
+	public final boolean isMouseDown(int button) { return mouse.isButtonDown(button); }
 
-	public final int keyCode() { return screen.keyCode(); }
+	public final boolean isMousePressed(int button) { return mouse.isButtonPressed(button); }
 
-	public final boolean[] keys() { return screen.keys(); }
+	public final boolean isMouseHeld(int button) { return mouse.isButtonHeld(button); }
+
+	public final boolean isMouserReleased(int button) { return mouse.isButtonReleased(button); }
+
+	public final double mouseWheel() { return mouse.mouseWheel(); }
 
 	void updateMousePosition(float x, float y) {}
 
 	/**
-	 * @return if default functionality should be skipped
+	 * <b>>GameBase.key</b> the character associated with the key in this event
+	 * <p>
+	 * <b>>GameBase.keyCode</b> the integer keyCode associated with the key in this event
+	 * 
+	 * @return <b>true</b> if default functionality should be skipped
 	 */
 	public boolean keyPressed() { return false; }
 
 	/**
-	 * @return if default functionality should be skipped
+	 * <b>>GameBase.key</b> the character associated with the key in this event
+	 * <p>
+	 * <b>>GameBase.keyCode</b> the integer keyCode associated with the key in this event
+	 * 
+	 * @return <b>true</b> if default functionality should be skipped
 	 */
 	public boolean keyReleased() { return false; }
 
 	/**
-	 * the character associated with the key in this event
-	 * the integer keyCode associated with the key in this event
+	 * <b>>GameBase.key</b> the character associated with the key in this event
+	 * <p>
+	 * <b>keyCode</b> the integer keyCode associated with the key in this event
 	 * 
-	 * @return if default functionality should be skipped
+	 * @return <b>true</b> if default functionality should be skipped
 	 */
 	public boolean keyTyped() { return false; }
 
+	/**
+	 * <b>GameBase.key</b> the character associated with the key in this event
+	 * <p>
+	 * <b>>GameBase.keyCode</b> the integer keyCode associated with the key in this event
+	 * 
+	 * @return <b>true</b> if default functionality should be skipped
+	 */
 	public boolean mouseOnPressed() { return false; }
 
+	/**
+	 * <b>>GameBase.button</b> the button associated with this event
+	 * 
+	 * @return <b>true</b> if default functionality should be skipped
+	 */
 	public boolean mouseOnReleased() { return false; }
 
 	@Override
@@ -1590,7 +1598,7 @@ public class GameBase implements SGFX,
 
 	protected SGraphics createPrimaryGraphics() { return makeGraphics(getWidth(), getHeight(), renderer, outputPath, true); }
 
-//	protected SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
+	//	protected SGraphics createGraphics(BufferedImage bi) { return new SGraphics(bi); }
 
 	@Override
 	public SGraphics createGraphics(int width, int height) { return createGraphics(width, height, SConstants.JAVA2D); }
@@ -1601,13 +1609,13 @@ public class GameBase implements SGFX,
 	public SGraphics createGraphics(int width, int height, String renderer, String path) { return makeGraphics(width, height, renderer, path, false); }
 
 	protected SGraphics makeGraphics(int width, int height, String renderer, String path, boolean primary) {
-//		if (!primary && !g.isGL()) {
-//			if (renderer.equals(P2D)) {
-//				throw new RuntimeException("createGraphics() with P2D requires size() to use P2D or P3D");
-//			} else if (renderer.equals(P3D)) {
-//				throw new RuntimeException("createGraphics() with P3D or OPENGL requires size() to use P2D or P3D");
-//			}
-//		}
+		//		if (!primary && !g.isGL()) {
+		//			if (renderer.equals(P2D)) {
+		//				throw new RuntimeException("createGraphics() with P2D requires size() to use P2D or P3D");
+		//			} else if (renderer.equals(P3D)) {
+		//				throw new RuntimeException("createGraphics() with P3D or OPENGL requires size() to use P2D or P3D");
+		//			}
+		//		}
 
 		try {
 			Class<?> rendererClass = Thread.currentThread().getContextClassLoader().loadClass(renderer);
@@ -1620,10 +1628,10 @@ public class GameBase implements SGFX,
 			if (path != null) {
 				pg.setPath(savePath(path));
 			}
-//		      pg.setQuality(sketchQuality());
-//		      if (!primary) {
-//		        surface.initImage(pg, w, h);
-//		      }
+			//		      pg.setQuality(sketchQuality());
+			//		      if (!primary) {
+			//		        surface.initImage(pg, w, h);
+			//		      }
 			pg.setSize(width, height);
 
 			// everything worked, return it
@@ -1650,10 +1658,10 @@ public class GameBase implements SGFX,
 			}
 
 		} catch (ClassNotFoundException cnfe) {
-//		      if (cnfe.getMessage().indexOf("processing.opengl.PGraphicsOpenGL") != -1) {
-//		        throw new RuntimeException(openglError +
-//		                                   " (The library .jar file is missing.)");
-//		      } else {
+			//		      if (cnfe.getMessage().indexOf("processing.opengl.PGraphicsOpenGL") != -1) {
+			//		        throw new RuntimeException(openglError +
+			//		                                   " (The library .jar file is missing.)");
+			//		      } else {
 			if (external) {
 				throw new RuntimeException("You need to use \"Import Library\" " +
 						"to add " + renderer + " to your sketch.");
@@ -1689,11 +1697,23 @@ public class GameBase implements SGFX,
 		}
 	}
 
-	public SImage createImage(int width, int height) { SImage img = new SImage(width, height); img.parent = this; return img; }
+	public SImage createImage(int width, int height) {
+		SImage img = new SImage(width, height);
+		img.parent = this;
+		return img;
+	}
 
-	public SImage createImage(int width, int height, int format) { SImage img = new SImage(width, height, format); img.parent = this; return img; }
+	public SImage createImage(int width, int height, int format) {
+		SImage img = new SImage(width, height, format);
+		img.parent = this;
+		return img;
+	}
 
-	public SImage createImage(Image bi) { SImage img = new SImage(bi); img.parent = this; return img; }
+	public SImage createImage(Image bi) {
+		SImage img = new SImage(bi);
+		img.parent = this;
+		return img;
+	}
 
 	@Override
 	public SImage loadImage(String filename) { return loadImage(filename, null); }
@@ -1733,9 +1753,9 @@ public class GameBase implements SGFX,
 		if (extension.equals("tga")) {
 			try {
 				SImage image = loadImageTGA(filename);
-//	        if (params != null) {
-//	          image.setParams(g, params);
-//	        }
+				//	        if (params != null) {
+				//	          image.setParams(g, params);
+				//	        }
 				return image;
 			} catch (IOException e) {
 				printStackTrace(e);
@@ -1746,9 +1766,9 @@ public class GameBase implements SGFX,
 		if (extension.equals("tif") || extension.equals("tiff")) {
 			byte bytes[] = loadBytes(filename);
 			SImage image = (bytes == null) ? null : SImage.loadTIFF(bytes);
-//	      if (params != null) {
-//	        image.setParams(g, params);
-//	      }
+			//	      if (params != null) {
+			//	        image.setParams(g, params);
+			//	      }
 			return image;
 		}
 
@@ -1799,9 +1819,9 @@ public class GameBase implements SGFX,
 						image.checkAlpha();
 					}
 
-//					if (params != null) {
-//						image.setParams(g, params);
-//					}
+					//					if (params != null) {
+					//						image.setParams(g, params);
+					//					}
 					image.parent = this;
 					return image;
 				}
@@ -1818,11 +1838,11 @@ public class GameBase implements SGFX,
 			for (int i = 0; i < loadImageFormats.length; i++) {
 				if (extension.equals(loadImageFormats[i])) {
 					return loadImageIO(filename);
-//	          SImage image = loadImageIO(filename);
-//	          if (params != null) {
-//	            image.setParams(g, params);
-//	          }
-//	          return image;
+					//	          SImage image = loadImageIO(filename);
+					//	          if (params != null) {
+					//	            image.setParams(g, params);
+					//	          }
+					//	          return image;
 				}
 			}
 		}
@@ -1836,9 +1856,7 @@ public class GameBase implements SGFX,
 	// fixed-size thread pool used by requestImage()
 	ExecutorService requestImagePool;
 
-	public SImage requestImage(String filename) {
-		return requestImage(filename, null);
-	}
+	public SImage requestImage(String filename) { return requestImage(filename, null); }
 
 	/**
 	 * ( begin auto-generated from requestImage.xml )
@@ -1877,9 +1895,7 @@ public class GameBase implements SGFX,
 		if (requestImagePool == null) {
 			ThreadFactory factory = new ThreadFactory() {
 				@Override
-				public Thread newThread(Runnable r) {
-					return new Thread(r, REQUEST_IMAGE_THREAD_PREFIX);
-				}
+				public Thread newThread(Runnable r) { return new Thread(r, REQUEST_IMAGE_THREAD_PREFIX); }
 			};
 			requestImagePool = Executors.newFixedThreadPool(4, factory);
 		}
@@ -2144,8 +2160,8 @@ public class GameBase implements SGFX,
 	public BufferedImage loadIOImage(String filename) {
 		BufferedImage img = null;
 		try {
-//		    URL url = new URL(getCodeBase(), "examples/strawberry.jpg");
-//		    img = ImageIO.read(url);
+			//		    URL url = new URL(getCodeBase(), "examples/strawberry.jpg");
+			//		    img = ImageIO.read(url);
 			File inputfile = new File(filename);
 			System.out.println(inputfile.getAbsolutePath());
 			img = ImageIO.read(inputfile);
@@ -2155,13 +2171,13 @@ public class GameBase implements SGFX,
 		return img;
 	}
 
-//	protected SImage loadSImage(String filename, int format) {
-//		return new SImage(loadImage(filename, format));
-//	}
+	//	protected SImage loadSImage(String filename, int format) {
+	//		return new SImage(loadImage(filename, format));
+	//	}
 
 	public void saveImage(SImage image, String filename) { image.save(savePath(filename)); }
 
-//	public void saveImage(SImage image, String filename) { saveImage((BufferedImage)image.getImage(), filename); }
+	//	public void saveImage(SImage image, String filename) { saveImage((BufferedImage)image.getImage(), filename); }
 
 	public void saveImage(BufferedImage image, String filename) {
 		try {
@@ -2279,9 +2295,7 @@ public class GameBase implements SGFX,
 	 * @see PApplet#createReader
 	 * @see BufferedReader
 	 */
-	public PrintWriter createWriter(String filename) {
-		return createWriter(saveFile(filename));
-	}
+	public PrintWriter createWriter(String filename) { return createWriter(saveFile(filename)); }
 
 	/**
 	 * @nowebref
@@ -2918,9 +2932,7 @@ public class GameBase implements SGFX,
 
 	// FILE OUTPUT
 
-	public OutputStream createOutput(String filename) {
-		return createOutput(saveFile(filename));
-	}
+	public OutputStream createOutput(String filename) { return createOutput(saveFile(filename)); }
 
 	static public OutputStream createOutput(File file) {
 		try {
@@ -2958,9 +2970,7 @@ public class GameBase implements SGFX,
 	 *            location to read from (a filename, path, or URL)
 	 * @see PApplet#createOutput(String)
 	 */
-	public boolean saveStream(String target, String source) {
-		return saveStream(saveFile(target), source);
-	}
+	public boolean saveStream(String target, String source) { return saveStream(saveFile(target), source); }
 
 	/**
 	 * Identical to the other saveStream(), but writes to a File
@@ -2969,16 +2979,12 @@ public class GameBase implements SGFX,
 	 * Note that unlike other api methods, this will not automatically
 	 * compress or uncompress gzip files.
 	 */
-	public boolean saveStream(File target, String source) {
-		return saveStream(target, createInputRaw(source));
-	}
+	public boolean saveStream(File target, String source) { return saveStream(target, createInputRaw(source)); }
 
 	/**
 	 * @nowebref
 	 */
-	public boolean saveStream(String target, InputStream source) {
-		return saveStream(saveFile(target), source);
-	}
+	public boolean saveStream(String target, InputStream source) { return saveStream(saveFile(target), source); }
 
 	/**
 	 * @nowebref
@@ -3060,9 +3066,7 @@ public class GameBase implements SGFX,
 	 * @see PApplet#loadBytes(String)
 	 * @see PApplet#saveStrings(String, String[])
 	 */
-	public void saveBytes(String filename, byte[] data) {
-		saveBytes(saveFile(filename), data);
-	}
+	public void saveBytes(String filename, byte[] data) { saveBytes(saveFile(filename), data); }
 
 	/**
 	 * Creates a temporary file based on the name/extension of another file
@@ -3174,16 +3178,12 @@ public class GameBase implements SGFX,
 	 * @see PApplet#loadBytes(String)
 	 * @see PApplet#saveBytes(String, byte[])
 	 */
-	public void saveStrings(String filename, String data[]) {
-		saveStrings(saveFile(filename), data);
-	}
+	public void saveStrings(String filename, String data[]) { saveStrings(saveFile(filename), data); }
 
 	/**
 	 * @nowebref
 	 */
-	static public void saveStrings(File file, String data[]) {
-		saveStrings(createOutput(file), data);
-	}
+	static public void saveStrings(File file, String data[]) { saveStrings(createOutput(file), data); }
 
 	/**
 	 * @nowebref
@@ -3211,8 +3211,8 @@ public class GameBase implements SGFX,
 			// Decode URL
 			String jarPath = jarURL.toURI().getSchemeSpecificPart();
 
-//			// Workaround for bug in Java for OS X from Oracle (7u51)
-//			// https://github.com/processing/processing/issues/2181
+			//			// Workaround for bug in Java for OS X from Oracle (7u51)
+			//			// https://github.com/processing/processing/issues/2181
 			if (platform == MACOSX) {
 				if (jarPath.contains("Contents/Java/")) {
 					String appPath = jarPath.substring(0, jarPath.indexOf(".app") + 4);
@@ -3254,9 +3254,7 @@ public class GameBase implements SGFX,
 		return sketchPath() + File.separator + where;
 	}
 
-	public File sketchFile(String where) {
-		return new File(sketchPath(where));
-	}
+	public File sketchFile(String where) { return new File(sketchPath(where)); }
 
 	public String savePath(String where) {
 		if (where == null) return null;
@@ -3265,9 +3263,7 @@ public class GameBase implements SGFX,
 		return filename;
 	}
 
-	public File saveFile(String where) {
-		return new File(savePath(where));
-	}
+	public File saveFile(String where) { return new File(savePath(where)); }
 
 	/**
 	 * <b>This function almost certainly does not do the thing you want it to.</b>
@@ -3283,9 +3279,7 @@ public class GameBase implements SGFX,
 	 * locations of files. You'll be disappointed when your app runs on different
 	 * platforms.
 	 */
-	public String dataPath(String where) {
-		return dataFile(where).getAbsolutePath();
-	}
+	public String dataPath(String where) { return dataFile(where).getAbsolutePath(); }
 
 	/**
 	 * Return a full path to an item in the data folder as a File object.
@@ -3313,15 +3307,13 @@ public class GameBase implements SGFX,
 		}
 		// Windows, Linux, or when not using a Mac OS X .app file
 		File workingDirItem = new File(sketchPath + File.separator + "data" + File.separator + where);
-//		    if (workingDirItem.exists()) {
+		//		    if (workingDirItem.exists()) {
 		return workingDirItem;
-//		    }
-//		    // In some cases, the current working directory won't be set properly.
+		//		    }
+		//		    // In some cases, the current working directory won't be set properly.
 	}
 
-	public static void createPath(String path) {
-		createPath(new File(path));
-	}
+	public static void createPath(String path) { createPath(new File(path)); }
 
 	public static void createPath(File file) {
 		try {
@@ -3484,13 +3476,19 @@ public class GameBase implements SGFX,
 	 *            6 : all default
 	 */
 	@Override
-	public void smooth(int level) { this.smooth = level; g.smooth(level); }
+	public void smooth(int level) {
+		this.smooth = level;
+		g.smooth(level);
+	}
 
 	/**
 	 * @webref environment
 	 */
 	@Override
-	public void noSmooth() { this.smooth = 0; g.noSmooth(); }
+	public void noSmooth() {
+		this.smooth = 0;
+		g.noSmooth();
+	}
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -3749,11 +3747,9 @@ public class GameBase implements SGFX,
 	@Override
 	public void applyMatrix(
 			float n00, float n01, float n02,
-			float n10, float n11, float n12) {
-		g.applyMatrix(
-				n00, n01, n02,
-				n10, n11, n12);
-	}
+			float n10, float n11, float n12) { g.applyMatrix(
+					n00, n01, n02,
+					n10, n11, n12); }
 
 	@Override
 	public void applyMatrix(SMatrix3D source) { g.applyMatrix(source); }
@@ -3763,13 +3759,11 @@ public class GameBase implements SGFX,
 			float n00, float n01, float n02, float n03,
 			float n10, float n11, float n12, float n13,
 			float n20, float n21, float n22, float n23,
-			float n30, float n31, float n32, float n33) {
-		g.applyMatrix(
-				n00, n01, n02, n03,
-				n10, n11, n12, n13,
-				n20, n21, n22, n23,
-				n30, n31, n32, n33);
-	}
+			float n30, float n31, float n32, float n33) { g.applyMatrix(
+					n00, n01, n02, n03,
+					n10, n11, n12, n13,
+					n20, n21, n22, n23,
+					n30, n31, n32, n33); }
 
 	@Override
 	public SMatrix_D getMatrix() { return g.getMatrix(); }
@@ -3994,14 +3988,10 @@ public class GameBase implements SGFX,
 	}
 
 	@Override
-	public void updatePixels() {
-		g.updatePixels();
-	}
+	public void updatePixels() { g.updatePixels(); }
 
 	@Override
-	public void updatePixels(int x, int y, int w, int h) {
-		g.updatePixels(x, y, w, h);
-	}
+	public void updatePixels(int x, int y, int w, int h) { g.updatePixels(x, y, w, h); }
 
 	@Override
 	public int get(int x, int y) { return g.get(x, y); }
@@ -4088,9 +4078,7 @@ public class GameBase implements SGFX,
 	 *            array to sort
 	 * @see PApplet#reverse(boolean[])
 	 */
-	static public byte[] sort(byte list[]) {
-		return sort(list, list.length);
-	}
+	static public byte[] sort(byte list[]) { return sort(list, list.length); }
 
 	/**
 	 * @param count
@@ -4103,9 +4091,7 @@ public class GameBase implements SGFX,
 		return outgoing;
 	}
 
-	static public char[] sort(char list[]) {
-		return sort(list, list.length);
-	}
+	static public char[] sort(char list[]) { return sort(list, list.length); }
 
 	static public char[] sort(char[] list, int count) {
 		char[] outgoing = new char[list.length];
@@ -4114,9 +4100,7 @@ public class GameBase implements SGFX,
 		return outgoing;
 	}
 
-	static public int[] sort(int list[]) {
-		return sort(list, list.length);
-	}
+	static public int[] sort(int list[]) { return sort(list, list.length); }
 
 	static public int[] sort(int[] list, int count) {
 		int[] outgoing = new int[list.length];
@@ -4125,9 +4109,7 @@ public class GameBase implements SGFX,
 		return outgoing;
 	}
 
-	static public float[] sort(float list[]) {
-		return sort(list, list.length);
-	}
+	static public float[] sort(float list[]) { return sort(list, list.length); }
 
 	static public float[] sort(float[] list, int count) {
 		float[] outgoing = new float[list.length];
@@ -4136,9 +4118,7 @@ public class GameBase implements SGFX,
 		return outgoing;
 	}
 
-	static public String[] sort(String list[]) {
-		return sort(list, list.length);
-	}
+	static public String[] sort(String list[]) { return sort(list, list.length); }
 
 	static public String[] sort(String[] list, int count) {
 		String[] outgoing = new String[list.length];
@@ -4181,26 +4161,20 @@ public class GameBase implements SGFX,
 	 */
 	static public void arrayCopy(Object src, int srcPosition,
 			Object dst, int dstPosition,
-			int length) {
-		System.arraycopy(src, srcPosition, dst, dstPosition, length);
-	}
+			int length) { System.arraycopy(src, srcPosition, dst, dstPosition, length); }
 
 	/**
 	 * Convenience method for arraycopy().
 	 * Identical to <CODE>arraycopy(src, 0, dst, 0, length);</CODE>
 	 */
-	static public void arrayCopy(Object src, Object dst, int length) {
-		System.arraycopy(src, 0, dst, 0, length);
-	}
+	static public void arrayCopy(Object src, Object dst, int length) { System.arraycopy(src, 0, dst, 0, length); }
 
 	/**
 	 * Shortcut to copy the entire contents of
 	 * the source into the destination array.
 	 * Identical to <CODE>arraycopy(src, 0, dst, 0, src.length);</CODE>
 	 */
-	static public void arrayCopy(Object src, Object dst) {
-		System.arraycopy(src, 0, dst, 0, Array.getLength(src));
-	}
+	static public void arrayCopy(Object src, Object dst) { System.arraycopy(src, 0, dst, 0, Array.getLength(src)); }
 
 	/**
 	 * Use arrayCopy() instead.
@@ -4208,25 +4182,19 @@ public class GameBase implements SGFX,
 	@Deprecated
 	static public void arraycopy(Object src, int srcPosition,
 			Object dst, int dstPosition,
-			int length) {
-		System.arraycopy(src, srcPosition, dst, dstPosition, length);
-	}
+			int length) { System.arraycopy(src, srcPosition, dst, dstPosition, length); }
 
 	/**
 	 * Use arrayCopy() instead.
 	 */
 	@Deprecated
-	static public void arraycopy(Object src, Object dst, int length) {
-		System.arraycopy(src, 0, dst, 0, length);
-	}
+	static public void arraycopy(Object src, Object dst, int length) { System.arraycopy(src, 0, dst, 0, length); }
 
 	/**
 	 * Use arrayCopy() instead.
 	 */
 	@Deprecated
-	static public void arraycopy(Object src, Object dst) {
-		System.arraycopy(src, 0, dst, 0, Array.getLength(src));
-	}
+	static public void arraycopy(Object src, Object dst) { System.arraycopy(src, 0, dst, 0, Array.getLength(src)); }
 
 	/**
 	 * ( begin auto-generated from expand.xml )
@@ -4247,9 +4215,7 @@ public class GameBase implements SGFX,
 	 *            the array to expand
 	 * @see PApplet#shorten(boolean[])
 	 */
-	static public boolean[] expand(boolean list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public boolean[] expand(boolean list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	/**
 	 * @param newSize
@@ -4261,9 +4227,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public byte[] expand(byte list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public byte[] expand(byte list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public byte[] expand(byte list[], int newSize) {
 		byte temp[] = new byte[newSize];
@@ -4271,9 +4235,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public char[] expand(char list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public char[] expand(char list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public char[] expand(char list[], int newSize) {
 		char temp[] = new char[newSize];
@@ -4281,9 +4243,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public int[] expand(int list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public int[] expand(int list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public int[] expand(int list[], int newSize) {
 		int temp[] = new int[newSize];
@@ -4291,9 +4251,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public long[] expand(long list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public long[] expand(long list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public long[] expand(long list[], int newSize) {
 		long temp[] = new long[newSize];
@@ -4301,9 +4259,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public float[] expand(float list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public float[] expand(float list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public float[] expand(float list[], int newSize) {
 		float temp[] = new float[newSize];
@@ -4311,9 +4267,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public double[] expand(double list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public double[] expand(double list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public double[] expand(double list[], int newSize) {
 		double temp[] = new double[newSize];
@@ -4321,9 +4275,7 @@ public class GameBase implements SGFX,
 		return temp;
 	}
 
-	static public String[] expand(String list[]) {
-		return expand(list, list.length > 0 ? list.length << 1 : 1);
-	}
+	static public String[] expand(String list[]) { return expand(list, list.length > 0 ? list.length << 1 : 1); }
 
 	static public String[] expand(String list[], int newSize) {
 		String temp[] = new String[newSize];
@@ -4428,29 +4380,17 @@ public class GameBase implements SGFX,
 	 * @see PApplet#append(byte[], byte)
 	 * @see PApplet#expand(boolean[])
 	 */
-	static public boolean[] shorten(boolean list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public boolean[] shorten(boolean list[]) { return subset(list, 0, list.length - 1); }
 
-	static public byte[] shorten(byte list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public byte[] shorten(byte list[]) { return subset(list, 0, list.length - 1); }
 
-	static public char[] shorten(char list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public char[] shorten(char list[]) { return subset(list, 0, list.length - 1); }
 
-	static public int[] shorten(int list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public int[] shorten(int list[]) { return subset(list, 0, list.length - 1); }
 
-	static public float[] shorten(float list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public float[] shorten(float list[]) { return subset(list, 0, list.length - 1); }
 
-	static public String[] shorten(String list[]) {
-		return subset(list, 0, list.length - 1);
-	}
+	static public String[] shorten(String list[]) { return subset(list, 0, list.length - 1); }
 
 	static public Object shorten(Object list) {
 		int length = Array.getLength(list);
@@ -4624,9 +4564,7 @@ public class GameBase implements SGFX,
 		return outgoing;
 	}
 
-	static public boolean[] subset(boolean[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public boolean[] subset(boolean[] list, int start) { return subset(list, start, list.length - start); }
 
 	/**
 	 * ( begin auto-generated from subset.xml )
@@ -4661,9 +4599,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public byte[] subset(byte[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public byte[] subset(byte[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public byte[] subset(byte[] list, int start, int count) {
 		byte[] output = new byte[count];
@@ -4671,9 +4607,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public char[] subset(char[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public char[] subset(char[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public char[] subset(char[] list, int start, int count) {
 		char[] output = new char[count];
@@ -4681,9 +4615,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public int[] subset(int[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public int[] subset(int[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public int[] subset(int[] list, int start, int count) {
 		int[] output = new int[count];
@@ -4691,9 +4623,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public long[] subset(long[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public long[] subset(long[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public long[] subset(long[] list, int start, int count) {
 		long[] output = new long[count];
@@ -4701,9 +4631,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public float[] subset(float[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public float[] subset(float[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public float[] subset(float[] list, int start, int count) {
 		float[] output = new float[count];
@@ -4711,9 +4639,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public double[] subset(double[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public double[] subset(double[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public double[] subset(double[] list, int start, int count) {
 		double[] output = new double[count];
@@ -4721,9 +4647,7 @@ public class GameBase implements SGFX,
 		return output;
 	}
 
-	static public String[] subset(String[] list, int start) {
-		return subset(list, start, list.length - start);
-	}
+	static public String[] subset(String[] list, int start) { return subset(list, start, list.length - start); }
 
 	static public String[] subset(String[] list, int start, int count) {
 		String[] output = new String[count];
@@ -4958,9 +4882,7 @@ public class GameBase implements SGFX,
 	 * @see PApplet#nf(float, int, int)
 	 * @see PApplet#nfs(float, int, int)
 	 */
-	static public String join(String[] list, char separator) {
-		return join(list, String.valueOf(separator));
-	}
+	static public String join(String[] list, char separator) { return join(list, String.valueOf(separator)); }
 
 	static public String join(String[] list, String separator) {
 		StringBuilder sb = new StringBuilder();
@@ -4971,9 +4893,7 @@ public class GameBase implements SGFX,
 		return sb.toString();
 	}
 
-	static public String[] splitTokens(String value) {
-		return splitTokens(value, WHITESPACE);
-	}
+	static public String[] splitTokens(String value) { return splitTokens(value, WHITESPACE); }
 
 	/**
 	 * ( begin auto-generated from splitTokens.xml )
@@ -5264,9 +5184,7 @@ public class GameBase implements SGFX,
 	 * 
 	 * @return false if 0, true if any other number
 	 */
-	static final public boolean parseBoolean(int what) {
-		return (what != 0);
-	}
+	static final public boolean parseBoolean(int what) { return (what != 0); }
 
 	/*
 	 * // removed because this makes no useful sense
@@ -5280,9 +5198,7 @@ public class GameBase implements SGFX,
 	 * 
 	 * @return true if 'what' is "true" or "TRUE", false otherwise
 	 */
-	static final public boolean parseBoolean(String what) {
-		return Boolean.parseBoolean(what);
-	}
+	static final public boolean parseBoolean(String what) { return Boolean.parseBoolean(what); }
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -5350,21 +5266,13 @@ public class GameBase implements SGFX,
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-	static final public byte parseByte(boolean what) {
-		return what ? (byte) 1 : 0;
-	}
+	static final public byte parseByte(boolean what) { return what ? (byte) 1 : 0; }
 
-	static final public byte parseByte(char what) {
-		return (byte) what;
-	}
+	static final public byte parseByte(char what) { return (byte) what; }
 
-	static final public byte parseByte(int what) {
-		return (byte) what;
-	}
+	static final public byte parseByte(int what) { return (byte) what; }
 
-	static final public byte parseByte(float what) {
-		return (byte) what;
-	}
+	static final public byte parseByte(float what) { return (byte) what; }
 
 	/*
 	 * // nixed, no precedent
@@ -5425,13 +5333,9 @@ public class GameBase implements SGFX,
 	 * }
 	 */
 
-	static final public char parseChar(byte what) {
-		return (char) (what & 0xff);
-	}
+	static final public char parseChar(byte what) { return (char) (what & 0xff); }
 
-	static final public char parseChar(int what) {
-		return (char) what;
-	}
+	static final public char parseChar(int what) { return (char) what; }
 
 	/*
 	 * static final public char parseChar(float what) { // nonsensical
@@ -5489,39 +5393,29 @@ public class GameBase implements SGFX,
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-	static final public int parseInt(boolean what) {
-		return what ? 1 : 0;
-	}
+	static final public int parseInt(boolean what) { return what ? 1 : 0; }
 
 	/**
 	 * Note that parseInt() will un-sign a signed byte value.
 	 */
-	static final public int parseInt(byte what) {
-		return what & 0xff;
-	}
+	static final public int parseInt(byte what) { return what & 0xff; }
 
 	/**
 	 * Note that parseInt('5') is unlike String in the sense that it
 	 * won't return 5, but the ascii value. This is because ((int) someChar)
 	 * returns the ascii value, and parseInt() is just longhand for the cast.
 	 */
-	static final public int parseInt(char what) {
-		return what;
-	}
+	static final public int parseInt(char what) { return what; }
 
 	/**
 	 * Same as floor(), or an (int) cast.
 	 */
-	static final public int parseInt(float what) {
-		return (int) what;
-	}
+	static final public int parseInt(float what) { return (int) what; }
 
 	/**
 	 * Parse a String into an int value. Returns 0 if the value is bad.
 	 */
-	static final public int parseInt(String what) {
-		return parseInt(what, 0);
-	}
+	static final public int parseInt(String what) { return parseInt(what, 0); }
 
 	/**
 	 * Parse a String to an int, and provide an alternate value that
@@ -5582,9 +5476,7 @@ public class GameBase implements SGFX,
 	 *
 	 * numbers will contain { 1, 300, 44 }
 	 */
-	static public int[] parseInt(String what[]) {
-		return parseInt(what, 0);
-	}
+	static public int[] parseInt(String what[]) { return parseInt(what, 0); }
 
 	/**
 	 * Make an array of int elements from an array of String objects.
@@ -5624,9 +5516,7 @@ public class GameBase implements SGFX,
 		return what;
 	}
 
-	static final public float parseFloat(String what) {
-		return parseFloat(what, Float.NaN);
-	}
+	static final public float parseFloat(String what) { return parseFloat(what, Float.NaN); }
 
 	static final public float parseFloat(String what, float otherwise) {
 		try {
@@ -5671,9 +5561,7 @@ public class GameBase implements SGFX,
 		return floaties;
 	}
 
-	static final public float[] parseFloat(String what[]) {
-		return parseFloat(what, Float.NaN);
-	}
+	static final public float[] parseFloat(String what[]) { return parseFloat(what, Float.NaN); }
 
 	static final public float[] parseFloat(String what[], float missing) {
 		float output[] = new float[what.length];
@@ -5689,25 +5577,15 @@ public class GameBase implements SGFX,
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-	static final public String str(boolean x) {
-		return String.valueOf(x);
-	}
+	static final public String str(boolean x) { return String.valueOf(x); }
 
-	static final public String str(byte x) {
-		return String.valueOf(x);
-	}
+	static final public String str(byte x) { return String.valueOf(x); }
 
-	static final public String str(char x) {
-		return String.valueOf(x);
-	}
+	static final public String str(char x) { return String.valueOf(x); }
 
-	static final public String str(int x) {
-		return String.valueOf(x);
-	}
+	static final public String str(int x) { return String.valueOf(x); }
 
-	static final public String str(float x) {
-		return String.valueOf(x);
-	}
+	static final public String str(float x) { return String.valueOf(x); }
 
 	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -5879,30 +5757,28 @@ public class GameBase implements SGFX,
 	 * numbers that have a negative sign in front of them.
 	 */
 
-	/**
-	 * ( begin auto-generated from nfs.xml )
-	 *
-	 * Utility function for formatting numbers into strings. Similar to
-	 * <b>nf()</b> but leaves a blank space in front of positive numbers so
-	 * they align with negative numbers in spite of the minus symbol. There are
-	 * two versions, one for formatting floats and one for formatting ints. The
-	 * values for the <b>digits</b>, <b>left</b>, and <b>right</b> parameters
-	 * should always be positive integers.
-	 *
-	 * ( end auto-generated )
-	 * 
-	 * @webref data:string_functions
-	 * @param num
-	 *            the number to format
-	 * @param digits
-	 *            number of digits to pad with zeroes
-	 * @see PApplet#nf(float, int, int)
-	 * @see PApplet#nfp(float, int, int)
-	 * @see PApplet#nfc(float, int)
-	 */
-	static public String nfs(int num, int digits) {
-		return (num < 0) ? nf(num, digits) : (' ' + nf(num, digits));
-	}
+		/**
+		 * ( begin auto-generated from nfs.xml )
+		 *
+		 * Utility function for formatting numbers into strings. Similar to
+		 * <b>nf()</b> but leaves a blank space in front of positive numbers so
+		 * they align with negative numbers in spite of the minus symbol. There are
+		 * two versions, one for formatting floats and one for formatting ints. The
+		 * values for the <b>digits</b>, <b>left</b>, and <b>right</b> parameters
+		 * should always be positive integers.
+		 *
+		 * ( end auto-generated )
+		 * 
+		 * @webref data:string_functions
+		 * @param num
+		 *            the number to format
+		 * @param digits
+		 *            number of digits to pad with zeroes
+		 * @see PApplet#nf(float, int, int)
+		 * @see PApplet#nfp(float, int, int)
+		 * @see PApplet#nfc(float, int)
+		 */
+	static public String nfs(int num, int digits) { return (num < 0) ? nf(num, digits) : (' ' + nf(num, digits)); }
 
 	/**
 	 * @param nums
@@ -5923,29 +5799,27 @@ public class GameBase implements SGFX,
 	 * Formats a number, always placing a - or + sign
 	 * in the front when it's negative or positive.
 	 */
-	/**
-	 * ( begin auto-generated from nfp.xml )
-	 *
-	 * Utility function for formatting numbers into strings. Similar to
-	 * <b>nf()</b> but puts a "+" in front of positive numbers and a "-" in
-	 * front of negative numbers. There are two versions, one for formatting
-	 * floats and one for formatting ints. The values for the <b>digits</b>,
-	 * <b>left</b>, and <b>right</b> parameters should always be positive integers.
-	 *
-	 * ( end auto-generated )
-	 * 
-	 * @webref data:string_functions
-	 * @param num
-	 *            the number to format
-	 * @param digits
-	 *            number of digits to pad with zeroes
-	 * @see PApplet#nf(float, int, int)
-	 * @see PApplet#nfs(float, int, int)
-	 * @see PApplet#nfc(float, int)
-	 */
-	static public String nfp(int num, int digits) {
-		return (num < 0) ? nf(num, digits) : ('+' + nf(num, digits));
-	}
+		/**
+		 * ( begin auto-generated from nfp.xml )
+		 *
+		 * Utility function for formatting numbers into strings. Similar to
+		 * <b>nf()</b> but puts a "+" in front of positive numbers and a "-" in
+		 * front of negative numbers. There are two versions, one for formatting
+		 * floats and one for formatting ints. The values for the <b>digits</b>,
+		 * <b>left</b>, and <b>right</b> parameters should always be positive integers.
+		 *
+		 * ( end auto-generated )
+		 * 
+		 * @webref data:string_functions
+		 * @param num
+		 *            the number to format
+		 * @param digits
+		 *            number of digits to pad with zeroes
+		 * @see PApplet#nf(float, int, int)
+		 * @see PApplet#nfs(float, int, int)
+		 * @see PApplet#nfc(float, int)
+		 */
+	static public String nfp(int num, int digits) { return (num < 0) ? nf(num, digits) : ('+' + nf(num, digits)); }
 
 	/**
 	 * @param nums
@@ -6050,9 +5924,7 @@ public class GameBase implements SGFX,
 		return formatted;
 	}
 
-	static public String nfs(float num, int left, int right) {
-		return (num < 0) ? nf(num, left, right) : (' ' + nf(num, left, right));
-	}
+	static public String nfs(float num, int left, int right) { return (num < 0) ? nf(num, left, right) : (' ' + nf(num, left, right)); }
 
 	/**
 	 * @param left
@@ -6068,9 +5940,7 @@ public class GameBase implements SGFX,
 		return formatted;
 	}
 
-	static public String nfp(float num, int left, int right) {
-		return (num < 0) ? nf(num, left, right) : ('+' + nf(num, left, right));
-	}
+	static public String nfp(float num, int left, int right) { return (num < 0) ? nf(num, left, right) : ('+' + nf(num, left, right)); }
 
 	//////////////////////////////////////////////////////////////
 
@@ -6098,17 +5968,11 @@ public class GameBase implements SGFX,
 	 * @see PApplet#binary(byte)
 	 * @see PApplet#unbinary(String)
 	 */
-	static final public String hex(byte value) {
-		return hex(value, 2);
-	}
+	static final public String hex(byte value) { return hex(value, 2); }
 
-	static final public String hex(char value) {
-		return hex(value, 4);
-	}
+	static final public String hex(char value) { return hex(value, 4); }
 
-	static final public String hex(int value) {
-		return hex(value, 8);
-	}
+	static final public String hex(int value) { return hex(value, 8); }
 
 	/**
 	 * @param digits
@@ -6156,27 +6020,21 @@ public class GameBase implements SGFX,
 	 * Returns a String that contains the binary value of a byte.
 	 * The returned value will always have 8 digits.
 	 */
-	static final public String binary(byte value) {
-		return binary(value, 8);
-	}
+	static final public String binary(byte value) { return binary(value, 8); }
 
 	/**
 	 * Returns a String that contains the binary value of a char.
 	 * The returned value will always have 16 digits because chars
 	 * are two bytes long.
 	 */
-	static final public String binary(char value) {
-		return binary(value, 16);
-	}
+	static final public String binary(char value) { return binary(value, 16); }
 
 	/**
 	 * Returns a String that contains the binary value of an int. The length
 	 * depends on the size of the number itself. If you want a specific number
 	 * of digits use binary(int what, int digits) to specify how many.
 	 */
-	static final public String binary(int value) {
-		return binary(value, 32);
-	}
+	static final public String binary(int value) { return binary(value, 32); }
 
 	/*
 	 * Returns a String that contains the binary value of an int.
@@ -6239,13 +6097,9 @@ public class GameBase implements SGFX,
 	 * @see PApplet#hex(int,int)
 	 * @see PApplet#unhex(String)
 	 */
-	static final public int unbinary(String value) {
-		return Integer.parseInt(value, 2);
-	}
+	static final public int unbinary(String value) { return Integer.parseInt(value, 2); }
 
-	static public int blendColor(int c1, int c2, int mode) {
-		return SImage.blendColor(c1, c2, mode);
-	}
+	static public int blendColor(int c1, int c2, int mode) { return SImage.blendColor(c1, c2, mode); }
 
 	//////////////////////////////////////////////////////////////
 
@@ -6399,9 +6253,7 @@ public class GameBase implements SGFX,
 	 * @see PApplet#print(byte)
 	 * @see PApplet#printArray(Object)
 	 */
-	static public void println() {
-		System.out.println();
-	}
+	static public void println() { System.out.println(); }
 
 	/**
 	 * @param what
@@ -6452,7 +6304,7 @@ public class GameBase implements SGFX,
 	 *            list of data, separated by commas
 	 */
 	static public void println(Object... variables) {
-//	    System.out.println("got " + variables.length + " variables");
+		//	    System.out.println("got " + variables.length + " variables");
 		print(variables);
 		println();
 	}
@@ -6587,9 +6439,9 @@ public class GameBase implements SGFX,
 		System.out.flush();
 	}
 
-//	static public void debug(String msg) {
-//		if (DEBUG) println(msg);
-//	}
+	//	static public void debug(String msg) {
+	//		if (DEBUG) println(msg);
+	//	}
 
-//	public GraphicsConfiguration getGC() { return screen.getGC(); }
+	//	public GraphicsConfiguration getGC() { return screen.getGC(); }
 }
